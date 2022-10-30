@@ -1,0 +1,24 @@
+#ifndef OMVLL_PY_OBFUSCATION_CONFIG_H
+#define OMVLL_PY_OBFUSCATION_CONFIG_H
+#include "omvll/ObfuscationConfig.hpp"
+
+namespace omvll {
+
+class PyObfuscationConfig : public ObfuscationConfig {
+  using ObfuscationConfig::ObfuscationConfig;
+  StringEncodingOpt obfuscate_string(llvm::Module* mod, llvm::Function* func,
+                                     const std::string& str) override;
+
+  BreakControlFlowOpt break_control_flow(llvm::Module* mod, llvm::Function* func) override;
+  ControlFlowFlatteningOpt flatten_cfg(llvm::Module* mod, llvm::Function* func) override;
+
+  StructAccessOpt obfuscate_struct_access(llvm::Module* mod, llvm::Function* func,
+                                          llvm::StructType* S) override;
+  VarAccessOpt obfuscate_variable_access(llvm::Module* mod, llvm::Function* func,
+                                         llvm::GlobalVariable* S) override;
+  AntiHookOpt anti_hooking(llvm::Module* mod, llvm::Function* func) override;
+  ArithmeticOpt obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func) override;
+  OpaqueConstantsOpt obfuscate_constants(llvm::Module* mod, llvm::Function* func) override;
+};
+}
+#endif

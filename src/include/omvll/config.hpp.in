@@ -1,0 +1,19 @@
+#ifndef OMVLL_CONFIG_H
+#define OMVLL_CONFIG_H
+#cmakedefine OMVLL_DEBUG  @OMVLL_DEBUG@
+#cmakedefine01 OMVLL_PY_STANDALONE
+
+#define OMVLL_VERSION "@OMVLL_VERSION_MAJOR@.@OMVLL_VERSION_MINOR@.@OMVLL_VERSION_PATCH@-@OMVLL_COMMIT_HASH@"
+#define OMVLL_TAGGED @OMVLL_IS_TAGGED@
+#define OMVLL_TAG    "@OMVLL_GIT_TAG@"
+#define OMVLL_COMMIT "@OMVLL_COMMIT_HASH@"
+
+static constexpr bool is_py_standalone = OMVLL_PY_STANDALONE;
+
+#ifdef OMVLL_DEBUG
+static constexpr bool is_debug = true;
+#else
+static constexpr bool is_debug = false;
+#endif
+
+#endif

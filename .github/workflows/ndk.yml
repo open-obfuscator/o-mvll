@@ -1,0 +1,37 @@
+name: 'O-MVLL NDK CI'
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: O-MVLL Android NDK r25
+        shell: bash
+        run: |
+          curl -LO https://data.romainthomas.fr/omvll-deps-ndk-r25.tar
+          mkdir -p /tmp/third-party-ndk25
+          tar xvf ./omvll-deps-ndk-r25.tar --directory=/tmp/third-party-ndk25
+          docker run --rm \
+            -v /tmp/third-party-ndk25:/third-party \
+            -v $GITHUB_WORKSPACE:/o-mvll \
+            openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/ndk_r25_compile.sh
+      - name: Nightly Deployment
+        env:
+          OMVLL_S3_KEY: ${{ secrets.OMVLL_S3_KEY }}
+          OMVLL_S3_SECRET: ${{ secrets.OMVLL_S3_SECRET }}
+        shell: bash
+        run: |
+          docker run \
+            -v $GITHUB_WORKSPACE:/o-mvll \
+            -e GITHUB_ACTIONS="true" \
+            -e GITHUB_WORKSPACE=$GITHUB_WORKSPACE \
+            -e GITHUB_REF=$GITHUB_REF \
+            -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
+            -e OMVLL_S3_KEY=$OMVLL_S3_KEY \
+            -e OMVLL_S3_SECRET=$OMVLL_S3_SECRET \
+            --rm \
+            openobfuscator/deployment python3 /o-mvll/.github/scripts/s3-deploy.py
+

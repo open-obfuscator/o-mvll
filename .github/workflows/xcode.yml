@@ -1,0 +1,39 @@
+name: 'O-MVLL Xcode CI'
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: O-MVLL Xcode 14
+        shell: bash
+        run: |
+          curl -LO https://data.romainthomas.fr/omvll-deps-xcode-14.tar
+          mkdir -p /tmp/third-party-xcode14
+          tar xvf ./omvll-deps-xcode-14.tar --directory=/tmp/third-party-xcode14
+          docker run --rm \
+            -v /tmp/third-party-xcode14:/third-party \
+            -v $GITHUB_WORKSPACE:/o-mvll \
+            openobfuscator/omvll-xcode:latest bash /o-mvll/scripts/docker/xcode_14_compile.sh
+      - name: Nightly Deployment
+        env:
+          OMVLL_S3_KEY: ${{ secrets.OMVLL_S3_KEY }}
+          OMVLL_S3_SECRET: ${{ secrets.OMVLL_S3_SECRET }}
+        shell: bash
+        run: |
+          docker run \
+            -v $GITHUB_WORKSPACE:/o-mvll \
+            -e GITHUB_ACTIONS="true" \
+            -e GITHUB_WORKSPACE=$GITHUB_WORKSPACE \
+            -e GITHUB_REF=$GITHUB_REF \
+            -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
+            -e OMVLL_S3_KEY=$OMVLL_S3_KEY \
+            -e OMVLL_S3_SECRET=$OMVLL_S3_SECRET \
+            --rm \
+            openobfuscator/deployment python3 /o-mvll/.github/scripts/s3-deploy.py
+
+
+
