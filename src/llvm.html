@@ -1,0 +1,435 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Versioning" href="versioning.html" /><link rel="prev" title="Global Configuration" href="config.html" />
+        <link rel="canonical" href="https://open-obfuscator.github.io/o-mvll/src/llvm.html" />
+
+    <link rel="shortcut icon" href="../_static/favicon.png"/><meta name="generator" content="sphinx-5.3.0, furo 2022.09.29"/>
+        <title>LLVM Objects - O-MVLL Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">O-MVLL Documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="../index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/logo.webp" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">O-MVLL Documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="obfuscation.html">Obfuscation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Global Configuration</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">LLVM Objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versioning.html">Versioning</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="llvm-objects">
+<h1>LLVM Objects<a class="headerlink" href="#llvm-objects" title="Permalink to this heading">#</a></h1>
+<section id="module">
+<h2>Module<a class="headerlink" href="#module" title="Permalink to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.Module">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">Module</span></span><a class="headerlink" href="#omvll.Module" title="Permalink to this definition">#</a></dt>
+<dd><p>This class mirrors <code class="docutils literal notranslate"><span class="pre">llvm::Module</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Module.data_layout">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">data_layout</span></span><a class="headerlink" href="#omvll.Module.data_layout" title="Permalink to this definition">#</a></dt>
+<dd><p>Get the data layout string for the module’s target platform.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.Module.dump">
+<span class="sig-name descname"><span class="pre">dump</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#omvll.Module.dump" title="Permalink to this definition">#</a></dt>
+<dd><p>This function dumps the IR instructions of the current module in the
+file provided in the second parameter.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Module.identifier">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">identifier</span></span><a class="headerlink" href="#omvll.Module.identifier" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Module.instruction_count">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">instruction_count</span></span><a class="headerlink" href="#omvll.Module.instruction_count" title="Permalink to this definition">#</a></dt>
+<dd><p>The number of non-debug IR instructions in the module.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Module.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#omvll.Module.name" title="Permalink to this definition">#</a></dt>
+<dd><p>The short “name” of this module</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Module.source_filename">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">source_filename</span></span><a class="headerlink" href="#omvll.Module.source_filename" title="Permalink to this definition">#</a></dt>
+<dd><p>The source filename of the module</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="function">
+<h2>Function<a class="headerlink" href="#function" title="Permalink to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.Function">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">Function</span></span><a class="headerlink" href="#omvll.Function" title="Permalink to this definition">#</a></dt>
+<dd><p>This class mirrors <code class="docutils literal notranslate"><span class="pre">llvm::Function</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Function.demangled_name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">demangled_name</span></span><a class="headerlink" href="#omvll.Function.demangled_name" title="Permalink to this definition">#</a></dt>
+<dd><p>The demangled name of the function.
+For instance:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_JNIEnv::NewStringUTF(char</span> <span class="pre">const*)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">main</span></code></p></li>
+</ul>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Function.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#omvll.Function.name" title="Permalink to this definition">#</a></dt>
+<dd><p>The (mangled) name of the function.
+For instance:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_ZN7_JNIEnv12NewStringUTFEPKc</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">main</span></code></p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="struct">
+<h2>Struct<a class="headerlink" href="#struct" title="Permalink to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.Struct">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">Struct</span></span><a class="headerlink" href="#omvll.Struct" title="Permalink to this definition">#</a></dt>
+<dd><p>This class mirrors <code class="docutils literal notranslate"><span class="pre">llvm::StructType</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.Struct.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#omvll.Struct.name" title="Permalink to this definition">#</a></dt>
+<dd><p>The name of the structure or the class.</p>
+<p>For instance:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">struct.std::__ndk1::basic_string&lt;char&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">struct._JNIEnv</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">struct.JNINativeInterface</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">class.SecretString</span></code></p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="globalvariable">
+<h2>GlobalVariable<a class="headerlink" href="#globalvariable" title="Permalink to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.GlobalVariable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">GlobalVariable</span></span><a class="headerlink" href="#omvll.GlobalVariable" title="Permalink to this definition">#</a></dt>
+<dd><p>This class mirrors <code class="docutils literal notranslate"><span class="pre">llvm::GlobalVariable</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.GlobalVariable.demangled_name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">demangled_name</span></span><a class="headerlink" href="#omvll.GlobalVariable.demangled_name" title="Permalink to this definition">#</a></dt>
+<dd><p>The demangled name of the global variable.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="omvll.GlobalVariable.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#omvll.GlobalVariable.name" title="Permalink to this definition">#</a></dt>
+<dd><p>The mangled name of the global variable.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="versioning.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Versioning</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="config.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Global Configuration</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022, Romain Thomas
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">LLVM Objects</a><ul>
+<li><a class="reference internal" href="#module">Module</a><ul>
+<li><a class="reference internal" href="#omvll.Module"><code class="docutils literal notranslate"><span class="pre">Module</span></code></a><ul>
+<li><a class="reference internal" href="#omvll.Module.data_layout"><code class="docutils literal notranslate"><span class="pre">Module.data_layout</span></code></a></li>
+<li><a class="reference internal" href="#omvll.Module.dump"><code class="docutils literal notranslate"><span class="pre">Module.dump()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.Module.identifier"><code class="docutils literal notranslate"><span class="pre">Module.identifier</span></code></a></li>
+<li><a class="reference internal" href="#omvll.Module.instruction_count"><code class="docutils literal notranslate"><span class="pre">Module.instruction_count</span></code></a></li>
+<li><a class="reference internal" href="#omvll.Module.name"><code class="docutils literal notranslate"><span class="pre">Module.name</span></code></a></li>
+<li><a class="reference internal" href="#omvll.Module.source_filename"><code class="docutils literal notranslate"><span class="pre">Module.source_filename</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#function">Function</a><ul>
+<li><a class="reference internal" href="#omvll.Function"><code class="docutils literal notranslate"><span class="pre">Function</span></code></a><ul>
+<li><a class="reference internal" href="#omvll.Function.demangled_name"><code class="docutils literal notranslate"><span class="pre">Function.demangled_name</span></code></a></li>
+<li><a class="reference internal" href="#omvll.Function.name"><code class="docutils literal notranslate"><span class="pre">Function.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#struct">Struct</a><ul>
+<li><a class="reference internal" href="#omvll.Struct"><code class="docutils literal notranslate"><span class="pre">Struct</span></code></a><ul>
+<li><a class="reference internal" href="#omvll.Struct.name"><code class="docutils literal notranslate"><span class="pre">Struct.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#globalvariable">GlobalVariable</a><ul>
+<li><a class="reference internal" href="#omvll.GlobalVariable"><code class="docutils literal notranslate"><span class="pre">GlobalVariable</span></code></a><ul>
+<li><a class="reference internal" href="#omvll.GlobalVariable.demangled_name"><code class="docutils literal notranslate"><span class="pre">GlobalVariable.demangled_name</span></code></a></li>
+<li><a class="reference internal" href="#omvll.GlobalVariable.name"><code class="docutils literal notranslate"><span class="pre">GlobalVariable.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    </body>
+</html>

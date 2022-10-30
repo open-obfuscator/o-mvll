@@ -1,0 +1,802 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Global Configuration" href="config.html" /><link rel="prev" title="O-MVLL API Documentation" href="../index.html" />
+        <link rel="canonical" href="https://open-obfuscator.github.io/o-mvll/src/obfuscation.html" />
+
+    <link rel="shortcut icon" href="../_static/favicon.png"/><meta name="generator" content="sphinx-5.3.0, furo 2022.09.29"/>
+        <title>Obfuscation - O-MVLL Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">O-MVLL Documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="../index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/logo.webp" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">O-MVLL Documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Obfuscation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Global Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="llvm.html">LLVM Objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versioning.html">Versioning</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="obfuscation">
+<h1>Obfuscation<a class="headerlink" href="#obfuscation" title="Permalink to this heading">#</a></h1>
+<section id="config">
+<h2>Config<a class="headerlink" href="#config" title="Permalink to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">ObfuscationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.ObfuscationConfig" title="Permalink to this definition">#</a></dt>
+<dd><p>This class must be inherited by the user to define where and how the obfuscation
+passes must be enabled.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.anti_hooking">
+<span class="sig-name descname"><span class="pre">anti_hooking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#omvll.AntiHookOpt" title="omvll.AntiHookOpt"><span class="pre">omvll.AntiHookOpt</span></a></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.anti_hooking" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback to enable hooking protection.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 75%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.ArithmeticOpt" title="omvll.ArithmeticOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArithmeticOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.ArithmeticOpt" title="omvll.ArithmeticOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArithmeticOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.ArithmeticOpt" title="omvll.ArithmeticOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArithmeticOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/anti-hook">anti-hook</a> documentation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.break_control_flow">
+<span class="sig-name descname"><span class="pre">break_control_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#omvll.BreakControlFlowOpt" title="omvll.BreakControlFlowOpt"><span class="pre">omvll.BreakControlFlowOpt</span></a></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.break_control_flow" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback for the pass that breaks
+the control flow.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 78%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.BreakControlFlowOpt" title="omvll.BreakControlFlowOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">BreakControlFlowOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.BreakControlFlowOpt" title="omvll.BreakControlFlowOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">BreakControlFlowOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.BreakControlFlowOpt" title="omvll.BreakControlFlowOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">BreakControlFlowOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/control-flow-breaking">control-flow-breaking</a> documentation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.flatten_cfg">
+<span class="sig-name descname"><span class="pre">flatten_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#omvll.ControlFlowFlatteningOpt" title="omvll.ControlFlowFlatteningOpt"><span class="pre">omvll.ControlFlowFlatteningOpt</span></a></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.flatten_cfg" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback used to configure the
+control-flow flattening pass.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 79%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.ControlFlowFlatteningOpt" title="omvll.ControlFlowFlatteningOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">ControlFlowFlatteningOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.ControlFlowFlatteningOpt" title="omvll.ControlFlowFlatteningOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">ControlFlowFlatteningOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.ControlFlowFlatteningOpt" title="omvll.ControlFlowFlatteningOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">ControlFlowFlatteningOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/control-flow-flattening">control-flow-flattening</a> documentation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.obfuscate_arithmetic">
+<span class="sig-name descname"><span class="pre">obfuscate_arithmetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#omvll.ArithmeticOpt" title="omvll.ArithmeticOpt"><span class="pre">omvll.ArithmeticOpt</span></a></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.obfuscate_arithmetic" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback when obfuscating arithmetic operations.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 75%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.AntiHookOpt" title="omvll.AntiHookOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">AntiHookOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.AntiHookOpt" title="omvll.AntiHookOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">AntiHookOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.AntiHookOpt" title="omvll.AntiHookOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">AntiHookOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/arithmetic">arithmetic</a> documentation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.obfuscate_constants">
+<span class="sig-name descname"><span class="pre">obfuscate_constants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#omvll.OpaqueConstantsSkip" title="omvll.OpaqueConstantsSkip"><span class="pre">omvll.OpaqueConstantsSkip</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#omvll.OpaqueConstantsBool" title="omvll.OpaqueConstantsBool"><span class="pre">omvll.OpaqueConstantsBool</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#omvll.OpaqueConstantsLowerLimit" title="omvll.OpaqueConstantsLowerLimit"><span class="pre">omvll.OpaqueConstantsLowerLimit</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#omvll.OpaqueConstantsSet" title="omvll.OpaqueConstantsSet"><span class="pre">omvll.OpaqueConstantsSet</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.obfuscate_constants" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback to obfuscate constants.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 75%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.OpaqueConstantsBool" title="omvll.OpaqueConstantsBool"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpaqueConstantsBool</span></code></a>(<code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.OpaqueConstantsBool" title="omvll.OpaqueConstantsBool"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpaqueConstantsBool</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.OpaqueConstantsBool" title="omvll.OpaqueConstantsBool"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpaqueConstantsBool</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">list(int</span> <span class="pre">...)</span></code></p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">OpaqueConstantsSet</span></code>(<code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">...</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/opaque-constants">opaque-constants</a> documentation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.obfuscate_string">
+<span class="sig-name descname"><span class="pre">obfuscate_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#omvll.StringEncOptSkip" title="omvll.StringEncOptSkip"><span class="pre">omvll.StringEncOptSkip</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#omvll.StringEncOptStack" title="omvll.StringEncOptStack"><span class="pre">omvll.StringEncOptStack</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#omvll.StringEncOptGlobal" title="omvll.StringEncOptGlobal"><span class="pre">omvll.StringEncOptGlobal</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#omvll.StringEncOptReplace" title="omvll.StringEncOptReplace"><span class="pre">omvll.StringEncOptReplace</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#omvll.StringEncOptDefault" title="omvll.StringEncOptDefault"><span class="pre">omvll.StringEncOptDefault</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.obfuscate_string" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback used to configure strings obfuscation.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 73%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StringEncOptSkip" title="omvll.StringEncOptSkip"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringEncOptSkip</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StringEncOptSkip" title="omvll.StringEncOptSkip"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringEncOptSkip</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StringEncOptDefault" title="omvll.StringEncOptDefault"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringEncOptDefault</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StringEncOptReplace" title="omvll.StringEncOptReplace"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringEncOptReplace</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bytes</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StringEncOptReplace" title="omvll.StringEncOptReplace"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringEncOptReplace</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/strings-encoding">strings-encoding</a> documentation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.obfuscate_struct_access">
+<span class="sig-name descname"><span class="pre">obfuscate_struct_access</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">struct</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Struct" title="omvll.Struct"><span class="pre">omvll.Struct</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#omvll.StructAccessOpt" title="omvll.StructAccessOpt"><span class="pre">omvll.StructAccessOpt</span></a></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.obfuscate_struct_access" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback when obfuscating structures accesses.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 24%" />
+<col style="width: 76%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StructAccessOpt" title="omvll.StructAccessOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructAccessOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StructAccessOpt" title="omvll.StructAccessOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructAccessOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.StructAccessOpt" title="omvll.StructAccessOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">StructAccessOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/opaque-fields-access">opaque-fields-access</a> documentation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="omvll.ObfuscationConfig.obfuscate_variable_access">
+<span class="sig-name descname"><span class="pre">obfuscate_variable_access</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ObfuscationConfig" title="omvll.ObfuscationConfig"><span class="pre">omvll.ObfuscationConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Module" title="omvll.Module"><span class="pre">omvll.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.Function" title="omvll.Function"><span class="pre">omvll.Function</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="llvm.html#omvll.GlobalVariable" title="omvll.GlobalVariable"><span class="pre">omvll.GlobalVariable</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#omvll.VarAccessOpt" title="omvll.VarAccessOpt"><span class="pre">omvll.VarAccessOpt</span></a></span></span><a class="headerlink" href="#omvll.ObfuscationConfig.obfuscate_variable_access" title="Permalink to this definition">#</a></dt>
+<dd><p>The default user-callback when obfuscating global variables access.</p>
+<p>In addition to the associated class options, O-MVLL interprets these return values as follows:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 75%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Return Value</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.VarAccessOpt" title="omvll.VarAccessOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarAccessOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.VarAccessOpt" title="omvll.VarAccessOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarAccessOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p><a class="reference internal" href="#omvll.VarAccessOpt" title="omvll.VarAccessOpt"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarAccessOpt</span></code></a>(<code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See the <a class="reference external" href="https://obfuscator.re/omvll/passes/opaque-fields-access">opaque-fields-access</a> documentation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<section id="template">
+<h3>Template<a class="headerlink" href="#template" title="Permalink to this heading">#</a></h3>
+<p>Here is a template for the main O-MVLL configuration file:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">omvll</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+
+<span class="k">class</span> <span class="nc">MyConfig</span><span class="p">(</span><span class="n">omvll</span><span class="o">.</span><span class="n">ObfuscationConfig</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">obfuscate_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">omvll</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">omvll</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span>
+                               <span class="n">string</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">func</span><span class="o">.</span><span class="n">demangled_name</span> <span class="o">==</span> <span class="s2">&quot;Hello::say_hi()&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="s2">&quot;debug.cpp&quot;</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&lt;REMOVED&gt;&quot;</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">omvll_get_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">omvll</span><span class="o">.</span><span class="n">ObfuscationConfig</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">MyConfig</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="options">
+<h2>Options<a class="headerlink" href="#options" title="Permalink to this heading">#</a></h2>
+<section id="anti-hooking">
+<h3>Anti-Hooking<a class="headerlink" href="#anti-hooking" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.AntiHookOpt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">AntiHookOpt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.AntiHookOpt" title="omvll.AntiHookOpt"><span class="pre">omvll.AntiHookOpt</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.AntiHookOpt" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.anti_hooking" title="omvll.ObfuscationConfig.anti_hooking"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.anti_hooking()</span></code></a> protection.</p>
+<p>This option only accepts a boolean value (e.g. <code class="docutils literal notranslate"><span class="pre">AntiHookOpt(True)</span></code>)</p>
+</dd></dl>
+
+</section>
+<section id="arithmetic-obfuscation">
+<h3>Arithmetic Obfuscation<a class="headerlink" href="#arithmetic-obfuscation" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.ArithmeticOpt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">ArithmeticOpt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.ArithmeticOpt" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_arithmetic" title="omvll.ObfuscationConfig.obfuscate_arithmetic"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_arithmetic()</span></code></a> protection.</p>
+<p>This option defines the number of rounds to transform arithmetic expressions (e.g. <code class="docutils literal notranslate"><span class="pre">ArithmeticOpt(3)</span></code>).
+It also accepts a boolean value which defers the number of rounds to O-MVLL (e.g. <code class="docutils literal notranslate"><span class="pre">ArithmeticOpt(True)</span></code>).</p>
+<p>Overloaded function.</p>
+<ol class="arabic simple">
+<li><p>__init__(self: omvll.ArithmeticOpt, rounds: int) -&gt; None</p></li>
+<li><p>__init__(self: omvll.ArithmeticOpt, value: bool) -&gt; None</p></li>
+</ol>
+</dd></dl>
+
+</section>
+<section id="control-flow-breaking">
+<h3>Control-Flow Breaking<a class="headerlink" href="#control-flow-breaking" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.BreakControlFlowOpt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">BreakControlFlowOpt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.BreakControlFlowOpt" title="omvll.BreakControlFlowOpt"><span class="pre">omvll.BreakControlFlowOpt</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.BreakControlFlowOpt" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.break_control_flow" title="omvll.ObfuscationConfig.break_control_flow"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.break_control_flow()</span></code></a> protection.</p>
+<p>This boolean option determines whether the protection must be enabled (e.g. <code class="docutils literal notranslate"><span class="pre">BreakControlFlowOpt(True)</span></code>)</p>
+</dd></dl>
+
+</section>
+<section id="control-flow-flattening">
+<h3>Control-Flow Flattening<a class="headerlink" href="#control-flow-flattening" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.ControlFlowFlatteningOpt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">ControlFlowFlatteningOpt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.ControlFlowFlatteningOpt" title="omvll.ControlFlowFlatteningOpt"><span class="pre">omvll.ControlFlowFlatteningOpt</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.ControlFlowFlatteningOpt" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.flatten_cfg" title="omvll.ObfuscationConfig.flatten_cfg"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.flatten_cfg()</span></code></a> protection.</p>
+<p>This boolean option determines whether the protection must be enabled (e.g. <code class="docutils literal notranslate"><span class="pre">ControlFlowFlatteningOpt(False)</span></code>)</p>
+</dd></dl>
+
+</section>
+<section id="opaque-constants">
+<h3>Opaque Constants<a class="headerlink" href="#opaque-constants" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.OpaqueConstantsBool">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">OpaqueConstantsBool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.OpaqueConstantsBool" title="omvll.OpaqueConstantsBool"><span class="pre">omvll.OpaqueConstantsBool</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.OpaqueConstantsBool" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_constants" title="omvll.ObfuscationConfig.obfuscate_constants"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_constants()</span></code></a> protection.</p>
+<p>This option defines whether or not the constants must be obfuscated. If the value is set to <cite>False</cite>,
+the constants are not protected otherwise, <strong>all</strong> the constants are protected.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.OpaqueConstantsLowerLimit">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">OpaqueConstantsLowerLimit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.OpaqueConstantsLowerLimit" title="omvll.OpaqueConstantsLowerLimit"><span class="pre">omvll.OpaqueConstantsLowerLimit</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.OpaqueConstantsLowerLimit" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_constants" title="omvll.ObfuscationConfig.obfuscate_constants"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_constants()</span></code></a> protection.</p>
+<p>This option defines lower limit from which constants must be obfuscated (e.g. <code class="docutils literal notranslate"><span class="pre">OpaqueConstantsLowerLimit(100)</span></code>)</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.OpaqueConstantsSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">OpaqueConstantsSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.OpaqueConstantsSet" title="omvll.OpaqueConstantsSet"><span class="pre">omvll.OpaqueConstantsSet</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">constants</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.OpaqueConstantsSet" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_constants" title="omvll.ObfuscationConfig.obfuscate_constants"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_constants()</span></code></a> protection.</p>
+<p>This option takes a list of constants that must be protected by the pass
+(e.g. <code class="docutils literal notranslate"><span class="pre">OpaqueConstantsSet([0x12234,</span> <span class="pre">1,</span> <span class="pre">2])</span></code>)</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.OpaqueConstantsSkip">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">OpaqueConstantsSkip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.OpaqueConstantsSkip" title="omvll.OpaqueConstantsSkip"><span class="pre">omvll.OpaqueConstantsSkip</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.OpaqueConstantsSkip" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_constants" title="omvll.ObfuscationConfig.obfuscate_constants"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_constants()</span></code></a> protection.</p>
+<p>Alias for <code class="docutils literal notranslate"><span class="pre">OpaqueConstantsBool(False)</span></code></p>
+</dd></dl>
+
+</section>
+<section id="opaque-fields-access">
+<h3>Opaque Fields Access<a class="headerlink" href="#opaque-fields-access" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.StructAccessOpt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">StructAccessOpt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.StructAccessOpt" title="omvll.StructAccessOpt"><span class="pre">omvll.StructAccessOpt</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.StructAccessOpt" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_struct_access" title="omvll.ObfuscationConfig.obfuscate_struct_access"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_struct_access()</span></code></a> protection.</p>
+<p>This boolean option determines whether the protection must be enabled (e.g. <code class="docutils literal notranslate"><span class="pre">StructAccessOpt(True)</span></code>)</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.VarAccessOpt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">VarAccessOpt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.VarAccessOpt" title="omvll.VarAccessOpt"><span class="pre">omvll.VarAccessOpt</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.VarAccessOpt" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_variable_access" title="omvll.ObfuscationConfig.obfuscate_variable_access"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_variable_access()</span></code></a> protection.</p>
+<p>This boolean option determines whether the protection must be enabled (e.g. <code class="docutils literal notranslate"><span class="pre">VarAccessOpt(True)</span></code>)</p>
+</dd></dl>
+
+</section>
+<section id="strings-encoding">
+<h3>Strings Encoding<a class="headerlink" href="#strings-encoding" title="Permalink to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.StringEncOptSkip">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">StringEncOptSkip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.StringEncOptSkip" title="omvll.StringEncOptSkip"><span class="pre">omvll.StringEncOptSkip</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.StringEncOptSkip" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_string" title="omvll.ObfuscationConfig.obfuscate_string"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_string()</span></code></a> protection.</p>
+<p>This option can be used to <strong>not</strong> protect the string given in the callback’s parameters.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.StringEncOptReplace">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">StringEncOptReplace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.StringEncOptReplace" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_string" title="omvll.ObfuscationConfig.obfuscate_string"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_string()</span></code></a> protection.</p>
+<p>This option determines the new string that replaces the one from the parameter</p>
+<p>Overloaded function.</p>
+<ol class="arabic simple">
+<li><p>__init__(self: omvll.StringEncOptReplace) -&gt; None</p></li>
+</ol>
+<p>Construct an empty string</p>
+<ol class="arabic simple" start="2">
+<li><p>__init__(self: omvll.StringEncOptReplace, new_string: str) -&gt; None</p></li>
+</ol>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.StringEncOptGlobal">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">StringEncOptGlobal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.StringEncOptGlobal" title="omvll.StringEncOptGlobal"><span class="pre">omvll.StringEncOptGlobal</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.StringEncOptGlobal" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_string" title="omvll.ObfuscationConfig.obfuscate_string"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_string()</span></code></a> protection.</p>
+<p>This option protect the string in a global constructor.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>With this option, the string will be in clear as soon as the binary is loaded.</p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.StringEncOptDefault">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">StringEncOptDefault</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#omvll.StringEncOptDefault" title="omvll.StringEncOptDefault"><span class="pre">omvll.StringEncOptDefault</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.StringEncOptDefault" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_string" title="omvll.ObfuscationConfig.obfuscate_string"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_string()</span></code></a> protection.</p>
+<p>Option that defers the choice of the protection to O-MVLL.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="omvll.StringEncOptStack">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">omvll.</span></span><span class="sig-name descname"><span class="pre">StringEncOptStack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#omvll.StringEncOptStack" title="Permalink to this definition">#</a></dt>
+<dd><p>Option for the <a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_string" title="omvll.ObfuscationConfig.obfuscate_string"><code class="xref py py-meth docutils literal notranslate"><span class="pre">omvll.ObfuscationConfig.obfuscate_string()</span></code></a> protection.</p>
+<p>This option protects the string with a stack decoding.</p>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>For large strings, this option can introduce a <strong>huge</strong> overhead if the <cite>loopThreshold</cite> is not used.</p>
+</div>
+<p>Overloaded function.</p>
+<ol class="arabic">
+<li><p>__init__(self: omvll.StringEncOptStack) -&gt; None</p></li>
+<li><p>__init__(self: omvll.StringEncOptStack, loopThreshold: int) -&gt; None</p>
+<blockquote>
+<div><p>Contructor that defines the string length threshold from which the decoding routine must be looped.</p>
+</div></blockquote>
+</li>
+</ol>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="config.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Global Configuration</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022, Romain Thomas
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Obfuscation</a><ul>
+<li><a class="reference internal" href="#config">Config</a><ul>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig</span></code></a><ul>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.anti_hooking"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.anti_hooking()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.break_control_flow"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.break_control_flow()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.flatten_cfg"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.flatten_cfg()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_arithmetic"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.obfuscate_arithmetic()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_constants"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.obfuscate_constants()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_string"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.obfuscate_string()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_struct_access"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.obfuscate_struct_access()</span></code></a></li>
+<li><a class="reference internal" href="#omvll.ObfuscationConfig.obfuscate_variable_access"><code class="docutils literal notranslate"><span class="pre">ObfuscationConfig.obfuscate_variable_access()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#template">Template</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#options">Options</a><ul>
+<li><a class="reference internal" href="#anti-hooking">Anti-Hooking</a><ul>
+<li><a class="reference internal" href="#omvll.AntiHookOpt"><code class="docutils literal notranslate"><span class="pre">AntiHookOpt</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#arithmetic-obfuscation">Arithmetic Obfuscation</a><ul>
+<li><a class="reference internal" href="#omvll.ArithmeticOpt"><code class="docutils literal notranslate"><span class="pre">ArithmeticOpt</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#control-flow-breaking">Control-Flow Breaking</a><ul>
+<li><a class="reference internal" href="#omvll.BreakControlFlowOpt"><code class="docutils literal notranslate"><span class="pre">BreakControlFlowOpt</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#control-flow-flattening">Control-Flow Flattening</a><ul>
+<li><a class="reference internal" href="#omvll.ControlFlowFlatteningOpt"><code class="docutils literal notranslate"><span class="pre">ControlFlowFlatteningOpt</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opaque-constants">Opaque Constants</a><ul>
+<li><a class="reference internal" href="#omvll.OpaqueConstantsBool"><code class="docutils literal notranslate"><span class="pre">OpaqueConstantsBool</span></code></a></li>
+<li><a class="reference internal" href="#omvll.OpaqueConstantsLowerLimit"><code class="docutils literal notranslate"><span class="pre">OpaqueConstantsLowerLimit</span></code></a></li>
+<li><a class="reference internal" href="#omvll.OpaqueConstantsSet"><code class="docutils literal notranslate"><span class="pre">OpaqueConstantsSet</span></code></a></li>
+<li><a class="reference internal" href="#omvll.OpaqueConstantsSkip"><code class="docutils literal notranslate"><span class="pre">OpaqueConstantsSkip</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opaque-fields-access">Opaque Fields Access</a><ul>
+<li><a class="reference internal" href="#omvll.StructAccessOpt"><code class="docutils literal notranslate"><span class="pre">StructAccessOpt</span></code></a></li>
+<li><a class="reference internal" href="#omvll.VarAccessOpt"><code class="docutils literal notranslate"><span class="pre">VarAccessOpt</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#strings-encoding">Strings Encoding</a><ul>
+<li><a class="reference internal" href="#omvll.StringEncOptSkip"><code class="docutils literal notranslate"><span class="pre">StringEncOptSkip</span></code></a></li>
+<li><a class="reference internal" href="#omvll.StringEncOptReplace"><code class="docutils literal notranslate"><span class="pre">StringEncOptReplace</span></code></a></li>
+<li><a class="reference internal" href="#omvll.StringEncOptGlobal"><code class="docutils literal notranslate"><span class="pre">StringEncOptGlobal</span></code></a></li>
+<li><a class="reference internal" href="#omvll.StringEncOptDefault"><code class="docutils literal notranslate"><span class="pre">StringEncOptDefault</span></code></a></li>
+<li><a class="reference internal" href="#omvll.StringEncOptStack"><code class="docutils literal notranslate"><span class="pre">StringEncOptStack</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    </body>
+</html>
