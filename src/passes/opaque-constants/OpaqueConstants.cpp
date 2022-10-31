@@ -24,7 +24,8 @@ namespace omvll {
 
 inline bool isEligible(const Instruction& I) {
   return !isa<CallInst>(I) &&
-         !isa<GetElementPtrInst>(I);
+         !isa<GetElementPtrInst>(I) &&
+         !isa<SwitchInst>(I);
 }
 
 inline bool isSkip(const OpaqueConstantsOpt& opt) {
