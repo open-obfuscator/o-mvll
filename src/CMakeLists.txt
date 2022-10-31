@@ -10,7 +10,7 @@ if(EXISTS       "${CMAKE_CURRENT_SOURCE_DIR}/../.git" AND
 else()
   set(OMVLL_VERSION_MAJOR "1")
   set(OMVLL_VERSION_MINOR "0")
-  set(OMVLL_VERSION_PATCH "0")
+  set(OMVLL_VERSION_PATCH "1")
 endif()
 
 project(OMVLL
