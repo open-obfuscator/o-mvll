@@ -195,7 +195,6 @@ PreservedAnalyses BreakControlFlow::run(Module &M,
     Changed |= runOnFunction(*F);
   }
 
-  SDEBUG("{}", ToString(M));
   SINFO("[{}] Done!", name());
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();

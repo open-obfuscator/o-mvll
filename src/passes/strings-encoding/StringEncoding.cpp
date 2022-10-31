@@ -174,7 +174,7 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
     appendToGlobalCtors(M, F, 0);
   }
   ctor_.clear();
-
+  SINFO("[{}] Done!", name());
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 }

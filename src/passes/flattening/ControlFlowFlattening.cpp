@@ -79,11 +79,11 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
         flattedBB.insert(flattedBB.begin(), EntryBlock);
 
         for (Instruction& I : *EntrySplited) {
-          SINFO("[EntrySplited] {}", ToString(I));
+          SDEBUG("[EntrySplited] {}", ToString(I));
         }
 
         for (Instruction& I : *EntryBlock) {
-          SINFO("[EntryBlock  ] {}", ToString(I));
+          SDEBUG("[EntryBlock  ] {}", ToString(I));
         }
         EntryBlock = EntrySplited;
       } else {
@@ -99,11 +99,11 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
   }
 
   if (isa<InvokeInst>(EntryBlock->getTerminator())) {
-    SINFO("{} is a single BB with a tail call", demangled);
+    SDEBUG("{} is a single BB with a tail call", demangled);
     return false;
   }
 
-  SINFO("Erasing {}", ToString(*EntryBlock->getTerminator()));
+  SDEBUG("Erasing {}", ToString(*EntryBlock->getTerminator()));
   EntryBlock->getTerminator()->eraseFromParent();
 
   /* Create a state encoding for the BB to flatten */
@@ -195,7 +195,6 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
     }
 
     if (isa<SwitchInst>(terminator)) {
-
       auto* switchTerm = dyn_cast<SwitchInst>(terminator);
 
       std::vector<const SwitchInst::CaseHandle*> cases;
