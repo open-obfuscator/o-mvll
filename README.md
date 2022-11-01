@@ -8,10 +8,17 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/open-obfuscator/omvll">
+    <img src="https://img.shields.io/github/license/open-obfuscator/o-mvll">
+  </a>
+  &nbsp;
+  <a href="https://github.com/open-obfuscator/o-mvll/actions/workflows/ndk.yml">
+    <img alt="Android NDK" src="https://github.com/open-obfuscator/o-mvll/actions/workflows/ndk.yml/badge.svg?branch=main">
+  </a>
+  &nbsp;
+  <a href="https://github.com/open-obfuscator/o-mvll/actions/workflows/xcode.yml">
+    <img alt="Xcode Toolcahin" src="https://github.com/open-obfuscator/o-mvll/actions/workflows/xcode.yml/badge.svg?branch=main">
   </a>
 </p>
-
 
 # O-MVLL
 
