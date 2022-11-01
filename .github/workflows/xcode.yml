@@ -1,4 +1,4 @@
-name: 'O-MVLL Xcode CI'
+name: 'O-MVLL Xcode'
 on: push
 
 jobs:

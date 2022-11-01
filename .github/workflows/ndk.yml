@@ -1,4 +1,4 @@
-name: 'O-MVLL NDK CI'
+name: 'O-MVLL NDK'
 on: push
 
 jobs:
