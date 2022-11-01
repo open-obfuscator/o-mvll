@@ -12,6 +12,7 @@ attributes that can be used to configure O-MVLL.
   src/obfuscation
   src/config
   src/llvm
+  src/code-completion
   src/versioning
 
 
