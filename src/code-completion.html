@@ -2,12 +2,15 @@
 <html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="#" />
-        <link rel="canonical" href="https://open-obfuscator.github.io/o-mvll/search.html" />
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Versioning" href="versioning.html" /><link rel="prev" title="LLVM Objects" href="llvm.html" />
+        <link rel="canonical" href="https://open-obfuscator.github.io/o-mvll/src/code-completion.html" />
 
-    <link rel="shortcut icon" href="_static/favicon.png"/><meta name="generator" content="sphinx-5.3.0, furo 2022.09.29"/><title>Search - O-MVLL Documentation</title><link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="shortcut icon" href="../_static/favicon.png"/><meta name="generator" content="sphinx-5.3.0, furo 2022.09.29"/>
+        <title>Code Completion - O-MVLL Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     
     
 
@@ -121,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">O-MVLL Documentation</div></a>
+      <a href="../index.html"><div class="brand">O-MVLL Documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -141,26 +144,26 @@
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
       
-      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="index.html">
+      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="../index.html">
   
   <div class="sidebar-logo-container">
-    <img class="sidebar-logo" src="_static/logo.webp" alt="Logo"/>
+    <img class="sidebar-logo" src="../_static/logo.webp" alt="Logo"/>
   </div>
   
   <span class="sidebar-brand-text">O-MVLL Documentation</span>
   
-</a><form class="sidebar-search-container" method="get" action="#" role="search">
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1"><a class="reference internal" href="src/obfuscation.html">Obfuscation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="src/config.html">Global Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="src/llvm.html">LLVM Objects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="src/code-completion.html">Code Completion</a></li>
-<li class="toctree-l1"><a class="reference internal" href="src/versioning.html">Versioning</a></li>
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="obfuscation.html">Obfuscation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Global Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="llvm.html">LLVM Objects</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Code Completion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versioning.html">Versioning</a></li>
 </ul>
 
 </div>
@@ -180,7 +183,8 @@
           <span>Back to top</span>
         </a>
         <div class="content-icon-container">
-          <div class="theme-toggle-container theme-toggle-content">
+          
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -194,25 +198,46 @@
           </label>
         </div>
         <article role="main">
-          
-<noscript>
-<div class="admonition error">
-  <p class="admonition-title">Error</p>
-  <p>
-    Please activate JavaScript to enable the search functionality.
-  </p>
+          <section id="code-completion">
+<h1>Code Completion<a class="headerlink" href="#code-completion" title="Permalink to this heading">#</a></h1>
+<p>While using O-MVLL, it can be handy to have code completion. For this purpose,
+the package <code class="docutils literal notranslate"><span class="pre">omvll</span></code> is available on PyPI and can be installed with pip:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python -m pip install <span class="o">[</span>--user<span class="o">]</span> omvll
+</pre></div>
 </div>
-</noscript>
-
-<div id="search-results"></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">omvll</span></code>  package is just exposing Python typing objects and does not contain
+the obfuscation logic.</p>
+</div>
+<img alt="../_images/completion.webp" src="../_images/completion.webp" />
+</section>
 
         </article>
       </div>
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="versioning.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Versioning</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="llvm.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">LLVM Objects</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -239,15 +264,12 @@
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    
-<script src="_static/searchtools.js"></script>
-<script src="_static/language_data.js"></script>
-<script src="searchindex.js"></script></body>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    </body>
 </html>
