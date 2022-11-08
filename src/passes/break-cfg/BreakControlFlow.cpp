@@ -74,6 +74,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
     BB->eraseFromParent();
   }
 
+  Function& Trampoline = F;
   std::unique_ptr<MemoryBuffer> insts = Jitter_->jitAsm(R"delim(
   // !! This block must be aligned on 32 bytes !!
   adr x1, #0x10;
@@ -133,7 +134,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   FCopied->setPrologueData(Prologue);
   FCopied->setLinkage(GlobalValue::InternalLinkage);
 
-  BasicBlock* Entry = BasicBlock::Create(F.getContext(), "Entry", &F);
+  BasicBlock* Entry = BasicBlock::Create(Trampoline.getContext(), "Entry", &Trampoline);
   IRBuilder<NoFolder> IRB(Entry);
 
   SmallVector<Value*> args;
@@ -174,17 +175,20 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   } else {
     IRB.CreateRet(IRB.CreateCall(FCopied->getFunctionType(), FPtr, args));
   }
-  F.addFnAttr(Attribute::OptimizeForSize);
+  Trampoline.addFnAttr(Attribute::OptimizeForSize);
+  Trampoline.addFnAttr(Attribute::NoInline);
 
 
   return true;
 }
 
+
+
 PreservedAnalyses BreakControlFlow::run(Module &M,
                                         ModuleAnalysisManager &FAM) {
   RNG_ = M.createRNG(name());
   Jitter_ = Jitter::Create(M.getTargetTriple());
-
+  SINFO("[{}] Run on: {}", name(), M.getName().str());
   bool Changed = false;
   std::vector<Function*> Fs;
   for (Function& F : M) {
