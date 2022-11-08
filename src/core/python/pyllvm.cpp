@@ -59,6 +59,11 @@ py::module_& py_init_llvm_bindings(py::module_& m) {
 
 
   py::class_<llvm::Function>(m, "Function", "This class mirrors ``llvm::Function``")
+    .def_property_readonly("nb_instructions",
+        &llvm::Function::getInstructionCount,
+        R"delim(
+        Return the number of IR instructions.
+        )delim")
     .def_property_readonly("name",
         [] (const llvm::Function& func) {
           return func.getName().str();
