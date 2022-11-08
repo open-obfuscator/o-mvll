@@ -72,18 +72,23 @@ void omvll::init_yamlconfig() {
 
 
 PassPluginLibraryInfo getOMVLLPluginInfo() {
+  static std::atomic<bool> ONCE_FLAG = false;
   Logger::set_level(spdlog::level::level_enum::debug);
 
   omvll::init_yamlconfig();
   omvll::init_pythonpath();
   return {LLVM_PLUGIN_API_VERSION, "OMVLL", "0.0.1",
           [](PassBuilder &PB) {
+
             try {
               auto& instance = omvll::PyConfig::instance();
               SDEBUG("OMVLL Path: {}", instance.config_path());
 
               PB.registerPipelineEarlySimplificationEPCallback(
                 [&] (ModulePassManager &MPM, OptimizationLevel opt) {
+                  if (ONCE_FLAG) {
+                    return true;
+                  }
                   for (const std::string& pass : instance.get_passes()) {
                     REGISTER_PASS(omvll::AntiHook);
                     REGISTER_PASS(omvll::StringEncoding);
@@ -101,7 +106,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
                     REGISTER_PASS(omvll::ObjCleaner);
                     REGISTER_PASS(omvll::Cleaning);
                   }
-
+                  ONCE_FLAG = true;
                   return true;
                 }
               );
