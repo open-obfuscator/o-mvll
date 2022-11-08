@@ -59,6 +59,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
     return false;
   }
 
+
   SDEBUG("{}", F.getName().str());
 
   ValueToValueMapTy VMap;
@@ -133,6 +134,16 @@ bool BreakControlFlow::runOnFunction(Function &F) {
 
   FCopied->setPrologueData(Prologue);
   FCopied->setLinkage(GlobalValue::InternalLinkage);
+
+  // "Demote" StructRet arguments as it can introduces
+  // a conflict in CodeGen (observed in CPython - _PyEval_InitGIL)
+  for (Argument& arg : FCopied->args()) {
+    if (arg.hasStructRetAttr()) {
+      unsigned ArgNo = arg.getArgNo();
+      FCopied->removeParamAttr(ArgNo, Attribute::StructRet);
+      FCopied->addParamAttr(ArgNo, Attribute::NoAlias);
+    }
+  }
 
   BasicBlock* Entry = BasicBlock::Create(Trampoline.getContext(), "Entry", &Trampoline);
   IRBuilder<NoFolder> IRB(Entry);
