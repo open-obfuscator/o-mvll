@@ -1,4 +1,5 @@
 #include "omvll/passes/Metadata.hpp"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"

@@ -15,6 +15,7 @@
 #include <llvm/Passes/PassPlugin.h>
 #include <llvm/Support/Path.h>
 #include <llvm/Support/YAMLParser.h>
+#include <llvm/Support/YAMLTraits.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 
 using namespace llvm;
