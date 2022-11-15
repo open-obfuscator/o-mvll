@@ -103,10 +103,11 @@ bool OpaqueConstants::Process(Instruction& I, Use& Op, ConstantInt& CI, OpaqueCo
     [&CI] (OpaqueConstantsLowerLimit& v) { return CI.getLimitedValue() > v.value;   },
     [&CI] (OpaqueConstantsSet& v)        {
       static constexpr uint64_t MAGIC = 0x4208d8df2c6415bc;
-      if (CI.getLimitedValue(MAGIC) == MAGIC) {
+      const uint64_t LV = CI.getLimitedValue(MAGIC);
+      if (LV == MAGIC) {
         return true;
       }
-      return !v.empty() && v.contains(CI.getLimitedValue());
+      return !v.empty() && v.contains(LV);
     },
   }, *opt);
 
