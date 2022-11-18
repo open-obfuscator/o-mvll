@@ -21,6 +21,59 @@ using namespace llvm;
 
 namespace omvll {
 
+constexpr uint32_t Encode(uint32_t Id, uint32_t X, uint32_t Y) {
+  return (Id ^ X) + Y;
+}
+
+template<class IRBTy>
+void EmitTransition(IRBTy& IRB, AllocaInst* SV, BasicBlock* Dispatch,
+                    uint32_t encId, uint32_t X, uint32_t Y) {
+  IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), encId), SV);
+  LoadInst* val = IRB.CreateLoad(IRB.getInt32Ty(), SV, true);
+
+  IRB.CreateStore(
+    IRB.CreateAdd(
+        IRB.CreateXor(val, ConstantInt::get(IRB.getInt32Ty(), X)),
+        ConstantInt::get(IRB.getInt32Ty(), Y)
+    ), SV, true);
+
+  IRB.CreateBr(Dispatch);
+}
+
+template<class IRBTy>
+void EmitTransition(IRBTy& IRB, AllocaInst* SV, BasicBlock* Dispatch,
+                    AllocaInst* TT, AllocaInst* TF, Value* Cond,
+                    uint32_t TrueId, uint32_t FalseId, uint32_t X, uint32_t Y) {
+
+  IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), TrueId), TT);
+  IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), FalseId), TF);
+
+  LoadInst* valTrue  = IRB.CreateLoad(IRB.getInt32Ty(), TT, true);
+  LoadInst* valFalse = IRB.CreateLoad(IRB.getInt32Ty(), TF, true);
+
+  auto* encTrue =
+    IRB.CreateAdd(
+        IRB.CreateXor(valTrue, ConstantInt::get(IRB.getInt32Ty(), X)),
+        ConstantInt::get(IRB.getInt32Ty(), Y));
+
+   auto* encFalse =
+     IRB.CreateAdd(
+        IRB.CreateXor(valFalse, ConstantInt::get(IRB.getInt32Ty(), X)),
+        ConstantInt::get(IRB.getInt32Ty(), Y));
+
+  IRB.CreateStore(
+    IRB.CreateSelect(Cond, encTrue, encFalse),
+    SV, true);
+  IRB.CreateBr(Dispatch);
+}
+
+
+template<class IRBTy>
+void EmitTransition(IRBTy& IRB, AllocaInst* V, BasicBlock* Dispatch,
+                    uint32_t TrueId, uint32_t FalseId, uint32_t X, uint32_t Y) {
+
+}
+
 bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RNG) {
   std::uniform_int_distribution<uint32_t> Dist(10);
   std::uniform_int_distribution<uint8_t> Dist8(10, 254);
@@ -47,6 +100,75 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
   demotePHINode(F);
 
   BasicBlock* EntryBlock = &F.getEntryBlock();
+  DenseSet<BasicBlock*> NormalDest2Split;
+
+  auto IsFromInvoke = [] (const BasicBlock& BB) {
+    return any_of(predecessors(&BB), [] (const BasicBlock* Pred) {
+            return isa<InvokeInst>(Pred->getTerminator());
+           });
+  };
+
+  for (BasicBlock& BB : F) {
+    if (BB.isLandingPad()) {
+      continue;
+    }
+    if (IsFromInvoke(BB)) {
+      NormalDest2Split.insert(&BB);
+    }
+  }
+
+  /*
+   * +------------------+  +------------------+
+   * |                  |  |                  |
+   * +--------+---------+  +---------+--------+
+   * | Normal | Unwind  |  |         |        |
+   * +---+----+---------+  +----+----+--------+
+   *     |                      |
+   * +---+----+            +----+----+
+   * |        |            |         +--+ Intermediate Block
+   * |        |            +---------+  |
+   * |        |                         |
+   * +--------+            +---------+<-+ Original Block
+   * Normal Dst            |         |
+   *                       |         |
+   *                       |         |
+   *                       +---------+
+   */
+
+
+  for (BasicBlock* BB : NormalDest2Split) {
+    auto* Trampoline = BasicBlock::Create(BB->getContext(), ".normal_split",
+                                          BB->getParent(), BB);
+    for (BasicBlock* Pred : predecessors(BB)) {
+      // [Inst]: Invoke
+      if (auto* Invoke = dyn_cast<InvokeInst>(Pred->getTerminator())) {
+        Invoke->setNormalDest(Trampoline);
+        continue;
+      }
+      // [Inst]: Br
+      if (auto* Branch = dyn_cast<BranchInst>(Pred->getTerminator())) {
+        for (size_t i = 0; i < Branch->getNumSuccessors(); ++i) {
+          if (Branch->getSuccessor(i) == BB) {
+            Branch->setSuccessor(i, Trampoline);
+          }
+        }
+        continue;
+      }
+      // [Inst]: Switch
+      if (auto* SW = dyn_cast<SwitchInst>(Pred->getTerminator())) {
+        SwitchInst::CaseIt begin = SW->case_begin();
+        SwitchInst::CaseIt end   = SW->case_end();
+        for (auto it = begin; it != end; ++it) {
+          if (it->getCaseSuccessor() == BB) {
+            it->setSuccessor(Trampoline);
+          }
+        }
+        continue;
+      }
+    }
+    // Branch the Trampoline to the original BasicBlock
+    BranchInst::Create(BB, Trampoline);
+  }
 
   for (BasicBlock& BB : F) {
     if (&BB == EntryBlock) {
@@ -55,21 +177,11 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
     flattedBB.push_back(&BB);
   }
 
-  if (flattedBB.size() <= 1) {
+  const size_t nbBlock = count_if(flattedBB, [] (BasicBlock* BB) {return !BB->isLandingPad();});
+  if (nbBlock <= 1) {
     SWARN("[{}] Is too small (#{}) to be flattened", ControlFlowFlattening::name().str(), flattedBB.size());
     return false;
   }
-
-  //if constexpr (is_debug) {
-  //  SDEBUG("EntryBlock of {}: {}", demangled, ToString(F.getEntryBlock()));
-
-  //  for (auto& BB : F) {
-  //    SINFO("[BB] {}", ToString(BB));
-  //    for (auto& I : BB) {
-  //      SINFO("   {}", ToString(I));
-  //    }
-  //  }
-  //}
 
   if (auto* br = dyn_cast<BranchInst>(EntryBlock->getTerminator())) {
     if (br->isConditional()) {
@@ -91,16 +203,16 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
       }
     }
   }
-
-  if (auto* swInst = dyn_cast<SwitchInst>(EntryBlock->getTerminator())) {
+  else if (auto* swInst = dyn_cast<SwitchInst>(EntryBlock->getTerminator())) {
     BasicBlock* EntrySplited = EntryBlock->splitBasicBlockBefore(swInst, "EntrySplit");
     flattedBB.insert(flattedBB.begin(), EntryBlock);
     EntryBlock = EntrySplited;
   }
 
-  if (isa<InvokeInst>(EntryBlock->getTerminator())) {
-    SDEBUG("{} is a single BB with a tail call", demangled);
-    return false;
+  else if (auto* Invoke = dyn_cast<InvokeInst>(EntryBlock->getTerminator())) {
+    BasicBlock* EntrySplited = EntryBlock->splitBasicBlockBefore(Invoke, "EntrySplit");
+    flattedBB.insert(flattedBB.begin(), EntryBlock);
+    EntryBlock = EntrySplited;
   }
 
   SDEBUG("Erasing {}", ToString(*EntryBlock->getTerminator()));
@@ -110,10 +222,14 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
   DenseMap<BasicBlock*, uint32_t> SwitchEnc;
   SmallSet<uint32_t, 20> SwitchRnd;
   for (BasicBlock* toFlat : flattedBB) {
+    if (toFlat->isLandingPad()) {
+      /* LandingPad are not embedded in the switch */
+      continue;
+    }
     uint32_t rnd = 0;
     do {
       rnd = Dist(RNG);
-      uint32_t enc = (rnd ^ X) + Y;
+      uint32_t enc = Encode(rnd, X, Y);
       if (!SwitchRnd.contains(rnd) && !SwitchRnd.contains(enc)) {
         SwitchRnd.insert(rnd);
         SwitchRnd.insert(enc);
@@ -128,7 +244,7 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
   AllocaInst* tmpTrue   = EntryIR.CreateAlloca(EntryIR.getInt32Ty(), 0, "TmpTrue");
   AllocaInst* tmpFalse  = EntryIR.CreateAlloca(EntryIR.getInt32Ty(), 0, "TmpFalse");
 
-  EntryIR.CreateStore(EntryIR.getInt32((SwitchEnc[flattedBB[0]] ^ X) + Y), switchVar);
+  EntryIR.CreateStore(EntryIR.getInt32(Encode(SwitchEnc[flattedBB[0]], X, Y)), switchVar);
 
   auto* flatLoopEntry = BasicBlock::Create(F.getContext(), "FlatLoopEntry", &F, EntryBlock);
   auto* flatLoopEnd   = BasicBlock::Create(F.getContext(), "FlatLoopEnd", &F, EntryBlock);
@@ -162,17 +278,21 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
   SwitchInst* switchInst = FlatLoopEntryIR.CreateSwitch(loadSwitchVar, defaultCase);
 
   for (BasicBlock* toFlat : flattedBB) {
+    if (toFlat->isLandingPad()) {
+      /* LandingPad should not be present in the switch case
+       * since they are not directly called by flattened blocks
+       */
+      continue;
+    }
     auto itEncId = SwitchEnc.find(toFlat);
     if (itEncId == SwitchEnc.end()) {
-      SERR("Can't find the encoded index for the basic block: {}", ToString(*toFlat));
-      std::abort();
+      fatalError(fmt::format("Can't find the encoded index for the basic block: {}", ToString(*toFlat)));
     }
-    uint32_t switchId = (itEncId->second ^ X) + Y;
+    uint32_t switchId = Encode(itEncId->second, X, Y);
     toFlat->moveBefore(flatLoopEnd);
     auto* id = dyn_cast<ConstantInt>(ConstantInt::get(switchInst->getCondition()->getType(), switchId));
     switchInst->addCase(id, toFlat);
   }
-
 
   /* Update the basic block with the switch var */
   for (BasicBlock* toFlat : flattedBB) {
@@ -190,7 +310,16 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
        */
       continue;
     }
-    if (isa<InvokeInst>(terminator) || isa<ResumeInst>(terminator)) {
+
+    if (isa<ResumeInst>(terminator)) {
+      /* Nothing to do as it will 'resume' from information
+       * already known.
+       */
+      continue;
+    }
+
+    if (isa<InvokeInst>(terminator)) {
+      /* Already processed with the early 'split' */
       continue;
     }
 
@@ -204,34 +333,21 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
       for (const SwitchInst::CaseHandle& handle : switchTerm->cases()) {
         BasicBlock* target = handle.getCaseSuccessor();
         auto itEncId = SwitchEnc.find(target);
+
         if (itEncId == SwitchEnc.end()) {
-          SWARN("Unable to find the encoded id for the basic block: '{}'", ToString(*target));
-          std::abort();
+          fatalError("Unable to find the encoded id for the basic block: " + ToString(*target));
         }
 
         ConstantInt *destId = switchInst->findCaseDest(target);
         if (destId == nullptr) {
-          SWARN("Unable to find {} in the switch case", ToString(*target));
-          std::abort();
-          continue;
+          fatalError(fmt::format("Unable to find {} in the switch case", ToString(*target)));
         }
 
         const uint32_t encId = itEncId->second;
         auto* dispatchBlock = BasicBlock::Create(F.getContext(), "", &F, flatLoopEnd);
 
         IRBuilder IRB(dispatchBlock);
-
-        IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), encId), switchVar);
-        LoadInst* val = IRB.CreateLoad(IRB.getInt32Ty(), switchVar, true);
-
-        IRB.CreateStore(
-          IRB.CreateAdd(
-              IRB.CreateXor(val, ConstantInt::get(IRB.getInt32Ty(), X)),
-              ConstantInt::get(IRB.getInt32Ty(), Y)
-          ),
-          switchVar, true);
-
-        IRB.CreateBr(flatLoopEnd);
+        EmitTransition(IRB, switchVar, flatLoopEnd, encId, X, Y);
         switchTerm->setSuccessor(handle.getSuccessorIndex(), dispatchBlock);
       }
       continue;
@@ -239,8 +355,8 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
 
     auto* branch = dyn_cast<BranchInst>(terminator);
     if (branch == nullptr) {
-      SWARN("[{}] Weird '{}' is not a branch", ControlFlowFlattening::name().str(), ToString(*terminator));
-      std::abort();
+      fatalError(fmt::format("[{}] Weird '{}' is not a branch",
+                             ControlFlowFlattening::name().str(), ToString(*terminator)));
     }
 
     if (branch->isUnconditional()) {
@@ -248,33 +364,18 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
       auto itEncId = SwitchEnc.find(target);
 
       if (itEncId == SwitchEnc.end()) {
-        SWARN("Unable to find the encoded id for the basic block: '{}'", ToString(*target));
-        std::abort();
+        fatalError(fmt::format("Unable to find the encoded id for the basic block: '{}'", ToString(*target)));
       }
 
       ConstantInt *destId = switchInst->findCaseDest(target);
       if (destId == nullptr) {
-        SWARN("Unable to find {} in the switch case", ToString(*target));
-        std::abort();
-        continue;
+        fatalError(fmt::format("Unable to find {} in the switch case", ToString(*target)));
       }
 
       const uint32_t encId = itEncId->second;
 
       IRBuilder IRB(branch);
-
-      IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), encId), switchVar);
-      LoadInst* val = IRB.CreateLoad(IRB.getInt32Ty(), switchVar, true);
-
-      IRB.CreateStore(
-        IRB.CreateAdd(
-            IRB.CreateXor(val, ConstantInt::get(IRB.getInt32Ty(), X)),
-            ConstantInt::get(IRB.getInt32Ty(), Y)
-        ),
-        switchVar, true);
-
-      IRB.CreateBr(flatLoopEnd);
-
+      EmitTransition(IRB, switchVar, flatLoopEnd, encId, X, Y);
       branch->eraseFromParent();
       continue;
     }
@@ -287,54 +388,30 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
       auto itFalse = SwitchEnc.find(falseCase);
 
       if (itTrue == SwitchEnc.end()) {
-        SWARN("Unable to find the encoded id for the (true) basic block: '{}'", ToString(*trueCase));
-        std::abort();
+        fatalError(fmt::format("Unable to find the encoded id for the (true) basic block: '{}'", ToString(*trueCase)));
       }
 
       if (itFalse == SwitchEnc.end()) {
-        SWARN("Unable to find the encoded id for the (false) basic block: '{}'", ToString(*falseCase));
-        std::abort();
+        fatalError(fmt::format("Unable to find the encoded id for the (false) basic block: '{}'", ToString(*falseCase)));
       }
 
       ConstantInt *trueId  = switchInst->findCaseDest(trueCase);
       ConstantInt *falseId = switchInst->findCaseDest(falseCase);
 
       if (trueId == nullptr ) {
-        SWARN("Unable to find {} (true case) in the switch case", ToString(*trueCase));
-        std::abort();
+        fatalError(fmt::format("Unable to find {} (true case) in the switch case", ToString(*trueCase)));
       }
       if (falseId == nullptr ) {
-        SWARN("Unable to find {} (false case) in the switch case", ToString(*falseCase));
-        std::abort();
+        fatalError(fmt::format("Unable to find {} (false case) in the switch case", ToString(*falseCase)));
       }
 
       const uint32_t trueEncId  = itTrue->second;
       const uint32_t falseEncId = itFalse->second;
 
       IRBuilder IRB(branch);
-
-      IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), trueEncId), tmpTrue);
-      IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), falseEncId), tmpFalse);
-
-      LoadInst* valTrue = IRB.CreateLoad(IRB.getInt32Ty(), tmpTrue, true);
-      LoadInst* valFalse = IRB.CreateLoad(IRB.getInt32Ty(), tmpFalse, true);
-
-      auto* encTrue =
-        IRB.CreateAdd(
-            IRB.CreateXor(valTrue, ConstantInt::get(IRB.getInt32Ty(), X)),
-            ConstantInt::get(IRB.getInt32Ty(), Y));
-
-       auto* encFalse =
-         IRB.CreateAdd(
-            IRB.CreateXor(valFalse, ConstantInt::get(IRB.getInt32Ty(), X)),
-            ConstantInt::get(IRB.getInt32Ty(), Y));
-
-      IRB.CreateStore(
-        IRB.CreateSelect(branch->getCondition(),
-                         encTrue, encFalse),
-        switchVar, true);
-      IRB.CreateBr(flatLoopEnd);
-
+      EmitTransition(IRB, switchVar, flatLoopEnd,
+                     tmpTrue, tmpFalse, branch->getCondition(),
+                     trueEncId, falseEncId, X, Y);
       branch->eraseFromParent();
       continue;
     }
