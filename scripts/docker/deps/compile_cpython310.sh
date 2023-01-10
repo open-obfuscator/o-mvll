@@ -8,8 +8,8 @@ curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz
 tar xzvf Python-3.10.7.tgz
 cd Python-3.10.7
 
-export CC=clang
-export CXX=clang++
+export CC=clang-11
+export CXX=clang++-11
 export CFLAGS="-fPIC -m64"
 
 ./configure \
@@ -21,12 +21,12 @@ export CFLAGS="-fPIC -m64"
   --disable-test-modules
 make -j$(nproc) install
 
-pushd /cpython-install
-tar czvf Python.tar.gz *
-popd
+cd /cpython-install
+#tar czvf Python.tar.gz *
+tar czvf Python-slim.tar.gz include/python3.10/ lib/libpython3.10.a lib/pkgconfig/ share/
 
 cd /cpython
 rm -rf Python-3.10.7 && rm -rf Python-3.10.7.tgz
-cp /cpython-install/Python.tar.gz /cpython/
-chown 1000:1000 /cpython/Python.tar.gz
+cp /cpython-install/Python-slim.tar.gz /cpython/
+chown 1000:1000 /cpython/Python-slim.tar.gz
 
