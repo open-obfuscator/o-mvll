@@ -21,5 +21,5 @@ cmake -GNinja -S . -B /tmp/spdlog_build \
 ninja -vvv -C /tmp/spdlog_build package
 cp /tmp/spdlog_build/spdlog-1.10.0-Linux.tar.gz /spdlog/
 
-rm -rf /spdlog/v1.10.0.tar.gz && rm -rf spdlog-1.10.0
+rm -rf /spdlog/v1.10.0.tar.gz && rm -rf /spdlog/spdlog-1.10.0
 chown 1000:1000 /spdlog/spdlog-1.10.0-Linux.tar.gz
