@@ -1,0 +1,11 @@
+# macOS specific files
+.DS_store
+
+# Output of CMAKE_EXPORT_COMPILE_COMMANDS is often symlinked into the project's root directory
+/compile_commands.json
+
+# Nested build directory
+/src/build*
+
+# clangd cache folder
+/src/.cache
