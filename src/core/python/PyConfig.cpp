@@ -267,15 +267,15 @@ void omvll_ctor(py::module_& m) {
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
 
-         +--------------+-----------------------------------------+
-         | Return Value | Interpretation                          |
-         +==============+=========================================+
-         | ``True``     | :class:`~omvll.AntiHookOpt`\(``True``)  |
-         +--------------+-----------------------------------------+
-         | ``False``    | :class:`~omvll.AntiHookOpt`\(``False``) |
-         +--------------+-----------------------------------------+
-         | ``None``     | :class:`~omvll.AntiHookOpt`\(``False``) |
-         +--------------+-----------------------------------------+
+         +--------------+-------------------------------------------+
+         | Return Value | Interpretation                            |
+         +==============+===========================================+
+         | ``True``     | :class:`~omvll.ArithmeticOpt`\(``True``)  |
+         +--------------+-------------------------------------------+
+         | ``False``    | :class:`~omvll.ArithmeticOpt`\(``False``) |
+         +--------------+-------------------------------------------+
+         | ``None``     | :class:`~omvll.ArithmeticOpt`\(``False``) |
+         +--------------+-------------------------------------------+
 
          See the :omvll:`arithmetic` documentation.
          )delim", "module"_a, "function"_a)
@@ -287,15 +287,15 @@ void omvll_ctor(py::module_& m) {
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
 
-         +--------------+-------------------------------------------+
-         | Return Value | Interpretation                            |
-         +==============+===========================================+
-         | ``True``     | :class:`~omvll.ArithmeticOpt`\(``True``)  |
-         +--------------+-------------------------------------------+
-         | ``False``    | :class:`~omvll.ArithmeticOpt`\(``False``) |
-         +--------------+-------------------------------------------+
-         | ``None``     | :class:`~omvll.ArithmeticOpt`\(``False``) |
-         +--------------+-------------------------------------------+
+         +--------------+-----------------------------------------+
+         | Return Value | Interpretation                          |
+         +==============+=========================================+
+         | ``True``     | :class:`~omvll.AntiHookOpt`\(``True``)  |
+         +--------------+-----------------------------------------+
+         | ``False``    | :class:`~omvll.AntiHookOpt`\(``False``) |
+         +--------------+-----------------------------------------+
+         | ``None``     | :class:`~omvll.AntiHookOpt`\(``False``) |
+         +--------------+-----------------------------------------+
 
          See the :omvll:`anti-hook` documentation.
          )delim", "module"_a, "function"_a);
