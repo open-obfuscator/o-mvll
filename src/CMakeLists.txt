@@ -203,3 +203,4 @@ endif()
 
 add_subdirectory("core")
 add_subdirectory("passes")
+add_subdirectory("test")
