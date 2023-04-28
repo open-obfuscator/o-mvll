@@ -9,3 +9,6 @@
 
 # clangd cache folder
 /src/.cache
+
+# python cache folders for tests
+__pycache__
