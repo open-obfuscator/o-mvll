@@ -201,5 +201,5 @@ if(CMAKE_BUILD_TYPE MATCHES Release AND NOT OMVLL_FORCE_LOG_DEBUG)
   endif()
 endif()
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/core/CMakeLists.txt")
-include("${CMAKE_CURRENT_SOURCE_DIR}/passes/CMakeLists.txt")
+add_subdirectory("core")
+add_subdirectory("passes")

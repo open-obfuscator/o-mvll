@@ -1,4 +1,4 @@
 
 target_sources(OMVLL PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/Cleaning.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Cleaning.cpp
 )

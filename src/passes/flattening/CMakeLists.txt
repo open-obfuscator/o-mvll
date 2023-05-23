@@ -1,3 +1,3 @@
 target_sources(OMVLL PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/ControlFlowFlattening.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ControlFlowFlattening.cpp
 )
