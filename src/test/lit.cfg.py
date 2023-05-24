@@ -3,7 +3,7 @@ import lit
 from lit.llvm import llvm_config
 
 config.name = "O-MVLL Tests"
-config.suffixes = ['.c']
+config.suffixes = ['.c', '.cpp']
 config.test_format = lit.formats.ShTest(True)
 config.test_source_root = os.path.dirname(__file__)
 
