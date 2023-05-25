@@ -91,6 +91,19 @@ void EmitDefaultCaseAssembly(IRBTy& IRB, Triple TT) {
       /* hasSideEffects */ true,
       /* isStackAligned */ true
     ));
+  } else if (TT.isX86()) {
+    // FIXME: This assembly may not confuse a decompiler
+    IRB.CreateCall(FType, InlineAsm::get(
+      FType,
+      R"delim(
+        nop;
+        .byte 0xF1, 0xFF;
+        .byte 0xF2, 0xA2;
+      )delim",
+      "",
+      /* hasSideEffects */ true,
+      /* isStackAligned */ true
+    ));
   } else {
     ExitOnError Exit("Unsupported target for Control-Flow Flattening obfuscation: ");
     Exit(make_error<StringError>(TT.str(), inconvertibleErrorCode()));
