@@ -74,6 +74,29 @@ void EmitTransition(IRBTy& IRB, AllocaInst* V, BasicBlock* Dispatch,
 
 }
 
+template<class IRBTy>
+void EmitDefaultCaseAssembly(IRBTy& IRB, Triple TT) {
+  auto* FType = FunctionType::get(IRB.getVoidTy(), false);
+  if (TT.isAArch64()) {
+    IRB.CreateCall(FType, InlineAsm::get(
+      FType,
+      R"delim(
+        ldr x1, #-8;
+        blr x1;
+        mov x0, x1;
+        .byte 0xF1, 0xFF;
+        .byte 0xF2, 0xA2;
+      )delim",
+      "",
+      /* hasSideEffects */ true,
+      /* isStackAligned */ true
+    ));
+  } else {
+    ExitOnError Exit("Unsupported target for Control-Flow Flattening obfuscation: ");
+    Exit(make_error<StringError>(TT.str(), inconvertibleErrorCode()));
+  }
+}
+
 bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RNG) {
   std::uniform_int_distribution<uint32_t> Dist(10);
   std::uniform_int_distribution<uint8_t> Dist8(10, 254);
@@ -258,21 +281,8 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
   EntryBlock->moveBefore(flatLoopEntry);
   EntryIR.CreateBr(flatLoopEntry);
   FlatLoopEndIR.CreateBr(flatLoopEntry);
-  auto* FType = FunctionType::get(DefaultCaseIR.getVoidTy(), false);
-  Value* rawAsm = InlineAsm::get(
-    FType,
-    R"delim(
-    ldr x1, #-8;
-    blr x1;
-    mov x0, x1;
-    .byte 0xF1, 0xFF;
-    .byte 0xF2, 0xA2;
-    )delim",
-    "",
-    /* hasSideEffects */ true,
-    /* isStackAligned */ true
-  );
-  DefaultCaseIR.CreateCall(FType, rawAsm);
+
+  EmitDefaultCaseAssembly(DefaultCaseIR, Triple(F.getParent()->getTargetTriple()));
   DefaultCaseIR.CreateBr(flatLoopEnd);
 
   SwitchInst* switchInst = FlatLoopEntryIR.CreateSwitch(loadSwitchVar, defaultCase);
