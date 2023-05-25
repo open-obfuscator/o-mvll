@@ -1,5 +1,6 @@
 import os
 import lit
+import sys
 from lit.llvm import llvm_config
 
 config.name = "O-MVLL Tests"
@@ -10,6 +11,14 @@ config.test_source_root = os.path.dirname(__file__)
 # Enable tests based on required targets, e.g. REQUIRES: x86-registered-target
 llvm_config.feature_config([('--targets-built',
                              lambda s: [arch.lower() + '-registered-target' for arch in s.split()])])
+
+# Enable tests based on the OS of the host machine
+if sys.platform.startswith('linux'):
+    config.available_features.add('host-platform-linux')
+if sys.platform == 'darwin':
+    config.available_features.add('host-platform-macOS')
+if sys.platform == 'win32':
+    config.available_features.add('host-platform-windows')
 
 # The tools directory defaults to LLVM_BINARY_DIR. In order to run tests with a different compiler,
 # pass the installation base path via LLVM_TOOLS_DIR at configuration time explicitly.

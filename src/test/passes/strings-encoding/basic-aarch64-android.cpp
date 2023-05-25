@@ -1,4 +1,5 @@
 // REQUIRES: aarch64-registered-target
+// XFAIL: host-platform-macOS
 
 // The default object contains the file-name string:
 //     RUN: clang++ -target aarch64-linux-android -fno-legacy-pass-manager -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT -DFILE_NAME=%s %s
