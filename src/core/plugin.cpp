@@ -18,6 +18,8 @@
 #include <llvm/Support/YAMLTraits.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 
+#include <dlfcn.h>
+
 using namespace llvm;
 
 #define REGISTER_PASS(X)     \
@@ -37,6 +39,20 @@ struct yaml::MappingTraits<omvll::yaml_config_t> {
     }
 };
 
+std::string expand_abs_path(StringRef path, StringRef base) {
+  if (sys::path::is_absolute(path)) {
+    if (!sys::fs::exists(path))
+      SWARN("Absolute path from doesn't exist!");
+    return path.str();
+  }
+
+  SmallString<256> YConfigAbs = base;
+  sys::path::append(YConfigAbs, path);
+  if (!sys::fs::exists(YConfigAbs))
+    SWARN("Relative path doesn't exist!");
+  return YConfigAbs.str().str();
+}
+
 bool load_yamlconfig(StringRef dir, StringRef filename) {
   SmallString<256> YConfig = dir;
   sys::path::append(YConfig, filename);
@@ -49,10 +65,17 @@ bool load_yamlconfig(StringRef dir, StringRef filename) {
     SERR("Can't read '{}': {}", YConfig.str(), Buffer.getError().message());
     return false;
   }
-
   yaml::Input yin(**Buffer);
   omvll::yaml_config_t yconfig;
-  yin >> omvll::PyConfig::yconfig;
+  yin >> yconfig;
+
+  SINFO("OMVLL_PYTHONPATH = {}", yconfig.PYTHONPATH);
+  yconfig.PYTHONPATH = expand_abs_path(yconfig.PYTHONPATH, dir);
+
+  SINFO("OMVLL_CONFIG = {}", yconfig.OMVLL_CONFIG);
+  yconfig.OMVLL_CONFIG = expand_abs_path(yconfig.OMVLL_CONFIG, dir);
+
+  omvll::PyConfig::yconfig = yconfig;
   return true;
 }
 
@@ -75,6 +98,16 @@ void omvll::init_yamlconfig() {
     SERR("Can't determine the current path: '{}''", err.message());
   } else {
     if (find_yamlconfig(cwd.str().str()))
+      return;
+  }
+
+  Dl_info info;
+  if (!dladdr((void*)find_yamlconfig, &info)) {
+    SERR("Can't determine plugin file path");
+  } else {
+    SmallString<256> PluginDir = StringRef(info.dli_fname);
+    sys::path::remove_filename(PluginDir);
+    if (find_yamlconfig(PluginDir.str().str()))
       return;
   }
 
