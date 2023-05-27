@@ -1,4 +1,4 @@
 
 target_sources(OMVLL PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/Arithmetic.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Arithmetic.cpp
 )

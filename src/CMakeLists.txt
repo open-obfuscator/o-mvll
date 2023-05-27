@@ -42,12 +42,12 @@ message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 
 message("LLVM STATUS:
   Definitions ${LLVM_DEFINITIONS}
-  Includes    ${LLVM_INCLUDE_DIRS}
+  Includes    ${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS}
   Libraries   ${LLVM_LIBRARY_DIRS}
   Targets     ${LLVM_TARGETS_TO_BUILD}"
 )
 
-include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
@@ -201,5 +201,5 @@ if(CMAKE_BUILD_TYPE MATCHES Release AND NOT OMVLL_FORCE_LOG_DEBUG)
   endif()
 endif()
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/core/CMakeLists.txt")
-include("${CMAKE_CURRENT_SOURCE_DIR}/passes/CMakeLists.txt")
+add_subdirectory("core")
+add_subdirectory("passes")
