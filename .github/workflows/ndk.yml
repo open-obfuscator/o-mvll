@@ -14,8 +14,11 @@ jobs:
           curl -LO https://data.romainthomas.fr/omvll-deps-ndk-r25.tar
           mkdir -p /tmp/third-party-ndk25
           tar xvf ./omvll-deps-ndk-r25.tar --directory=/tmp/third-party-ndk25
+          curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz
+          tar xzvf Python-3.10.7.tgz --directory=/tmp
           docker run --rm \
             -v /tmp/third-party-ndk25:/third-party \
+            -v /tmp/Python-3.10.7:/Python-3.10.7 \
             -v $GITHUB_WORKSPACE:/o-mvll \
             openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/ndk_r25_compile.sh
       - name: Nightly Deployment
