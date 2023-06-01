@@ -10,7 +10,7 @@ cd spdlog-1.10.0
 
 export CXXFLAGS="-stdlib=libc++ -fPIC -fno-rtti -fno-exceptions -fvisibility-inlines-hidden"
 cmake -GNinja -S . -B /tmp/spdlog_build \
-      -DCMAKE_CXX_COMPILER=clang++-11 \
+      -DCMAKE_CXX_COMPILER=clang++-14 \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
       -DSPDLOG_NO_THREAD_ID=on \

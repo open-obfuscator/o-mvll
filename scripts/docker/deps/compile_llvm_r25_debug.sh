@@ -3,8 +3,8 @@ LLVM_TARGET="AArch64;X86"
 echo "LLVM Android Version: $(git --git-dir=/LLVM/.git describe --dirty)"
 
 cmake -GNinja -S /LLVM/llvm -B /tmp/build_llvm_ndk                                                                   \
-      -DCMAKE_CXX_COMPILER=clang++-11 \
-      -DCMAKE_C_COMPILER=clang-11 \
+      -DCMAKE_CXX_COMPILER=clang++-14 \
+      -DCMAKE_C_COMPILER=clang-14 \
       -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                                                                        \
       -DLLVM_ENABLE_ASSERTIONS=on \

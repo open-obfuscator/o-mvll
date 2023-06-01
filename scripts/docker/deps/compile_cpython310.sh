@@ -8,8 +8,8 @@ curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz
 tar xzvf Python-3.10.7.tgz
 cd Python-3.10.7
 
-export CC=clang-11
-export CXX=clang++-11
+export CC=clang-14
+export CXX=clang++-14
 export CFLAGS="-fPIC -m64"
 
 ./configure \
