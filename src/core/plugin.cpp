@@ -37,41 +37,48 @@ struct yaml::MappingTraits<omvll::yaml_config_t> {
     }
 };
 
-void init_yamlconfig(SmallVector<char>& YConfig) {
-  SINFO("Loading omvll.yml from {}", std::string{YConfig.begin(), YConfig.end()});
-  if (auto Buffer = MemoryBuffer::getFile(YConfig)) {
-    yaml::Input yin(**Buffer);
-    yin >> omvll::PyConfig::yconfig;
-  } else {
-    std::string path(YConfig.begin(), YConfig.end());
-    SERR("Can't read '{}': {}", path, Buffer.getError().message());
+bool load_yamlconfig(StringRef dir, StringRef filename) {
+  SmallString<256> YConfig = dir;
+  sys::path::append(YConfig, filename);
+  if (!sys::fs::exists(YConfig))
+    return false;
+
+  SINFO("Loading omvll.yml from {}", YConfig.str());
+  auto Buffer = MemoryBuffer::getFile(YConfig);
+  if (!Buffer) {
+    SERR("Can't read '{}': {}", YConfig.str(), Buffer.getError().message());
+    return false;
+  }
+
+  yaml::Input yin(**Buffer);
+  omvll::yaml_config_t yconfig;
+  yin >> omvll::PyConfig::yconfig;
+  return true;
+}
+
+bool find_yamlconfig(std::string dir) {
+  while (true) {
+    SINFO("Looking for omvll.yml in {}", dir);
+    if (load_yamlconfig(dir, omvll::PyConfig::YAML_FILE))
+      return true;
+    if (sys::path::has_parent_path(dir)) {
+      dir = sys::path::parent_path(dir);
+    } else {
+      return false;
+    }
   }
 }
 
 void omvll::init_yamlconfig() {
-  SmallVector<char> cwd;
+  SmallString<256> cwd;
   if (auto err = sys::fs::current_path(cwd)) {
     SERR("Can't determine the current path: '{}''", err.message());
-    return;
+  } else {
+    if (find_yamlconfig(cwd.str().str()))
+      return;
   }
 
-  SINFO("Looking for omvll.yml in {}", std::string{cwd.begin(), cwd.end()});
-  SmallVector<char> YConfig = cwd;
-  sys::path::append(YConfig, omvll::PyConfig::YAML_FILE);
-  if (sys::fs::exists(YConfig)) {
-    return ::init_yamlconfig(YConfig);
-  }
-
-  std::string parent(cwd.begin(), cwd.end());
-  while (sys::path::has_parent_path(parent)) {
-    parent = sys::path::parent_path(parent);
-    SINFO("Looking for omvll.yml in {}", std::string{parent.begin(), parent.end()});
-    SmallVector<char> YConfig(parent.begin(), parent.end());
-    sys::path::append(YConfig, omvll::PyConfig::YAML_FILE);
-    if (sys::fs::exists(YConfig)) {
-      return ::init_yamlconfig(YConfig);
-    }
-  }
+  SINFO("Didn't find omvll.yml");
 }
 
 
