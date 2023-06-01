@@ -38,6 +38,7 @@ struct yaml::MappingTraits<omvll::yaml_config_t> {
 };
 
 void init_yamlconfig(SmallVector<char>& YConfig) {
+  SINFO("Loading omvll.yml from {}", std::string{YConfig.begin(), YConfig.end()});
   if (auto Buffer = MemoryBuffer::getFile(YConfig)) {
     yaml::Input yin(**Buffer);
     yin >> omvll::PyConfig::yconfig;
@@ -54,6 +55,7 @@ void omvll::init_yamlconfig() {
     return;
   }
 
+  SINFO("Looking for omvll.yml in {}", std::string{cwd.begin(), cwd.end()});
   SmallVector<char> YConfig = cwd;
   sys::path::append(YConfig, omvll::PyConfig::YAML_FILE);
   if (sys::fs::exists(YConfig)) {
@@ -63,6 +65,7 @@ void omvll::init_yamlconfig() {
   std::string parent(cwd.begin(), cwd.end());
   while (sys::path::has_parent_path(parent)) {
     parent = sys::path::parent_path(parent);
+    SINFO("Looking for omvll.yml in {}", std::string{parent.begin(), parent.end()});
     SmallVector<char> YConfig(parent.begin(), parent.end());
     sys::path::append(YConfig, omvll::PyConfig::YAML_FILE);
     if (sys::fs::exists(YConfig)) {
