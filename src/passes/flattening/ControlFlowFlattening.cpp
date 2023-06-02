@@ -105,8 +105,7 @@ void EmitDefaultCaseAssembly(IRBTy& IRB, Triple TT) {
       /* isStackAligned */ true
     ));
   } else {
-    ExitOnError Exit("Unsupported target for Control-Flow Flattening obfuscation: ");
-    Exit(make_error<StringError>(TT.str(), inconvertibleErrorCode()));
+    fatalError("Unsupported target for Control-Flow Flattening obfuscation: " + TT.str());
   }
 }
 
