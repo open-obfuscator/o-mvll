@@ -4,6 +4,11 @@
   <a href="https://obfuscator.re/omvll">
     <img src=".github/img/banner.webp" alt="O-MVLL" width="100%">
   </a>
+  <br />
+  <br />
+  <a href="https://build38.com/">
+    <img src=".github/img/build38.webp" alt="Build38" width="100%">
+  </a>
 </p>
 
 <p align="center">
@@ -53,6 +58,10 @@ For the details, you can checkout the documentation: [obfuscator.re/omvll](https
 You can reach out by email at this address: `ping@obfuscator.re`
 
 #### Maintainers
+
+- [Build38: Mobile Application Protection Solutions](https://build38.com/)
+
+#### Author
 
 - [Romain Thomas](https://www.romainthomas.fr): [@rh0main](https://twitter.com/rh0main) - `me@romainthomas.fr`
 

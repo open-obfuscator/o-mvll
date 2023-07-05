@@ -8,4 +8,4 @@ assignees: romainthomas
 ---
 
 Please make sure to read and use the relevant sections of this
-paragraph: https://obfuscator.re/omvll/other-topics/troubleshooting/#how-to-open-a-github-issue
+paragraph: https://obfuscator.re/dprotect/introduction/troubleshooting//#how-to-open-a-github-issue
