@@ -1,6 +1,7 @@
 import os
 import lit
 import sys
+import platform
 from lit.llvm import llvm_config
 
 config.name = "O-MVLL Tests"
@@ -19,6 +20,15 @@ if sys.platform == 'darwin':
     config.available_features.add('host-platform-macOS')
 if sys.platform == 'win32':
     config.available_features.add('host-platform-windows')
+
+# Determine host architecture
+host_arch = platform.machine()
+
+# Allow tests to be based on the host architecture
+if host_arch == 'x86_64':
+    config.available_features.add('host-arch-x86')
+elif host_arch == 'arm64':
+    config.available_features.add('host-arch-arm64')
 
 # The tools directory defaults to LLVM_BINARY_DIR. In order to run tests with a different compiler,
 # pass the installation base path via LLVM_TOOLS_DIR at configuration time explicitly.
