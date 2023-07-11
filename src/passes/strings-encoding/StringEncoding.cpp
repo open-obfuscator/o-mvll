@@ -1,4 +1,5 @@
 #include "omvll/passes/string-encoding/StringEncoding.hpp"
+
 #include "omvll/log.hpp"
 #include "omvll/utils.hpp"
 #include "omvll/PyConfig.hpp"
@@ -8,23 +9,22 @@
 #include "omvll/Jitter.hpp"
 #include "omvll/passes/arithmetic/Arithmetic.hpp"
 
-#include "llvm/Demangle/Demangle.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/NoFolder.h"
-#include <llvm/IRReader/IRReader.h>
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/ModuleUtils.h"
+#include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/StringExtras.h>
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/Demangle/Demangle.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/NoFolder.h>
+#include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/Path.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/Transforms/Utils/ModuleUtils.h>
 
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 
@@ -505,7 +505,8 @@ static Expected<std::string> runClangExecutable(StringRef code, StringRef dashx,
   int inFileFD;
   SmallString<128> inFileName;
   std::string prefix = ("omvll-" + triple).str();
-  if (auto ec = sys::fs::createTemporaryFile(prefix, dashx, inFileFD, inFileName))
+  if (auto ec =
+          sys::fs::createTemporaryFile(prefix, dashx, inFileFD, inFileName))
     return errorCodeToError(ec);
   std::string outFileName = inFileName.str().str() + ".ll";
 
@@ -528,7 +529,8 @@ static Expected<std::string> runClangExecutable(StringRef code, StringRef dashx,
   errs() << "\n";
 
   if (int ec = sys::ExecuteAndWait(clang, cmd))
-    return createStringError(inconvertibleErrorCode(), Twine("exit code ") + std::to_string(ec));
+    return createStringError(inconvertibleErrorCode(),
+                             Twine("exit code ") + std::to_string(ec));
 
   return outFileName;
 }
@@ -549,7 +551,8 @@ static Error createSMDiagnosticError(llvm::SMDiagnostic &Diag) {
   return make_error<StringError>(std::move(Msg), inconvertibleErrorCode());
 }
 
-static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path, LLVMContext& Ctx) {
+static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path,
+                                                          LLVMContext &Ctx) {
   SMDiagnostic Err;
   auto M = parseIRFile(Path, Err, Ctx);
   if (!M)
@@ -560,9 +563,8 @@ static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path, LLVMCo
 void StringEncoding::genRoutines(const std::string& Triple, EncodingInfo& EI, LLVMContext& Ctx) {
   std::string hostTriple = sys::getProcessTriple();
 
-  if (HOSTJIT == nullptr) {
-    HOSTJIT = Jitter::Create(hostTriple).release();
-  }
+  if (HOSTJIT == nullptr)
+    HOSTJIT = new Jitter(hostTriple);
 
   std::uniform_int_distribution<size_t> Dist(0, ROUTINES.size() - 1);
   size_t idx = Dist(*RNG_);
@@ -571,13 +573,15 @@ void StringEncoding::genRoutines(const std::string& Triple, EncodingInfo& EI, LL
   ExitOnError exitOnErr("Nested clang invocation failed: ");
   std::string externC = (Twine("extern \"C\" {\n") + R + "}\n").str();
   {
-    std::string pathHM = exitOnErr(runClangExecutable(externC, "cpp", hostTriple, { "-std=c++17" }));
+    std::string pathHM = exitOnErr(
+        runClangExecutable(externC, "cpp", hostTriple, {"-std=c++17"}));
     EI.HM = exitOnErr(loadModule(pathHM, HOSTJIT->getContext()));
   }
   {
     Ctx.setDiscardValueNames(false);
-    std::vector<std::string> argsTM { "-target", Triple, "-std=c++17" };
-    std::string pathTM = exitOnErr(runClangExecutable(externC, "cpp", Triple, toStringRefArray(argsTM)));
+    std::vector<std::string> argsTM{"-target", Triple, "-std=c++17"};
+    std::string pathTM = exitOnErr(
+        runClangExecutable(externC, "cpp", Triple, toStringRefArray(argsTM)));
     EI.TM = exitOnErr(loadModule(pathTM, Ctx));
     annotateRoutine(*EI.TM);
   }

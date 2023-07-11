@@ -73,7 +73,7 @@ bool AntiHook::runOnFunction(llvm::Function &F) {
 PreservedAnalyses AntiHook::run(Module &M,
                                 ModuleAnalysisManager &FAM) {
   bool Changed = false;
-  jitter_ = Jitter::Create(M.getTargetTriple());
+  jitter_ = std::make_unique<Jitter>(M.getTargetTriple());
 
   RNG_ = M.createRNG(name());
 

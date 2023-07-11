@@ -191,7 +191,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
 PreservedAnalyses BreakControlFlow::run(Module &M,
                                         ModuleAnalysisManager &FAM) {
   RNG_ = M.createRNG(name());
-  Jitter_ = Jitter::Create(M.getTargetTriple());
+  Jitter_ = std::make_unique<Jitter>(M.getTargetTriple());
   SINFO("[{}] Run on: {}", name(), M.getName().str());
   bool Changed = false;
   std::vector<Function*> Fs;

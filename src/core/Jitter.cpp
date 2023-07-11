@@ -1,4 +1,5 @@
 #include "omvll/Jitter.hpp"
+
 #include "omvll/utils.hpp"
 #include "omvll/log.hpp"
 
@@ -29,19 +30,11 @@ using namespace llvm;
 
 namespace omvll {
 
-Jitter::Jitter(const std::string& Triple) : Triple_{Triple},
-                                            Ctx_{new LLVMContext{}} {
+Jitter::Jitter(const std::string &Triple)
+    : Triple_{Triple}, Ctx_{new LLVMContext{}} {
   InitializeNativeTarget();
   InitializeNativeTargetAsmParser();
   InitializeNativeTargetAsmPrinter();
-}
-
-std::unique_ptr<Jitter> Jitter::Create(const std::string& Triple) {
-  return std::unique_ptr<Jitter>(new Jitter(Triple));
-}
-
-std::unique_ptr<Jitter> Jitter::Create() {
-  return std::unique_ptr<Jitter>(new Jitter(sys::getProcessTriple()));
 }
 
 std::unique_ptr<llvm::orc::LLJIT> Jitter::compile(llvm::Module& M) {
