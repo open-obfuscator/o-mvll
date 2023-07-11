@@ -88,9 +88,8 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
     return nullptr;
   }
 
-  private:
+private:
   inline static Jitter* HOSTJIT = nullptr;
-  inline static Jitter* TARGETJIT = nullptr;
 
   void genRoutines(const std::string& Triple, EncodingInfo& EI, llvm::LLVMContext& Ctx);
   void annotateRoutine(llvm::Module& M);

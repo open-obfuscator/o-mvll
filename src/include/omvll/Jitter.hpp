@@ -5,14 +5,12 @@
 
 #include <llvm/ADT/IntrusiveRefCntPtr.h>
 #include <llvm/ADT/StringRef.h>
+#include <llvm/Support/Error.h>
 
 namespace llvm {
 class LLVMContext;
 class Module;
 class MemoryBuffer;
-namespace vfs {
-class InMemoryFileSystem;
-}
 namespace orc {
 class LLJIT;
 }
@@ -22,24 +20,15 @@ class ObjectFile;
 }
 }
 
-namespace clang {
-class CompilerInstance;
-class DiagnosticIDs;
-class DiagnosticOptions;
-class DiagnosticsEngine;
-class TextDiagnosticPrinter;
-class FileManager;
-namespace driver {
-class Driver;
-}
-}
-
-
 namespace omvll {
 class Jitter {
-  public:
-  std::unique_ptr<llvm::Module> generate(const std::string& code);
-  std::unique_ptr<llvm::Module> generate(const std::string& code, llvm::LLVMContext& Ctx);
+public:
+  llvm::LLVMContext& getContext() { return *Ctx_; }
+
+  llvm::Expected<std::unique_ptr<llvm::Module>>
+  loadModule(llvm::StringRef Path);
+  llvm::Expected<std::unique_ptr<llvm::Module>>
+  loadModule(llvm::StringRef Path, llvm::LLVMContext& Ctx);
   std::unique_ptr<llvm::orc::LLJIT> compile(llvm::Module& M);
 
   std::unique_ptr<llvm::MemoryBuffer> jitAsm(const std::string& Asm, size_t Size);
@@ -47,21 +36,13 @@ class Jitter {
   static std::unique_ptr<Jitter> Create(const std::string& Triple);
   static std::unique_ptr<Jitter> Create();
 
-  protected:
+protected:
   size_t getFunctionSize(llvm::object::ObjectFile& Obj, llvm::StringRef Name);
 
-  private:
+private:
   Jitter(const std::string& Triple);
-  Jitter();
-  std::string Triple_;
-  std::unique_ptr<clang::driver::Driver> Driver_;
-  std::unique_ptr<clang::CompilerInstance> Clang_;
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> Diags_;
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID_;
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts_;
 
-  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> VFS_;
-  llvm::IntrusiveRefCntPtr<clang::FileManager> FileMgr_;
+  std::string Triple_;
   std::unique_ptr<llvm::LLVMContext> Ctx_;
 };
 }
