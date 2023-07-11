@@ -8,7 +8,7 @@
 /src/build*
 
 # clangd cache folder
-/src/.cache
+.cache
 
 # python cache folders for tests
 __pycache__
