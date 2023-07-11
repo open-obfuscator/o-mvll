@@ -17,7 +17,8 @@ struct AntiHook : llvm::PassInfoMixin<AntiHook> {
                               llvm::ModuleAnalysisManager &FAM);
 
   bool runOnFunction(llvm::Function &F);
-  private:
+
+private:
   std::unique_ptr<llvm::RandomNumberGenerator> RNG_;
   std::unique_ptr<Jitter> jitter_;
 };

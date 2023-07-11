@@ -2,10 +2,10 @@
 #define OMVLL_STRING_ENCODING_H
 #include "omvll/passes/string-encoding/StringEncodingOpt.hpp"
 
-#include "llvm/Support/RandomNumberGenerator.h"
-#include "llvm/IR/PassManager.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallSet.h"
+#include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/SmallSet.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Support/RandomNumberGenerator.h>
 #include <variant>
 
 namespace llvm {
@@ -89,7 +89,7 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
   }
 
 private:
-  inline static Jitter* HOSTJIT = nullptr;
+  inline static Jitter *HOSTJIT = nullptr;
 
   void genRoutines(const std::string& Triple, EncodingInfo& EI, llvm::LLVMContext& Ctx);
   void annotateRoutine(llvm::Module& M);
