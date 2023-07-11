@@ -1,8 +1,5 @@
 // REQUIRES: aarch64-registered-target
 
-// Temporary change: the 'replace' test fails on macOS because clang crashes
-// XFAIL: host-platform-macOS
-
 // The default object contains the file-name string:
 //     RUN: clang++ -target aarch64-linux-android -fno-legacy-pass-manager -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT  -DFILE_NAME=%s %s
 //     RUN: clang++ -target arm64-apple-ios  -fno-legacy-pass-manager -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT  -DFILE_NAME=%s %s
