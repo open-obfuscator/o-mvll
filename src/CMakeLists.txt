@@ -121,7 +121,8 @@ endif()
 
 if(APPLE)
   list(APPEND OMVLL_LINK_OPT
-    #-undefined dynamic_lookup
+    -Wl,-flat_namespace -Wl,-undefined -Wl,suppress
+    -Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/exports.txt
   )
 endif()
 
