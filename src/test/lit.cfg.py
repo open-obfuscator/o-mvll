@@ -41,6 +41,8 @@ plugin_file = os.path.join(config.omvll_plugin_dir, 'libOMVLL' + config.llvm_plu
 print("Testing plugin file:", plugin_file)
 config.substitutions.append(('%libOMVLL', plugin_file))
 
+print("Available features are:", config.available_features)
+
 # We need this to find the Python standard library
 if 'OMVLL_PYTHONPATH' in os.environ:
     print("OMVLL_PYTHONPATH:", os.environ['OMVLL_PYTHONPATH'])
