@@ -8,13 +8,7 @@
 
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/Constants.h>
-
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Basic/DiagnosticOptions.h>
-#include <clang/Basic/Diagnostic.h>
-#include <clang/Basic/FileManager.h>
-#include <clang/Driver/Driver.h>
-#include <clang/Frontend/CompilerInstance.h>
+#include <llvm/Support/MemoryBuffer.h>
 
 using namespace llvm;
 

@@ -8,22 +8,21 @@
 #include "omvll/Jitter.hpp"
 #include "omvll/passes/arithmetic/Arithmetic.hpp"
 
-#include "clang/Driver/Driver.h"
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Basic/DiagnosticOptions.h>
-#include <clang/Basic/Diagnostic.h>
-#include <clang/Basic/FileManager.h>
-
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/NoFolder.h"
+#include <llvm/IRReader/IRReader.h>
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/IR/Function.h>
+#include <llvm/Support/Error.h>
+#include <llvm/Support/Host.h>
+#include <llvm/Support/Path.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 
@@ -487,20 +486,101 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
   return true;
 }
 
-void StringEncoding::genRoutines(const std::string& Triple, EncodingInfo& EI, LLVMContext& Ctx) {
-  if (HOSTJIT == nullptr) {
-    HOSTJIT = Jitter::Create().release();
+static Expected<std::string> runClangExecutable(StringRef code, StringRef dashx,
+                                                StringRef triple,
+                                                std::vector<StringRef> args) {
+  std::vector<StringRef> cmd;
+  cmd.reserve(args.size() + 6);
+
+  static int Dummy;
+  std::string clang = sys::fs::getMainExecutable("clang", (void *)&Dummy);
+  cmd.push_back(clang);
+  cmd.push_back("-S");
+  cmd.push_back("-emit-llvm");
+
+  for (StringRef arg : args)
+    cmd.push_back(arg);
+
+  // Create the input C file and choose macthing output file name
+  int inFileFD;
+  SmallString<128> inFileName;
+  std::string prefix = ("omvll-" + triple).str();
+  if (auto ec = sys::fs::createTemporaryFile(prefix, dashx, inFileFD, inFileName))
+    return errorCodeToError(ec);
+  std::string outFileName = inFileName.str().str() + ".ll";
+
+  cmd.push_back("-o");
+  cmd.push_back(outFileName);
+  cmd.push_back(inFileName);
+
+  // Write the given C code to the input file
+  {
+    std::error_code ec;
+    raw_fd_ostream inFileOS(inFileName, ec);
+    if (ec)
+      return errorCodeToError(ec);
+    inFileOS << code;
   }
-  if (TARGETJIT == nullptr) {
-    TARGETJIT = Jitter::Create(Triple).release();
+
+  // TODO: Write to omvll debug log instead of stderr
+  for (StringRef entry : cmd)
+    errs() << entry << " ";
+  errs() << "\n";
+
+  if (int ec = sys::ExecuteAndWait(clang, cmd))
+    return createStringError(inconvertibleErrorCode(), Twine("exit code ") + std::to_string(ec));
+
+  return outFileName;
+}
+
+static std::vector<StringRef> toStringRefArray(std::vector<std::string> strs) {
+  std::vector<StringRef> res;
+  for (const std::string &s : strs)
+    res.push_back(s);
+  return res;
+}
+
+static Error createSMDiagnosticError(llvm::SMDiagnostic &Diag) {
+  std::string Msg;
+  {
+    raw_string_ostream OS(Msg);
+    Diag.print("", OS);
+  }
+  return make_error<StringError>(std::move(Msg), inconvertibleErrorCode());
+}
+
+static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path, LLVMContext& Ctx) {
+  SMDiagnostic Err;
+  auto M = parseIRFile(Path, Err, Ctx);
+  if (!M)
+    return createSMDiagnosticError(Err);
+  return M;
+}
+
+void StringEncoding::genRoutines(const std::string& Triple, EncodingInfo& EI, LLVMContext& Ctx) {
+  std::string hostTriple = sys::getProcessTriple();
+
+  if (HOSTJIT == nullptr) {
+    HOSTJIT = Jitter::Create(hostTriple).release();
   }
 
   std::uniform_int_distribution<size_t> Dist(0, ROUTINES.size() - 1);
   size_t idx = Dist(*RNG_);
   StringRef R = ROUTINES[idx];
-  EI.HM = HOSTJIT->generate(R.str());
-  EI.TM = TARGETJIT->generate(R.str(), Ctx);
-  annotateRoutine(*EI.TM);
+
+  ExitOnError exitOnErr("Nested clang invocation failed: ");
+  std::string externC = (Twine("extern \"C\" {\n") + R + "}\n").str();
+  {
+    std::string pathHM = exitOnErr(runClangExecutable(externC, "cpp", hostTriple, { "-std=c++17" }));
+    EI.HM = exitOnErr(loadModule(pathHM, HOSTJIT->getContext()));
+  }
+  {
+    Ctx.setDiscardValueNames(false);
+    std::vector<std::string> argsTM { "-target", Triple, "-std=c++17" };
+    std::string pathTM = exitOnErr(runClangExecutable(externC, "cpp", Triple, toStringRefArray(argsTM)));
+    EI.TM = exitOnErr(loadModule(pathTM, Ctx));
+    annotateRoutine(*EI.TM);
+  }
 }
 
 void StringEncoding::annotateRoutine(llvm::Module& M) {

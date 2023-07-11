@@ -21,7 +21,6 @@ option(OMVLL_FORCE_LOG_DEBUG "Force the log debug output" OFF)
 option(OMVLL_PY_STANDALONE   "Build OMVLL as a standalone Python module" OFF)
 
 find_package(LLVM 14 REQUIRED CONFIG NO_DEFAULT_PATH)
-find_package(Clang REQUIRED CONFIG. NO_DEFAULT_PATH)
 
 set(PYTHON_VERSION "3" CACHE STRING "Python version")
 find_package(Python3 COMPONENTS Development Interpreter)
@@ -42,12 +41,12 @@ message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 
 message("LLVM STATUS:
   Definitions ${LLVM_DEFINITIONS}
-  Includes    ${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS}
+  Includes    ${LLVM_INCLUDE_DIRS}
   Libraries   ${LLVM_LIBRARY_DIRS}
   Targets     ${LLVM_TARGETS_TO_BUILD}"
 )
 
-include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
@@ -146,11 +145,7 @@ endif()
 set(LLVM_LIBS_DEP
   demangle
   OrcJIT
-  AllTargetsCodeGens
-  AllTargetsMCAs
-  AllTargetsDescs
-  AllTargetsAsmParsers
-  AllTargetsDisassemblers
+  native
 )
 
 if(APPLE)
@@ -159,13 +154,11 @@ if(APPLE)
     Option
     MCJIT
   )
-  target_link_libraries(OMVLL PRIVATE
-    clangCodeGen
-    clangFrontend
-  )
 endif()
 
 if (OMVLL_PY_STANDALONE)
+  find_package(Clang REQUIRED CONFIG NO_DEFAULT_PATH)
+  include_directories(SYSTEM ${CLANG_INCLUDE_DIRS})
   set_target_properties(OMVLL PROPERTIES PREFIX "" OUTPUT_NAME "omvll" CLEAN_DIRECT_OUTPUT 1)
   list(APPEND LLVM_LIBS_DEP
     core
