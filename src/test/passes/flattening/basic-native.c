@@ -1,12 +1,9 @@
 // TODO: Require that the native target is registered.
 // TODO: Make sure Clang finds a linker on our host machine.
 
-// Failing with "ld: library not found for -lSystem" with system clang symlinked to LLVM_TOOLS_DIR
-// XFAIL: host-platform-macOS
-
 // Compilation can fail, e.g. if we insert invalid inline assembly.
-// RUN:                                   clang -fno-legacy-pass-manager                         -O1 %s -o %T/basic-native
-// RUN: env OMVLL_CONFIG=%S/config_all.py clang -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 %s -o %T/basic-native-obf
+// RUN:                                   clang -fno-legacy-pass-manager                         %EXTRA_LINKER_FLAGS -O1 %s -o %T/basic-native
+// RUN: env OMVLL_CONFIG=%S/config_all.py clang -fno-legacy-pass-manager -fpass-plugin=%libOMVLL %EXTRA_LINKER_FLAGS -O1 %s -o %T/basic-native-obf
 
 // This execution test only fails, if the below C code is invalid.
 // RUN: %T/basic-native right
