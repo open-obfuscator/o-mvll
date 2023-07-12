@@ -486,9 +486,9 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
   return true;
 }
 
-static Expected<std::string> runClangExecutable(StringRef code, StringRef dashx,
-                                                StringRef triple,
-                                                std::vector<StringRef> args) {
+static Expected<std::string>
+runClangExecutable(StringRef code, StringRef dashx, StringRef triple,
+                   const std::vector<std::string> &args) {
   std::vector<StringRef> cmd;
   cmd.reserve(args.size() + 6);
 
@@ -498,7 +498,7 @@ static Expected<std::string> runClangExecutable(StringRef code, StringRef dashx,
   cmd.push_back("-S");
   cmd.push_back("-emit-llvm");
 
-  for (StringRef arg : args)
+  for (const std::string &arg : args)
     cmd.push_back(arg);
 
   // Create the input C file and choose macthing output file name
@@ -535,13 +535,6 @@ static Expected<std::string> runClangExecutable(StringRef code, StringRef dashx,
   return outFileName;
 }
 
-static std::vector<StringRef> toStringRefArray(std::vector<std::string> strs) {
-  std::vector<StringRef> res;
-  for (const std::string &s : strs)
-    res.push_back(s);
-  return res;
-}
-
 static Error createSMDiagnosticError(llvm::SMDiagnostic &Diag) {
   std::string Msg;
   {
@@ -560,7 +553,8 @@ static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path,
   return M;
 }
 
-void StringEncoding::genRoutines(const std::string& Triple, EncodingInfo& EI, LLVMContext& Ctx) {
+void StringEncoding::genRoutines(const std::string &Triple, EncodingInfo &EI,
+                                 LLVMContext &Ctx) {
   std::string hostTriple = sys::getProcessTriple();
 
   if (HOSTJIT == nullptr)
@@ -580,8 +574,8 @@ void StringEncoding::genRoutines(const std::string& Triple, EncodingInfo& EI, LL
   {
     Ctx.setDiscardValueNames(false);
     std::vector<std::string> argsTM{"-target", Triple, "-std=c++17"};
-    std::string pathTM = exitOnErr(
-        runClangExecutable(externC, "cpp", Triple, toStringRefArray(argsTM)));
+    std::string pathTM =
+        exitOnErr(runClangExecutable(externC, "cpp", Triple, argsTM));
     EI.TM = exitOnErr(loadModule(pathTM, Ctx));
     annotateRoutine(*EI.TM);
   }
