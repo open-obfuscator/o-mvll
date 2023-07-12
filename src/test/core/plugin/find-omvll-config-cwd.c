@@ -1,7 +1,7 @@
-// Prepare test output dir with yml-config, py-config and fake python-libs dir
+// Prepare test output dir with yml-config, py-config and python-libs dir
 // RUN: rm -rf %T_cwd
 // RUN: mkdir -p %T_cwd
-// RUN: mkdir -p %T_cwd/Python-3.10.7/Lib
+// RUN: cp -R %S/Inputs/Python-3.10.7 %T_cwd
 // RUN: cp %S/Inputs/omvll.yml %T_cwd/omvll.yml
 // RUN: cp %S/Inputs/config_empty.py %T_cwd/config_empty.py
 
