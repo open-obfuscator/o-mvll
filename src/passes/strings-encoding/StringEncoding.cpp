@@ -9,6 +9,7 @@
 #include "omvll/Jitter.hpp"
 #include "omvll/passes/arithmetic/Arithmetic.hpp"
 
+#include <llvm/ADT/Hashing.h>
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
@@ -20,11 +21,13 @@
 #include <llvm/IR/NoFolder.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/Error.h>
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/Path.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/ModuleUtils.h>
+#include <string>
 
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 
@@ -553,30 +556,63 @@ static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path,
   return M;
 }
 
+static Expected<std::unique_ptr<llvm::Module>>
+generateModule(StringRef Routine, StringRef Triple, LLVMContext &Ctx,
+               ArrayRef<std::string> ExtraArgs) {
+  llvm::hash_code HashValue = llvm::hash_combine(Routine, Triple);
+
+  SmallString<128> TempPath;
+  llvm::sys::path::system_temp_directory(true, TempPath);
+  llvm::sys::path::append(TempPath, "omvll-cache-" + Triple.str() + "-" +
+                                        std::to_string(HashValue) + ".ll");
+  std::string IRModuleFilename = std::string(TempPath.str());
+
+  if (llvm::sys::fs::exists(IRModuleFilename)) {
+    return loadModule(IRModuleFilename, Ctx);
+  } else {
+    auto MaybePath = runClangExecutable(Routine, "cpp", Triple, ExtraArgs);
+    if (!MaybePath)
+      return MaybePath.takeError();
+
+    auto MaybeModule = loadModule(*MaybePath, Ctx);
+    if (!MaybeModule)
+      return MaybeModule.takeError();
+
+    std::error_code EC;
+    llvm::raw_fd_ostream IRModuleFile(IRModuleFilename, EC,
+                                      llvm::sys::fs::OF_None);
+    if (EC)
+      return errorCodeToError(EC);
+
+    (*MaybeModule)->print(IRModuleFile, nullptr);
+
+    return MaybeModule;
+  }
+}
+
 void StringEncoding::genRoutines(const std::string &Triple, EncodingInfo &EI,
                                  LLVMContext &Ctx) {
-  std::string hostTriple = sys::getProcessTriple();
+  std::string HostTriple = sys::getProcessTriple();
 
   if (HOSTJIT == nullptr)
-    HOSTJIT = new Jitter(hostTriple);
+    HOSTJIT = new Jitter(HostTriple);
 
   std::uniform_int_distribution<size_t> Dist(0, ROUTINES.size() - 1);
   size_t idx = Dist(*RNG_);
   StringRef R = ROUTINES[idx];
 
-  ExitOnError exitOnErr("Nested clang invocation failed: ");
-  std::string externC = (Twine("extern \"C\" {\n") + R + "}\n").str();
+  ExitOnError ExitOnErr("Nested clang invocation failed: ");
+  std::string ExternC = (Twine("extern \"C\" {\n") + R + "}\n").str();
+
   {
-    std::string pathHM = exitOnErr(
-        runClangExecutable(externC, "cpp", hostTriple, {"-std=c++17"}));
-    EI.HM = exitOnErr(loadModule(pathHM, HOSTJIT->getContext()));
+    EI.HM = ExitOnErr(generateModule(ExternC, HostTriple, HOSTJIT->getContext(),
+                                     {"-std=c++17"}));
   }
+
   {
     Ctx.setDiscardValueNames(false);
-    std::vector<std::string> argsTM{"-target", Triple, "-std=c++17"};
-    std::string pathTM =
-        exitOnErr(runClangExecutable(externC, "cpp", Triple, argsTM));
-    EI.TM = exitOnErr(loadModule(pathTM, Ctx));
+    EI.TM = ExitOnErr(generateModule(ExternC, Triple, Ctx,
+                                     {"-target", Triple, "-std=c++17"}));
     annotateRoutine(*EI.TM);
   }
 }
