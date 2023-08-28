@@ -8,12 +8,12 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: O-MVLL Android NDK r25
+      - name: O-MVLL Android NDK r25c
         shell: bash
         run: |
-          curl -LO https://data.romainthomas.fr/omvll-deps-ndk-r25.tar
+          curl -LO https://open-ofuscator.build38.io/static/omvll-deps-ndk-r25c.tar
           mkdir -p /tmp/third-party-ndk25
-          tar xvf ./omvll-deps-ndk-r25.tar --directory=/tmp/third-party-ndk25
+          tar xvf ./omvll-deps-ndk-r25c.tar --directory=/tmp/third-party-ndk25
           curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz
           tar xzvf Python-3.10.7.tgz --directory=/tmp
           docker run --rm \

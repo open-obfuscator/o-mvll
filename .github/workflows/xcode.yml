@@ -8,12 +8,12 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: O-MVLL Xcode 14
+      - name: O-MVLL Xcode 14.1
         shell: bash
         run: |
-          curl -LO https://data.romainthomas.fr/omvll-deps-xcode-14.tar
+          curl -LO https://open-ofuscator.build38.io/static/omvll-deps-xcode-14_1.tar
           mkdir -p /tmp/third-party-xcode14
-          tar xvf ./omvll-deps-xcode-14.tar --directory=/tmp/third-party-xcode14
+          tar xvf ./omvll-deps-xcode-14_1.tar --directory=/tmp/third-party-xcode14
           docker run --rm \
             -v /tmp/third-party-xcode14:/third-party \
             -v $GITHUB_WORKSPACE:/o-mvll \

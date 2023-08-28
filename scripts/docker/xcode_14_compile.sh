@@ -2,12 +2,14 @@
 set -ex
 mkdir -p /deps && cd /deps
 
-cp /third-party/LLVM-14.0.0git-Darwin-slim.tar.gz .
-cp /third-party/Python-slim.tar.gz .
-cp /third-party/pybind11.tar.gz .
-cp /third-party/spdlog-1.10.0-Darwin.tar.gz .
+cp /third-party/omvll-deps-xcode-*/LLVM-14.0.0git-arm64-Darwin.tar.gz .
+cp /third-party/omvll-deps-xcode-*/LLVM-14.0.0git-x86_64-Darwin.tar.gz .
+cp /third-party/omvll-deps-xcode-*/Python-slim.tar.gz .
+cp /third-party/omvll-deps-xcode-*/pybind11.tar.gz .
+cp /third-party/omvll-deps-xcode-*/spdlog-1.10.0-Darwin.tar.gz .
 
-tar xzvf LLVM-14.0.0git-Darwin-slim.tar.gz
+tar xzvf LLVM-14.0.0git-arm64-Darwin.tar.gz
+tar xzvf LLVM-14.0.0git-x86_64-Darwin.tar.gz
 tar xzvf Python-slim.tar.gz
 tar xzvf pybind11.tar.gz
 tar xzvf spdlog-1.10.0-Darwin.tar.gz
@@ -25,7 +27,7 @@ export OSXCROSS_TARGET="arm64-apple-darwin22"
 
 cmake -GNinja ../.. \
       -DCMAKE_TOOLCHAIN_FILE=${OSXCROSS_TARGET_DIR}/toolchain.cmake \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="13.0" \
       -DOSXCROSS_HOST=${OSXCROSS_HOST} \
       -DOSXCROSS_TARGET_DIR=${OSXCROSS_TARGET_DIR} \
       -DOSXCROSS_SDK=${OSXCROSS_SDK} \
@@ -37,8 +39,7 @@ cmake -GNinja ../.. \
       -DPython3_INCLUDE_DIR=/deps/include/python3.10 \
       -Dpybind11_DIR=/deps/share/cmake/pybind11 \
       -Dspdlog_DIR=/deps/lib/cmake/spdlog \
-      -DLLVM_DIR=/deps/LLVM-14.0.0git-Darwin/lib/cmake/llvm \
-      -DClang_DIR=/deps/LLVM-14.0.0git-Darwin/lib/cmake/clang
+      -DLLVM_DIR=/deps/LLVM-14.0.0git-arm64-Darwin/lib/cmake/llvm \
 
 ninja
 
@@ -50,7 +51,7 @@ export OSXCROSS_TARGET="x86_64-apple-darwin22"
 
 cmake -GNinja ../.. \
       -DCMAKE_TOOLCHAIN_FILE=${OSXCROSS_TARGET_DIR}/toolchain.cmake \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="13.0" \
       -DOSXCROSS_HOST=${OSXCROSS_HOST} \
       -DOSXCROSS_TARGET_DIR=${OSXCROSS_TARGET_DIR} \
       -DOSXCROSS_SDK=${OSXCROSS_SDK} \
@@ -62,8 +63,7 @@ cmake -GNinja ../.. \
       -DPython3_INCLUDE_DIR=/deps/include/python3.10 \
       -Dpybind11_DIR=/deps/share/cmake/pybind11 \
       -Dspdlog_DIR=/deps/lib/cmake/spdlog \
-      -DLLVM_DIR=/deps/LLVM-14.0.0git-Darwin/lib/cmake/llvm \
-      -DClang_DIR=/deps/LLVM-14.0.0git-Darwin/lib/cmake/clang
+      -DLLVM_DIR=/deps/LLVM-14.0.0git-x86_64-Darwin/lib/cmake/llvm \
 
 ninja
 cd ..

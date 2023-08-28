@@ -36,7 +36,6 @@ RUN mkdir -p /usr/share/man/man1 && \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-
 ENV PATH="/osxcross/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/osxcross/lib:${LD_LIBRARY_PATH}"
 
