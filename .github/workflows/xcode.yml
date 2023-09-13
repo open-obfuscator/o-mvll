@@ -11,7 +11,7 @@ jobs:
       - name: O-MVLL Xcode 14.1
         shell: bash
         run: |
-          curl -LO https://open-ofuscator.build38.io/static/omvll-deps-xcode-14_1.tar
+          curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-14_1.tar
           mkdir -p /tmp/third-party-xcode14
           tar xvf ./omvll-deps-xcode-14_1.tar --directory=/tmp/third-party-xcode14
           docker run --rm \

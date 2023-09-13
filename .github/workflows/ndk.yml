@@ -11,7 +11,7 @@ jobs:
       - name: O-MVLL Android NDK r25c
         shell: bash
         run: |
-          curl -LO https://open-ofuscator.build38.io/static/omvll-deps-ndk-r25c.tar
+          curl -LO https://open-obfuscator.build38.io/static/omvll-deps-ndk-r25c.tar
           mkdir -p /tmp/third-party-ndk25
           tar xvf ./omvll-deps-ndk-r25c.tar --directory=/tmp/third-party-ndk25
           curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz
