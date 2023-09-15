@@ -37,4 +37,19 @@ jobs:
             -e OMVLL_S3_SECRET=$OMVLL_S3_SECRET \
             --rm \
             openobfuscator/deployment python3 /o-mvll/.github/scripts/s3-deploy.py
-
+      - name: Experimental Deployment
+        env:
+          BUILD38_S3_KEY: ${{ secrets.BUILD38_S3_KEY }}
+          BUILD38_S3_SECRET: ${{ secrets.BUILD38_S3_SECRET }}
+        shell: bash
+        run: |
+          docker run \
+            -v $GITHUB_WORKSPACE:/o-mvll \
+            -e GITHUB_ACTIONS="true" \
+            -e GITHUB_WORKSPACE=$GITHUB_WORKSPACE \
+            -e GITHUB_REF=$GITHUB_REF \
+            -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
+            -e BUILD38_S3_KEY=$BUILD38_S3_KEY \
+            -e BUILD38_S3_SECRET=$BUILD38_S3_SECRET \
+            --rm \
+            openobfuscator/deployment python3 /o-mvll/.github/scripts/s3-deploy.py

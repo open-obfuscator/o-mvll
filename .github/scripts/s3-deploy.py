@@ -8,6 +8,7 @@ from enum import Enum, auto
 import tempfile
 import boto3
 from botocore.exceptions import ClientError
+from datetime import datetime
 
 class CI(Enum):
     UNKNOWN        = auto()
@@ -87,12 +88,24 @@ OMVLL_S3_BUCKET   = "obfuscator"
 OMVLL_S3_KEY      = os.getenv("OMVLL_S3_KEY", None)
 OMVLL_S3_SECRET   = os.getenv("OMVLL_S3_SECRET", None)
 
-if OMVLL_S3_KEY is None or len(OMVLL_S3_KEY) == 0:
-    logger.error("OPEN_OBFUSCATOR_S3_KEY is not set!")
-    sys.exit(1)
+BUILD38_S3_REGION   = "eu-central-1"
+BUILD38_S3_ENDPOINT = "https://s3.{region}.amazonaws.com".format(region=BUILD38_S3_REGION)
+BUILD38_S3_BUCKET   = "build38-open-obfuscator"
+BUILD38_S3_KEY      = os.getenv("BUILD38_S3_KEY", None)
+BUILD38_S3_SECRET   = os.getenv("BUILD38_S3_SECRET", None)
 
-if OMVLL_S3_SECRET is None or len(OMVLL_S3_SECRET) == 0:
-    logger.error("OPEN_OBFUSCATOR_S3_SECRET is not set!")
+omvll_keys_set = True
+build38_keys_set = True
+
+if (OMVLL_S3_KEY is None or len(OMVLL_S3_KEY) == 0) or (OMVLL_S3_SECRET is None or len(OMVLL_S3_SECRET) == 0):
+    logger.error("OMVLL_S3_KEY/OMVLL_S3_SECRET not set!")
+    omvll_keys_set = False
+
+if (BUILD38_S3_KEY is None or len(BUILD38_S3_KEY) == 0) or (BUILD38_S3_SECRET is None or len(BUILD38_S3_SECRET) == 0):
+    logger.error("BUILD38_S3_KEY/BUILD38_S3_SECRET not set!")
+    build38_keys_set = False
+
+if not omvll_keys_set and not build38_keys_set:
     sys.exit(1)
 
 CI_CWD = pathlib.Path(get_ci_workdir(CURRENT_CI))
@@ -120,7 +133,7 @@ INDEX_TEMPLATE = r"""
 
 SKIP_LIST = ["index.html"]
 
-s3 = boto3.resource(
+omvll_s3 = boto3.resource(
     's3',
     region_name=OMVLL_S3_REGION,
     use_ssl=True,
@@ -129,25 +142,33 @@ s3 = boto3.resource(
     aws_secret_access_key=OMVLL_S3_SECRET
 )
 
+build38_s3 = boto3.resource(
+    's3',
+    region_name=BUILD38_S3_REGION,
+    use_ssl=True,
+    endpoint_url=BUILD38_S3_ENDPOINT,
+    aws_access_key_id=BUILD38_S3_KEY,
+    aws_secret_access_key=BUILD38_S3_SECRET
+)
 
-def push(file: str, dir_name: str):
+def push(file: str, dir_name: str, s3_bucket_name: str, s3_resource):
     zipfile = pathlib.Path(file)
-    dst = f"{dir_name}/omvll/{zipfile.name}"
+    now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    dst = f"{dir_name}/{zipfile.stem}_{now}{zipfile.suffix}"
     logger.info("Uploading %s to %s", file, dst)
     try:
-        obj = s3.Object(OMVLL_S3_BUCKET, dst)
+        obj = s3_resource.Object(s3_bucket_name, dst)
         obj.put(Body=zipfile.read_bytes())
         return 0
     except ClientError as e:
         logger.error("S3 push failed: %s", e)
         return 1
 
-
 def filename(object):
     return pathlib.Path(object.key).name
 
-def generate_index(dir_name: str):
-    files = s3.Bucket(OMVLL_S3_BUCKET).objects.filter(Prefix=f'{dir_name}/omvll')
+def generate_index(dir_name: str, s3_bucket_name: str, s3_resource):
+    files = s3_resource.Bucket(s3_bucket_name).objects.filter(Prefix=f'{dir_name}/omvll')
     tmpl_info = [(object.key, filename(object)) for object in files if filename(object) not in SKIP_LIST]
     html = Template(INDEX_TEMPLATE).render(files=tmpl_info)
     return html
@@ -163,22 +184,41 @@ if BRANCH_NAME.startswith("release-"):
 if IS_TAGGED:
     dir_name = str(TAG_NAME)
 
+dir_name = f"{dir_name}/omvll" if omvll_keys_set else "ci"
 logger.info("Destination directory: %s", dir_name)
 
 for file in DIST_DIR.glob("*.zip"):
     logger.info("[ZIP   ] Uploading '%s'", file.as_posix())
-    push(file.as_posix(), dir_name)
+    # Nightly deployment
+    if omvll_keys_set:
+        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3)
+    # Experimental deployment
+    if build38_keys_set:
+        push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3)
 
 for file in DIST_DIR.glob("*.tar.gz"):
     logger.info("[TAR.GZ] Uploading '%s'", file.as_posix())
-    push(file.as_posix(), dir_name)
+    # Nightly deployment
+    if omvll_keys_set:
+        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3)
+    # Experimental deployment
+    if build38_keys_set:
+        push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3)
 
-nightly_index = generate_index(dir_name)
-with tempfile.TemporaryDirectory() as tmp:
-    tmp = pathlib.Path(tmp)
-    index = (tmp / "index.html")
-    index.write_text(nightly_index)
-    push(index.as_posix(), dir_name)
+if omvll_keys_set:
+    nightly_index = generate_index(dir_name, OMVLL_S3_BUCKET, omvll_s3)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        index = (tmp / "index.html")
+        index.write_text(nightly_index)
+        push(index.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3)
+
+if build38_keys_set:
+    experimental_index = generate_index(dir_name, BUILD38_S3_BUCKET, build38_s3)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        index = (tmp / "index.html")
+        index.write_text(experimental_index)
+        push(index.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3)
 
 logger.info("Done!")
-
