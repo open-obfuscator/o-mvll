@@ -118,8 +118,7 @@ DIST_DIR  = REPODIR / "dist"
 
 logger.info("Working directory: %s", CI_CWD)
 
-INDEX_TEMPLATE = r"""
-<!DOCTYPE html>
+INDEX_TEMPLATE = r"""<!DOCTYPE html>
 <html>
 <title>Packages for O-MVLL</title>
 <body>
@@ -151,10 +150,13 @@ build38_s3 = boto3.resource(
     aws_secret_access_key=BUILD38_S3_SECRET
 )
 
-def push(file: str, dir_name: str, s3_bucket_name: str, s3_resource):
+def push(file: str, dir_name: str, s3_bucket_name: str, s3_resource, use_timestamp=True):
     zipfile = pathlib.Path(file)
-    now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-    dst = f"{dir_name}/{zipfile.stem}_{now}{zipfile.suffix}"
+    if use_timestamp:
+        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        dst = f"{dir_name}/{zipfile.stem}_{now}{zipfile.suffix}"
+    else:
+        dst = f"{dir_name}/{zipfile.name}"
     logger.info("Uploading %s to %s", file, dst)
     try:
         obj = s3_resource.Object(s3_bucket_name, dst)
@@ -211,7 +213,7 @@ if omvll_keys_set:
         tmp = pathlib.Path(tmp)
         index = (tmp / "index.html")
         index.write_text(nightly_index)
-        push(index.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3)
+        push(index.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, False)
 
 if build38_keys_set:
     experimental_index = generate_index(dir_name, BUILD38_S3_BUCKET, build38_s3)
@@ -219,6 +221,6 @@ if build38_keys_set:
         tmp = pathlib.Path(tmp)
         index = (tmp / "index.html")
         index.write_text(experimental_index)
-        push(index.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3)
+        push(index.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3, False)
 
 logger.info("Done!")
