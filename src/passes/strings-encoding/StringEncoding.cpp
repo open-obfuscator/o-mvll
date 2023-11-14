@@ -334,7 +334,7 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
   for (size_t i = 0; i < NewF->arg_size(); ++i) {
     auto* E = NewF->getFunctionType()->getParamType(i);
     auto* V = Args[i]->getType();
-    if (E->getTypeID() != V->getTypeID()) {
+    if (E != V) {
       std::string err = fmt::format("Args #{}: Expecting {} while it is {}",
                                     i, ToString(*E), ToString(*V));
       fatalError(err.c_str());
