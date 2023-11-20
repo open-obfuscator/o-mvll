@@ -94,6 +94,9 @@ BUILD38_S3_BUCKET   = "build38-open-obfuscator"
 BUILD38_S3_KEY      = os.getenv("BUILD38_S3_KEY", None)
 BUILD38_S3_SECRET   = os.getenv("BUILD38_S3_SECRET", None)
 
+BINARIES_CONTENT_TYPE = "binary/octet-stream"
+INDEX_CONTENT_TYPE = "text/html"
+
 omvll_keys_set = True
 build38_keys_set = True
 
@@ -150,7 +153,7 @@ build38_s3 = boto3.resource(
     aws_secret_access_key=BUILD38_S3_SECRET
 )
 
-def push(file: str, dir_name: str, s3_bucket_name: str, s3_resource, use_timestamp=True):
+def push(file: str, dir_name: str, s3_bucket_name: str, s3_resource, s3_content_type: str, use_timestamp=True):
     zipfile = pathlib.Path(file)
     if use_timestamp:
         now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
@@ -160,7 +163,7 @@ def push(file: str, dir_name: str, s3_bucket_name: str, s3_resource, use_timesta
     logger.info("Uploading %s to %s", file, dst)
     try:
         obj = s3_resource.Object(s3_bucket_name, dst)
-        obj.put(Body=zipfile.read_bytes())
+        obj.put(Body=zipfile.read_bytes(), ContentType=s3_content_type)
         return 0
     except ClientError as e:
         logger.error("S3 push failed: %s", e)
@@ -193,19 +196,19 @@ for file in DIST_DIR.glob("*.zip"):
     logger.info("[ZIP   ] Uploading '%s'", file.as_posix())
     # Nightly deployment
     if omvll_keys_set:
-        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3)
+        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, BINARIES_CONTENT_TYPE)
     # Experimental deployment
     if build38_keys_set:
-        push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3)
+        push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3, BINARIES_CONTENT_TYPE)
 
 for file in DIST_DIR.glob("*.tar.gz"):
     logger.info("[TAR.GZ] Uploading '%s'", file.as_posix())
     # Nightly deployment
     if omvll_keys_set:
-        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3)
+        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, BINARIES_CONTENT_TYPE)
     # Experimental deployment
     if build38_keys_set:
-        push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3)
+        push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3, BINARIES_CONTENT_TYPE)
 
 if omvll_keys_set:
     nightly_index = generate_index(dir_name, OMVLL_S3_BUCKET, omvll_s3)
@@ -213,7 +216,7 @@ if omvll_keys_set:
         tmp = pathlib.Path(tmp)
         index = (tmp / "index.html")
         index.write_text(nightly_index)
-        push(index.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, False)
+        push(index.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, INDEX_CONTENT_TYPE, False)
 
 if build38_keys_set:
     experimental_index = generate_index(dir_name, BUILD38_S3_BUCKET, build38_s3)
@@ -221,6 +224,6 @@ if build38_keys_set:
         tmp = pathlib.Path(tmp)
         index = (tmp / "index.html")
         index.write_text(experimental_index)
-        push(index.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3, False)
+        push(index.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3, INDEX_CONTENT_TYPE, False)
 
 logger.info("Done!")
