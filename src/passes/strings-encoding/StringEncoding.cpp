@@ -14,10 +14,13 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Demangle/Demangle.h>
+#include <llvm/IR/Constant.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Instruction.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/NoFolder.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/Error.h>
@@ -88,6 +91,22 @@ inline bool isSkip(const StringEncodingOpt& encInfo) {
   return std::get_if<StringEncOptSkip>(&encInfo) != nullptr;
 }
 
+GlobalVariable *extractGlobalVariable(ConstantExpr *Expr) {
+  while (Expr) {
+    if (Expr->getOpcode() == llvm::Instruction::IntToPtr ||
+        llvm::Instruction::isBinaryOp(Expr->getOpcode())) {
+      Expr = dyn_cast<ConstantExpr>(Expr->getOperand(0));
+    } else if (Expr->getOpcode() == llvm::Instruction::PtrToInt ||
+               Expr->getOpcode() == llvm::Instruction::GetElementPtr) {
+      return dyn_cast<GlobalVariable>(Expr->getOperand(0));
+    } else {
+      break;
+    }
+  }
+
+  return nullptr;
+}
+
 bool StringEncoding::runOnBasicBlock(Module& M, Function& F, BasicBlock& BB,
                                      ObfuscationConfig& userConfig)
 {
@@ -103,9 +122,13 @@ bool StringEncoding::runOnBasicBlock(Module& M, Function& F, BasicBlock& BB,
     for (Use& Op : I.operands()) {
       GlobalVariable *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts());
 
-      if (G == nullptr) {
-        continue;
+      if (!G) {
+        if (auto *CE = dyn_cast<ConstantExpr>(Op))
+          G = extractGlobalVariable(CE);
       }
+
+      if (!G)
+        continue;
 
       if (!isEligible(*G)) {
         continue;
@@ -269,6 +292,24 @@ bool StringEncoding::injectOnStack(BasicBlock& BB, Instruction& I, Use& Op, Glob
   return true;
 }
 
+std::pair<Instruction *, Instruction *>
+materializeConstantExpression(Instruction *Point, ConstantExpr *CE) {
+  auto *Inst = CE->getAsInstruction();
+  auto *Prev = Inst;
+  Inst->insertBefore(Point);
+
+  Value *Expr = Inst->getOperand(0);
+  while (isa<ConstantExpr>(Expr)) {
+    auto *NewInst = cast<ConstantExpr>(Expr)->getAsInstruction();
+    NewInst->insertBefore(Prev);
+    Prev->setOperand(0, NewInst);
+    Expr = NewInst->getOperand(0);
+    Prev = NewInst;
+  }
+
+  return {Inst, Prev};
+}
+
 bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, GlobalVariable& G,
                                        ConstantDataSequential& data, const StringEncoding::EncodingInfo& info)
 {
@@ -285,8 +326,9 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
   IRBuilder<NoFolder> IRB(&BB);
   IRB.SetInsertPoint(&I);
 
-  AllocaInst* clearBuffer = IRB.CreateAlloca(IRB.getInt8Ty(),
-                                             IRB.getInt32(str.size()));
+  AllocaInst *ClearBuffer =
+      IRB.CreateAlloca(ArrayType::get(IRB.getInt8Ty(), str.size()));
+  auto *CastClearBuffer = IRB.CreateBitCast(ClearBuffer, IRB.getInt8PtrTy());
 
   AllocaInst* Key     = IRB.CreateAlloca(IRB.getInt64Ty());
   AllocaInst* StrSize = IRB.CreateAlloca(IRB.getInt32Ty());
@@ -311,6 +353,14 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
     fatalError("Can't find the 'decode' routine");
   }
 
+  // TODO: support ObjC strings as well
+  Value *CastEncPtr = nullptr;
+  if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
+    assert(extractGlobalVariable(CE) == &G &&
+           "Previously extracted global variable need to match");
+    CastEncPtr = IRB.CreateBitCast(&G, IRB.getInt8PtrTy());
+  }
+
   auto NewF = Function::Create(FDecode->getFunctionType(), llvm::GlobalValue::PrivateLinkage,
                                "__omvll_decode", BB.getModule());
 
@@ -323,9 +373,8 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
   SmallVector<ReturnInst*, 8> Returns;
   CloneFunctionInto(NewF, FDecode, VMap, CloneFunctionChangeType::DifferentModule, Returns);
 
-  std::vector<Value*> Args = {
-    clearBuffer, EncPtr, KeyVal, VStrSize
-  };
+  std::vector<Value *> Args = {
+      CastClearBuffer, CastEncPtr ? CastEncPtr : EncPtr, KeyVal, VStrSize};
 
   if (NewF->arg_size() != 4) {
     fatalError(fmt::format("Expecting 4 arguments ({} provided)", NewF->arg_size()));
@@ -344,7 +393,17 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
   CallInst* callee = IRB.CreateCall(NewF->getFunctionType(), NewF, Args);
   inline_wlist_.push_back(callee);
 
-  I.setOperand(Op.getOperandNo(), clearBuffer);
+  if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
+    auto [First, Last] = materializeConstantExpression(&I, CE);
+    assert(((First != Last) ||
+            (isa<GetElementPtrInst>(First) || isa<PtrToIntInst>(First))) &&
+           "Nested constantexpr in getelementptr/ptrtoint should not appear?");
+    Last->setOperand(0, ClearBuffer);
+    I.setOperand(Op.getOperandNo(), First);
+  } else {
+    I.setOperand(Op.getOperandNo(), ClearBuffer);
+  }
+
   return true;
 }
 

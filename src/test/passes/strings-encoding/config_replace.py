@@ -7,6 +7,8 @@ class MyConfig(omvll.ObfuscationConfig):
     def obfuscate_string(self, _, __, string: bytes):
         if string.endswith(b".cpp"):
             return omvll.StringEncOptGlobal()
+        if string.endswith(b"Swift"):
+            return omvll.StringEncOptStack()
 
 @lru_cache(maxsize=1)
 def omvll_get_config() -> omvll.ObfuscationConfig:
