@@ -361,8 +361,10 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
     CastEncPtr = IRB.CreateBitCast(&G, IRB.getInt8PtrTy());
   }
 
-  auto NewF = Function::Create(FDecode->getFunctionType(), llvm::GlobalValue::PrivateLinkage,
-                               "__omvll_decode", BB.getModule());
+  auto *M = BB.getModule();
+  FunctionCallee DecodeCallee =
+      M->getOrInsertFunction("__omvll_decode", FDecode->getFunctionType());
+  auto *NewF = cast<Function>(DecodeCallee.getCallee());
 
   ValueToValueMapTy VMap;
   auto NewFArgsIt = NewF->arg_begin();
@@ -372,6 +374,7 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
   }
   SmallVector<ReturnInst*, 8> Returns;
   CloneFunctionInto(NewF, FDecode, VMap, CloneFunctionChangeType::DifferentModule, Returns);
+  NewF->setDSOLocal(true);
 
   std::vector<Value *> Args = {
       CastClearBuffer, CastEncPtr ? CastEncPtr : EncPtr, KeyVal, VStrSize};
@@ -508,8 +511,9 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
     fatalError("Can't find the 'decode' routine");
   }
 
-  auto NewF = Function::Create(FDecode->getFunctionType(), llvm::GlobalValue::PrivateLinkage,
-                               "__omvll_decode", M);
+  FunctionCallee DecodeCallee =
+      M->getOrInsertFunction("__omvll_decode", FDecode->getFunctionType());
+  auto *NewF = cast<Function>(DecodeCallee.getCallee());
 
   ValueToValueMapTy VMap;
   auto NewFArgsIt = NewF->arg_begin();
@@ -519,6 +523,7 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
   }
   SmallVector<ReturnInst*, 8> Returns;
   CloneFunctionInto(NewF, FDecode, VMap, CloneFunctionChangeType::DifferentModule, Returns);
+  NewF->setDSOLocal(true);
 
   std::vector<Value*> Args = {
     DataPtr, DataPtr, KeyVal, VStrSize
