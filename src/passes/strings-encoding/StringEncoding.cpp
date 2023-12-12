@@ -355,9 +355,10 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
 
   // TODO: support ObjC strings as well
   Value *CastEncPtr = nullptr;
-  if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
-    assert(extractGlobalVariable(CE) == &G &&
-           "Previously extracted global variable need to match");
+  if (isa<GlobalVariable>(EncPtr) || isa<ConstantExpr>(EncPtr)) {
+    if (isa<ConstantExpr>(EncPtr))
+      assert(extractGlobalVariable(cast<ConstantExpr>(EncPtr)) == &G &&
+             "Previously extracted global variable need to match");
     CastEncPtr = IRB.CreateBitCast(&G, IRB.getInt8PtrTy());
   }
 
