@@ -82,12 +82,6 @@ REPODIR    = CURRENTDIR / ".." / ".."
 # should starts with '<bucket>'.s3.<region>.scw.cloud
 # Nevertheless boto3 uses /{Bucket} endpoints suffix
 # which create issues (see: https://stackoverflow.com/a/70383653)
-OMVLL_S3_REGION   = "fr-par"
-OMVLL_S3_ENDPOINT = "https://s3.{region}.scw.cloud".format(region=OMVLL_S3_REGION)
-OMVLL_S3_BUCKET   = "obfuscator"
-OMVLL_S3_KEY      = os.getenv("OMVLL_S3_KEY", None)
-OMVLL_S3_SECRET   = os.getenv("OMVLL_S3_SECRET", None)
-
 BUILD38_S3_REGION   = "eu-central-1"
 BUILD38_S3_ENDPOINT = "https://s3.{region}.amazonaws.com".format(region=BUILD38_S3_REGION)
 BUILD38_S3_BUCKET   = "build38-open-obfuscator"
@@ -97,18 +91,13 @@ BUILD38_S3_SECRET   = os.getenv("BUILD38_S3_SECRET", None)
 BINARIES_CONTENT_TYPE = "binary/octet-stream"
 INDEX_CONTENT_TYPE = "text/html"
 
-omvll_keys_set = True
 build38_keys_set = True
-
-if (OMVLL_S3_KEY is None or len(OMVLL_S3_KEY) == 0) or (OMVLL_S3_SECRET is None or len(OMVLL_S3_SECRET) == 0):
-    logger.error("OMVLL_S3_KEY/OMVLL_S3_SECRET not set!")
-    omvll_keys_set = False
 
 if (BUILD38_S3_KEY is None or len(BUILD38_S3_KEY) == 0) or (BUILD38_S3_SECRET is None or len(BUILD38_S3_SECRET) == 0):
     logger.error("BUILD38_S3_KEY/BUILD38_S3_SECRET not set!")
     build38_keys_set = False
 
-if not omvll_keys_set and not build38_keys_set:
+if not build38_keys_set:
     sys.exit(1)
 
 CI_CWD = pathlib.Path(get_ci_workdir(CURRENT_CI))
@@ -134,15 +123,6 @@ INDEX_TEMPLATE = r"""<!DOCTYPE html>
 """
 
 SKIP_LIST = ["index.html"]
-
-omvll_s3 = boto3.resource(
-    's3',
-    region_name=OMVLL_S3_REGION,
-    use_ssl=True,
-    endpoint_url=OMVLL_S3_ENDPOINT,
-    aws_access_key_id=OMVLL_S3_KEY,
-    aws_secret_access_key=OMVLL_S3_SECRET
-)
 
 build38_s3 = boto3.resource(
     's3',
@@ -178,45 +158,18 @@ def generate_index(dir_name: str, s3_bucket_name: str, s3_resource):
     html = Template(INDEX_TEMPLATE).render(files=tmpl_info)
     return html
 
-dir_name = "latest"
-
-if BRANCH_NAME != "main":
-    dir_name = "{}".format(BRANCH_NAME.replace("/", "-").replace("_", "-"))
-
-if BRANCH_NAME.startswith("release-"):
-    _, dir_name = BRANCH_NAME.split("release-")
-
-if IS_TAGGED:
-    dir_name = str(TAG_NAME)
-
-dir_name = f"{dir_name}/omvll" if omvll_keys_set else "ci"
+dir_name = "ci"
 logger.info("Destination directory: %s", dir_name)
 
 for file in DIST_DIR.glob("*.zip"):
     logger.info("[ZIP   ] Uploading '%s'", file.as_posix())
-    # Nightly deployment
-    if omvll_keys_set:
-        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, BINARIES_CONTENT_TYPE)
-    # Experimental deployment
     if build38_keys_set:
         push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3, BINARIES_CONTENT_TYPE)
 
 for file in DIST_DIR.glob("*.tar.gz"):
     logger.info("[TAR.GZ] Uploading '%s'", file.as_posix())
-    # Nightly deployment
-    if omvll_keys_set:
-        push(file.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, BINARIES_CONTENT_TYPE)
-    # Experimental deployment
     if build38_keys_set:
         push(file.as_posix(), dir_name, BUILD38_S3_BUCKET, build38_s3, BINARIES_CONTENT_TYPE)
-
-if omvll_keys_set:
-    nightly_index = generate_index(dir_name, OMVLL_S3_BUCKET, omvll_s3)
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = pathlib.Path(tmp)
-        index = (tmp / "index.html")
-        index.write_text(nightly_index)
-        push(index.as_posix(), dir_name, OMVLL_S3_BUCKET, omvll_s3, INDEX_CONTENT_TYPE, False)
 
 if build38_keys_set:
     experimental_index = generate_index(dir_name, BUILD38_S3_BUCKET, build38_s3)

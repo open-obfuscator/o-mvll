@@ -21,23 +21,7 @@ jobs:
             -v /tmp/Python-3.10.7:/Python-3.10.7 \
             -v $GITHUB_WORKSPACE:/o-mvll \
             openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/ndk_r25_compile.sh
-      - name: Nightly Deployment
-        env:
-          OMVLL_S3_KEY: ${{ secrets.OMVLL_S3_KEY }}
-          OMVLL_S3_SECRET: ${{ secrets.OMVLL_S3_SECRET }}
-        shell: bash
-        run: |
-          docker run \
-            -v $GITHUB_WORKSPACE:/o-mvll \
-            -e GITHUB_ACTIONS="true" \
-            -e GITHUB_WORKSPACE=$GITHUB_WORKSPACE \
-            -e GITHUB_REF=$GITHUB_REF \
-            -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
-            -e OMVLL_S3_KEY=$OMVLL_S3_KEY \
-            -e OMVLL_S3_SECRET=$OMVLL_S3_SECRET \
-            --rm \
-            openobfuscator/deployment python3 /o-mvll/.github/scripts/s3-deploy.py
-      - name: Experimental Deployment
+      - name: O-MVLL Deployment
         env:
           BUILD38_S3_KEY: ${{ secrets.BUILD38_S3_KEY }}
           BUILD38_S3_SECRET: ${{ secrets.BUILD38_S3_SECRET }}
