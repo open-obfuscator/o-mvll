@@ -107,9 +107,6 @@ std::unique_ptr<MemoryBuffer> Jitter::jitAsm(const std::string& Asm, size_t Size
   orc::LLJITBuilder Builder;
   std::string TT = Triple_;
   orc::JITTargetMachineBuilder JTMB{llvm::Triple(TT)};
-  // Note(romain): At this point, the code crashes on OSX/iOS.
-  // -> To be investigated
-#if 0
   JTMB.setRelocationModel(Reloc::Model::PIC_);
   JTMB.setCodeModel(CodeModel::Large);
   JTMB.setCodeGenOptLevel(CodeGenOpt::Level::None);
@@ -117,7 +114,6 @@ std::unique_ptr<MemoryBuffer> Jitter::jitAsm(const std::string& Asm, size_t Size
   Builder
     .setPlatformSetUp(orc::setUpInactivePlatform) // /!\Only for iOS???
     .setJITTargetMachineBuilder(JTMB);
-#endif
 
   Builder
     .setJITTargetMachineBuilder(std::move(JTMB));
