@@ -255,9 +255,10 @@ PreservedAnalyses Arithmetic::run(Module &M,
 
   for (Function* F : LFs) {
     ArithmeticOpt opt = config.getUserConfig()->obfuscate_arithmetic(&M, F);
-    if (opt) {
-      opts_.insert({F, std::move(opt)});
-    }
+    if (!opt)
+      continue;
+
+    opts_.insert({F, std::move(opt)});
 
     for (BasicBlock& BB : *F) {
       Changed |= runOnBasicBlock(BB);

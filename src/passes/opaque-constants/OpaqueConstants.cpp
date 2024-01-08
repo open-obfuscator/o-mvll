@@ -258,11 +258,12 @@ PreservedAnalyses OpaqueConstants::run(Module &M,
   for (Function& F : M) {
     OpaqueConstantsOpt opt = config.getUserConfig()->obfuscate_constants(&M, &F);
     OpaqueConstantsOpt* inserted = nullptr;
-    if (!isSkip(opt)) {
-      auto ret = opts_.insert({&F, std::move(opt)});
-      if (ret.second) {
-        inserted = &ret.first->second;
-      }
+    if (isSkip(opt))
+      continue;
+
+    auto ret = opts_.insert({&F, std::move(opt)});
+    if (ret.second) {
+      inserted = &ret.first->second;
     }
 
     for (BasicBlock& BB : F) {
