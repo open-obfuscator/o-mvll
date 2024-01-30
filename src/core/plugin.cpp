@@ -143,6 +143,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
                      */
                     REGISTER_PASS(omvll::ObjCleaner);
                     REGISTER_PASS(omvll::Cleaning);
+                    REGISTER_PASS(omvll::TakInjection);
                   }
                   ONCE_FLAG = true;
                   return true;

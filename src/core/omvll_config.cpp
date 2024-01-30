@@ -5,18 +5,19 @@ namespace omvll {
 config_t config;
 void init_default_config() {
   config.passes = {
-    AntiHook::name().str(),
-    StringEncoding::name().str(),
+      AntiHook::name().str(),
+      StringEncoding::name().str(),
 
-    OpaqueFieldAccess::name().str(),
-    ControlFlowFlattening::name().str(),
-    BreakControlFlow::name().str(),
+      OpaqueFieldAccess::name().str(),
+      ControlFlowFlattening::name().str(),
+      BreakControlFlow::name().str(),
 
-    OpaqueConstants::name().str(),
-    Arithmetic::name().str(),
+      OpaqueConstants::name().str(),
+      Arithmetic::name().str(),
 
-    // Last pass
-    Cleaning::name().str(),
+      // Last pass
+      Cleaning::name().str(),
+      TakInjection::name().str(),
   };
 
   config.inline_jni_wrappers = true;

@@ -1,0 +1,114 @@
+#ifndef OMVLL_POSTCODING_H
+#define OMVLL_POSTCODING_H
+
+namespace omvll {
+
+#define STRINGIZE(s) #s
+#define EXPAND_AND_STRINGIZE(s) STRINGIZE(s)
+#define __tak_injection lKeEc0yFCfkP2MlhnLkhRrPMjX_gGT37XzdnMcdllvg
+#define TakInjectionFunctionName EXPAND_AND_STRINGIZE(__tak_injection)
+
+static constexpr auto TakInjectionFunction = R"delim(
+  extern "C" {
+    #import <Foundation/Foundation.h>
+    #import <dispatch/dispatch.h>
+    #include <stdlib.h>
+    #include <unistd.h>
+
+    #define NO_NETWORK_RETRIES  5
+    #define RETRY_WAIT_INTERVAL 10
+    #define CHECK_WAIT_INTERVAL 10
+    #define MAX_RETRY           10
+    #define TAK_SUCCESS                     ((int)0x00000000)
+    #define TAK_RE_REGISTER_SUCCESS         ((int)0x00000002)
+    #define TAK_API_ALREADY_INITIALIZED     ((int)0x00010001)
+    #define TAK_LICENSE_ABOUT_TO_EXPIRE     ((int)0x00020007)
+    #define TAK_NETWORK_TIMEOUT             ((int)0x00030008)
+    #define TAK_NETWORK_ERROR               ((int)0x00030009)
+    #define DQP_BACKGROUND DISPATCH_QUEUE_PRIORITY_BACKGROUND
+
+    typedef int TAK_RETURN;
+    typedef void JNIEnv;
+    typedef void* jobject;
+
+    TAK_RETURN TakLib_initialize(const char* workingPath,
+                                const char* licenseFilePath,
+                                JNIEnv *env,
+                                jobject contextWrapper);
+    TAK_RETURN TakLib_register(const char* userHash);
+    bool TakLib_isRegistered(TAK_RETURN *error);
+    TAK_RETURN TakLib_createRuntimeCheckThread(int timeInterval);
+    TAK_RETURN TakLib_checkIntegrity(const char* safetynetAttestation);
+    bool TakLib_isRuntimeThreadActive(bool relaunch);
+
+    void )delim" TakInjectionFunctionName R"delim(() {
+      dispatch_async(dispatch_get_global_queue(DQP_BACKGROUND, 0), ^{
+        NSString *documentdir =
+        [NSSearchPathForDirectoriesInDomains(
+            NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+
+        char* workingPath =
+        (char*)[documentdir cStringUsingEncoding:NSUTF8StringEncoding];
+
+        TAK_RETURN ret = TakLib_initialize(workingPath,
+                                           "license.tak",
+                                           NULL,
+                                           NULL);
+
+        if (ret != TAK_SUCCESS && ret != TAK_API_ALREADY_INITIALIZED
+            && ret != TAK_LICENSE_ABOUT_TO_EXPIRE) {
+            // Make it crash
+          abort();
+        }
+
+        TAK_RETURN error;
+        bool isRegistered = TakLib_isRegistered(&error);
+        int retryNum = 0;
+        if (!isRegistered) {
+          do {
+            if (retryNum > 0)
+              sleep(RETRY_WAIT_INTERVAL);
+
+            ret = TakLib_register(NULL);
+            retryNum++;
+          } while (retryNum < MAX_RETRY &&
+                    (ret == TAK_NETWORK_TIMEOUT || ret == TAK_NETWORK_ERROR));
+          if (ret != TAK_SUCCESS && ret != TAK_API_ALREADY_INITIALIZED
+              && ret != TAK_LICENSE_ABOUT_TO_EXPIRE) {
+                // Make it crash
+                abort();
+              }
+        } else {
+          do {
+            ret = TakLib_checkIntegrity(NULL);
+            retryNum++;
+          } while (retryNum < MAX_RETRY &&
+                    (ret == TAK_NETWORK_TIMEOUT || ret == TAK_NETWORK_ERROR));
+          if (ret != TAK_SUCCESS && ret != TAK_RE_REGISTER_SUCCESS
+              && ret != TAK_LICENSE_ABOUT_TO_EXPIRE && ret != TAK_NETWORK_TIMEOUT
+              && ret != TAK_NETWORK_ERROR) {
+            // Make it crash
+            abort();
+          }
+        }
+
+        ret = TakLib_createRuntimeCheckThread(10);
+        if (ret != TAK_SUCCESS) {
+          // Make it crash
+          abort();
+        }
+
+        while (true) {
+          sleep(CHECK_WAIT_INTERVAL);
+          TakLib_isRuntimeThreadActive(true);
+        }
+
+        return;
+      });
+    }
+  }
+)delim";
+
+} // namespace omvll
+
+#endif
