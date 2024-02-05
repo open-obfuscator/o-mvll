@@ -1,0 +1,101 @@
+pipeline {
+    agent {
+        label 'master'
+    }
+
+    stages {
+        stage('Clone omvll') {
+            steps {
+                script {
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/open-obfuscator/o-mvll.git']]])
+                    sh("git checkout main")
+                }
+            }
+        }
+
+        stage('Add Build38 fork remote') {
+            steps {
+                script {
+                    sh(script: 'git remote add b38 git@bitbucket.org:build38/o-mvll.git')
+                }
+            }
+        }
+
+        stage('Update fork') {
+            steps {
+                sshagent(credentials: ['8a93fd64-3029-4a20-b830-809bb70593ee']) {
+                    script {
+                        sh "git push b38 main"
+                    }
+                }
+            }
+        }
+
+        stage('Create branch') {
+            steps {
+                sshagent(credentials: ['8a93fd64-3029-4a20-b830-809bb70593ee']) {
+                    script {
+                        sh "git checkout -b update-branch-$BUILD_NUMBER"
+                        sh "git push b38 update-branch-$BUILD_NUMBER"
+                    }
+                }
+            }
+        }
+
+        stage('Create PR') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'Bitbucket-oauth', usernameVariable: 'CLIENT_ID', passwordVariable: 'CLIENT_SECRET')]){
+                        sh '''  set -e
+                                accessToken=$(curl -X POST -u "$CLIENT_ID:$CLIENT_SECRET" https://bitbucket.org/site/oauth2/access_token -d grant_type=client_credentials | python -c \'import json,sys;obj=json.load(sys.stdin);print obj[\"access_token\"]\')
+                                OUTPUT_FILE=$(mktemp)
+                                HTTP_CODE=$(curl --output $OUTPUT_FILE --write-out "%{http_code}" \
+                                    --request POST \
+                                    --url "https://api.bitbucket.org/2.0/repositories/build38/o-mvll/pullrequests" \
+                                    --header "Authorization: Bearer ${accessToken}" \
+                                    --header "Accept: application/json" \
+                                    --header "Content-Type: application/json" \
+                                    --data "{
+                                        \\"title\\": \\"Update Repo\\",
+                                        \\"source\\": {
+                                            \\"branch\\": {
+                                                \\"name\\": \\"update-branch-$BUILD_NUMBER\\"
+                                            }
+                                        },
+                                        \\"destination\\": {
+                                            \\"branch\\": {
+                                                \\"name\\": \\"main_b38\\"
+                                            }
+                                        },
+                                        \\"reviewers\\": [
+                                            {
+                                                \\"account_id\\": \\"5c3c3edab4d5d75a3b52610c\\"
+                                            },
+                                            {
+                                                \\"account_id\\": \\"712020:fa7443b5-a067-4131-be63-83ae0f888e66\\"
+                                            }
+                                        ]
+                                    }" \
+                                )
+                                if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+                                    >&2 cat $OUTPUT_FILE
+                                    exit 22
+                                fi
+                                echo "PR generated"
+                                exit 0
+                        '''
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        cleanup {
+            script {
+                // Remove workspace
+                cleanWs()
+            }
+        }
+    }
+}
