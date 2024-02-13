@@ -1,20 +1,97 @@
 #include "omvll/utils.hpp"
 #include "omvll/log.hpp"
 
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/MemoryBuffer.h>
-
+#include <llvm/ADT/Hashing.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Instruction.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Support/Error.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/Path.h>
+#include <llvm/Support/Program.h>
 #include <llvm/Support/RandomNumberGenerator.h>
+#include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Local.h>
 
 using namespace llvm;
+
+namespace detail {
+
+static Expected<std::string>
+runClangExecutable(StringRef code, StringRef dashx, StringRef triple,
+                   const std::vector<std::string> &args) {
+  std::vector<StringRef> cmd;
+  cmd.reserve(args.size() + 6);
+
+  static int Dummy;
+  std::string clang = sys::fs::getMainExecutable("clang", (void *)&Dummy);
+  cmd.push_back(clang);
+  cmd.push_back("-S");
+  cmd.push_back("-emit-llvm");
+
+  for (const std::string &arg : args)
+    cmd.push_back(arg);
+
+  // Create the input C file and choose macthing output file name
+  int inFileFD;
+  SmallString<128> inFileName;
+  std::string prefix = ("omvll-" + triple).str();
+  if (auto ec =
+          sys::fs::createTemporaryFile(prefix, dashx, inFileFD, inFileName))
+    return errorCodeToError(ec);
+  std::string outFileName = inFileName.str().str() + ".ll";
+
+  cmd.push_back("-o");
+  cmd.push_back(outFileName);
+  cmd.push_back(inFileName);
+
+  // Write the given C code to the input file
+  {
+    std::error_code ec;
+    raw_fd_ostream inFileOS(inFileName, ec);
+    if (ec)
+      return errorCodeToError(ec);
+    inFileOS << code;
+  }
+
+  // TODO: Write to omvll debug log instead of stderr
+  for (StringRef entry : cmd)
+    errs() << entry << " ";
+  errs() << "\n";
+
+  if (int ec = sys::ExecuteAndWait(clang, cmd))
+    return createStringError(inconvertibleErrorCode(),
+                             Twine("exit code ") + std::to_string(ec));
+
+  return outFileName;
+}
+
+static Error createSMDiagnosticError(llvm::SMDiagnostic &Diag) {
+  std::string Msg;
+  {
+    raw_string_ostream OS(Msg);
+    Diag.print("", OS);
+  }
+  return make_error<StringError>(std::move(Msg), inconvertibleErrorCode());
+}
+
+static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path,
+                                                          LLVMContext &Ctx) {
+  SMDiagnostic Err;
+  auto M = parseIRFile(Path, Err, Ctx);
+  if (!M)
+    return createSMDiagnosticError(Err);
+  return M;
+}
+
+} // namespace detail
 
 namespace omvll {
 
@@ -269,4 +346,39 @@ void fatalError(const char* msg) {
   std::abort();
 }
 
+Expected<std::unique_ptr<llvm::Module>>
+generateModule(StringRef Routine, StringRef Triple, LLVMContext &Ctx,
+               ArrayRef<std::string> ExtraArgs) {
+  using namespace ::detail;
+
+  llvm::hash_code HashValue = llvm::hash_combine(Routine, Triple);
+
+  SmallString<128> TempPath;
+  llvm::sys::path::system_temp_directory(true, TempPath);
+  llvm::sys::path::append(TempPath, "omvll-cache-" + Triple.str() + "-" +
+                                        std::to_string(HashValue) + ".ll");
+  std::string IRModuleFilename = std::string(TempPath.str());
+
+  if (llvm::sys::fs::exists(IRModuleFilename)) {
+    return loadModule(IRModuleFilename, Ctx);
+  } else {
+    auto MaybePath = runClangExecutable(Routine, "cpp", Triple, ExtraArgs);
+    if (!MaybePath)
+      return MaybePath.takeError();
+
+    auto MaybeModule = loadModule(*MaybePath, Ctx);
+    if (!MaybeModule)
+      return MaybeModule.takeError();
+
+    std::error_code EC;
+    llvm::raw_fd_ostream IRModuleFile(IRModuleFilename, EC,
+                                      llvm::sys::fs::OF_None);
+    if (EC)
+      return errorCodeToError(EC);
+
+    (*MaybeModule)->print(IRModuleFile, nullptr);
+
+    return MaybeModule;
+  }
+}
 }

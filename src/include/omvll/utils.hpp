@@ -1,6 +1,11 @@
 #ifndef OMVLL_UTILS_H
 #define OMVLL_UTILS_H
+
+#include "llvm/ADT/StringRef.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/Support/Error.h"
 #include <string>
+
 namespace llvm {
 class Instruction;
 class BasicBlock;
@@ -35,5 +40,9 @@ void shuffleFunctions(llvm::Module& M);
 
 [[noreturn]] void fatalError(const char* msg);
 [[noreturn]] void fatalError(const std::string& msg);
+
+llvm::Expected<std::unique_ptr<llvm::Module>>
+generateModule(llvm::StringRef Routine, llvm::StringRef Triple,
+               llvm::LLVMContext &Ctx, llvm::ArrayRef<std::string> ExtraArgs);
 }
 #endif
