@@ -35,7 +35,10 @@ pipeline {
             steps {
                 sshagent(credentials: ['8a93fd64-3029-4a20-b830-809bb70593ee']) {
                     script {
+                        sh "git fetch b38"
+                        sh "git checkout -b main_b38 b38/main_b38"
                         sh "git checkout -b update-branch-$BUILD_NUMBER"
+                        sh "git merge main"
                         sh "git push b38 update-branch-$BUILD_NUMBER"
                     }
                 }
