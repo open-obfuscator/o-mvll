@@ -43,6 +43,7 @@ void shuffleFunctions(llvm::Module& M);
 
 llvm::Expected<std::unique_ptr<llvm::Module>>
 generateModule(llvm::StringRef Routine, llvm::StringRef Triple,
-               llvm::LLVMContext &Ctx, llvm::ArrayRef<std::string> ExtraArgs);
+               llvm::StringRef Extension, llvm::LLVMContext &Ctx,
+               llvm::ArrayRef<std::string> ExtraArgs);
 }
 #endif

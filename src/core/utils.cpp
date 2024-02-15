@@ -347,8 +347,8 @@ void fatalError(const char* msg) {
 }
 
 Expected<std::unique_ptr<llvm::Module>>
-generateModule(StringRef Routine, StringRef Triple, LLVMContext &Ctx,
-               ArrayRef<std::string> ExtraArgs) {
+generateModule(StringRef Routine, StringRef Triple, StringRef Extension,
+               LLVMContext &Ctx, ArrayRef<std::string> ExtraArgs) {
   using namespace ::detail;
 
   llvm::hash_code HashValue = llvm::hash_combine(Routine, Triple);
@@ -362,7 +362,7 @@ generateModule(StringRef Routine, StringRef Triple, LLVMContext &Ctx,
   if (llvm::sys::fs::exists(IRModuleFilename)) {
     return loadModule(IRModuleFilename, Ctx);
   } else {
-    auto MaybePath = runClangExecutable(Routine, "cpp", Triple, ExtraArgs);
+    auto MaybePath = runClangExecutable(Routine, Extension, Triple, ExtraArgs);
     if (!MaybePath)
       return MaybePath.takeError();
 

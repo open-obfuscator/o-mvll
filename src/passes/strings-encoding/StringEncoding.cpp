@@ -564,13 +564,13 @@ void StringEncoding::genRoutines(const std::string &Triple, EncodingInfo &EI,
   std::string ExternC = (Twine("extern \"C\" {\n") + R + "}\n").str();
 
   {
-    EI.HM = ExitOnErr(generateModule(ExternC, HostTriple, HOSTJIT->getContext(),
-                                     {"-std=c++17"}));
+    EI.HM = ExitOnErr(generateModule(ExternC, HostTriple, "cpp",
+                                     HOSTJIT->getContext(), {"-std=c++17"}));
   }
 
   {
     Ctx.setDiscardValueNames(false);
-    EI.TM = ExitOnErr(generateModule(ExternC, Triple, Ctx,
+    EI.TM = ExitOnErr(generateModule(ExternC, Triple, "cpp", Ctx,
                                      {"-target", Triple, "-std=c++17"}));
     annotateRoutine(*EI.TM);
   }
