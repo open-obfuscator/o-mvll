@@ -358,9 +358,9 @@ bool StringEncoding::injectOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op, 
   }
 
   auto *M = BB.getModule();
-  FunctionCallee DecodeCallee =
-      M->getOrInsertFunction("__omvll_decode", FDecode->getFunctionType());
-  auto *NewF = cast<Function>(DecodeCallee.getCallee());
+  auto *NewF =
+      Function::Create(FDecode->getFunctionType(), GlobalValue::PrivateLinkage,
+                       "__omvll_decode", M);
 
   ValueToValueMapTy VMap;
   auto NewFArgsIt = NewF->arg_begin();
@@ -507,9 +507,9 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
     fatalError("Can't find the 'decode' routine");
   }
 
-  FunctionCallee DecodeCallee =
-      M->getOrInsertFunction("__omvll_decode", FDecode->getFunctionType());
-  auto *NewF = cast<Function>(DecodeCallee.getCallee());
+  auto *NewF =
+      Function::Create(FDecode->getFunctionType(), GlobalValue::PrivateLinkage,
+                       "__omvll_decode", M);
 
   ValueToValueMapTy VMap;
   auto NewFArgsIt = NewF->arg_begin();
