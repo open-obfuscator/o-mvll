@@ -4,6 +4,7 @@
 
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/ADT/SmallSet.h>
+#include <llvm/ADT/Triple.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Support/RandomNumberGenerator.h>
 #include <variant>
@@ -91,7 +92,8 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
 private:
   inline static Jitter *HOSTJIT = nullptr;
 
-  void genRoutines(const std::string& Triple, EncodingInfo& EI, llvm::LLVMContext& Ctx);
+  void genRoutines(const llvm::Triple &Triple, EncodingInfo &EI,
+                   llvm::LLVMContext &Ctx);
   void annotateRoutine(llvm::Module& M);
 
   std::vector<llvm::CallInst*> inline_wlist_;

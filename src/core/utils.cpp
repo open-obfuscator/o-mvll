@@ -2,6 +2,7 @@
 #include "omvll/log.hpp"
 
 #include <llvm/ADT/Hashing.h>
+#include <llvm/ADT/Optional.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/InstIterator.h>
@@ -24,53 +25,97 @@ using namespace llvm;
 
 namespace detail {
 
+static int runExecutable(SmallVectorImpl<StringRef> &Args,
+                         ArrayRef<Optional<StringRef>> Redirects = {}) {
+  return sys::ExecuteAndWait(Args[0], Args, None, Redirects);
+}
+
+static Expected<std::string> getIPhoneOSSDKPath() {
+  ErrorOr<std::string> MaybeXcrunPath = sys::findProgramByName("xcrun");
+  if (!MaybeXcrunPath)
+    return createStringError(MaybeXcrunPath.getError(),
+                             "Unable to find xcrun.");
+  auto XcrunPath = *MaybeXcrunPath;
+
+  int FD;
+  SmallString<128> TempPath;
+  if (std::error_code EC =
+          sys::fs::createTemporaryFile("xcrun-output", "txt", FD, TempPath))
+    return createStringError(EC, "Failed to create temporary file.");
+
+  SmallVector<StringRef, 8> Args = {XcrunPath, "--sdk", "iphoneos",
+                                    "--show-sdk-path"};
+  Optional<StringRef> Redirects[] = {None, StringRef(TempPath), None};
+
+  if (int EC = runExecutable(Args, Redirects))
+    return createStringError(inconvertibleErrorCode(),
+                             "Unable to execute program.");
+
+  std::string Out;
+  auto Buffer = MemoryBuffer::getFile(TempPath);
+  if (Buffer && *Buffer)
+    Out = Buffer->get()->getBuffer().rtrim();
+  else
+    return createStringError(Buffer.getError(), "Unable to read output.");
+
+  (void)sys::fs::remove(TempPath);
+  return Out;
+}
+
 static Expected<std::string>
-runClangExecutable(StringRef code, StringRef dashx, StringRef triple,
-                   const std::vector<std::string> &args) {
-  std::vector<StringRef> cmd;
-  cmd.reserve(args.size() + 6);
-
+runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
+                   const std::vector<std::string> &ExtraArgs) {
   static int Dummy;
-  std::string clang = sys::fs::getMainExecutable("clang", (void *)&Dummy);
-  cmd.push_back(clang);
-  cmd.push_back("-S");
-  cmd.push_back("-emit-llvm");
+  std::string ClangPath = sys::fs::getMainExecutable("clang", (void *)&Dummy);
+  SmallVector<StringRef, 16> Args = {ClangPath, "-S", "-emit-llvm"};
 
-  for (const std::string &arg : args)
-    cmd.push_back(arg);
+  std::string SDKPath;
+  if (Triple.isiOS()) {
+    auto MaybeSDKPath = getIPhoneOSSDKPath();
+    if (Error E = MaybeSDKPath.takeError()) {
+      SWARN("Warning: {}", toString(std::move(E)));
+    } else {
+      SDKPath = *MaybeSDKPath;
+      Args.push_back("-isysroot");
+      Args.push_back(SDKPath);
+    }
+  }
+
+  for (const auto &Arg : ExtraArgs)
+    Args.push_back(Arg);
 
   // Create the input C file and choose macthing output file name
-  int inFileFD;
-  SmallString<128> inFileName;
-  std::string prefix = ("omvll-" + triple).str();
-  if (auto ec =
-          sys::fs::createTemporaryFile(prefix, dashx, inFileFD, inFileName))
-    return errorCodeToError(ec);
-  std::string outFileName = inFileName.str().str() + ".ll";
+  int InFileFD;
+  SmallString<128> InFileName;
+  std::string Prefix = "omvll-" + Triple.getTriple();
+  if (std::error_code EC =
+          sys::fs::createTemporaryFile(Prefix, Dashx, InFileFD, InFileName))
+    return errorCodeToError(EC);
+  std::string OutFileName = InFileName.str().str() + ".ll";
 
-  cmd.push_back("-o");
-  cmd.push_back(outFileName);
-  cmd.push_back(inFileName);
+  Args.push_back("-o");
+  Args.push_back(OutFileName);
+  Args.push_back(InFileName);
 
   // Write the given C code to the input file
   {
-    std::error_code ec;
-    raw_fd_ostream inFileOS(inFileName, ec);
-    if (ec)
-      return errorCodeToError(ec);
-    inFileOS << code;
+    std::error_code EC;
+    raw_fd_ostream inFileOS(InFileName, EC);
+    if (EC)
+      return errorCodeToError(EC);
+    inFileOS << Code;
   }
 
   // TODO: Write to omvll debug log instead of stderr
-  for (StringRef entry : cmd)
-    errs() << entry << " ";
+  for (StringRef Entry : Args)
+    errs() << Entry << " ";
   errs() << "\n";
 
-  if (int ec = sys::ExecuteAndWait(clang, cmd))
+  if (int EC = runExecutable(Args))
     return createStringError(inconvertibleErrorCode(),
-                             Twine("exit code ") + std::to_string(ec));
+                             Twine("exit code ") + std::to_string(EC));
 
-  return outFileName;
+  return OutFileName;
 }
 
 static Error createSMDiagnosticError(llvm::SMDiagnostic &Diag) {
@@ -347,15 +392,15 @@ void fatalError(const char* msg) {
 }
 
 Expected<std::unique_ptr<llvm::Module>>
-generateModule(StringRef Routine, StringRef Triple, StringRef Extension,
+generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
                LLVMContext &Ctx, ArrayRef<std::string> ExtraArgs) {
   using namespace ::detail;
 
-  llvm::hash_code HashValue = llvm::hash_combine(Routine, Triple);
+  llvm::hash_code HashValue = llvm::hash_combine(Routine, Triple.getTriple());
 
   SmallString<128> TempPath;
   llvm::sys::path::system_temp_directory(true, TempPath);
-  llvm::sys::path::append(TempPath, "omvll-cache-" + Triple.str() + "-" +
+  llvm::sys::path::append(TempPath, "omvll-cache-" + Triple.getTriple() + "-" +
                                         std::to_string(HashValue) + ".ll");
   std::string IRModuleFilename = std::string(TempPath.str());
 
@@ -381,4 +426,5 @@ generateModule(StringRef Routine, StringRef Triple, StringRef Extension,
     return MaybeModule;
   }
 }
-}
+
+} // namespace omvll

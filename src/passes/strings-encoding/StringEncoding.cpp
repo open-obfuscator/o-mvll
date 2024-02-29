@@ -461,7 +461,7 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
   std::vector<uint8_t> encoded(str.size());
   EncodingInfo EI(EncodingTy::GLOBAL);
   EI.key = key;
-  genRoutines(BB.getModule()->getTargetTriple(), EI, BB.getContext());
+  genRoutines(Triple(BB.getModule()->getTargetTriple()), EI, BB.getContext());
 
   auto JIT = StringEncoding::HOSTJIT->compile(*EI.HM);
   if (auto E = JIT->lookup("encode")) {
@@ -549,29 +549,30 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
   return true;
 }
 
-void StringEncoding::genRoutines(const std::string &Triple, EncodingInfo &EI,
+void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
                                  LLVMContext &Ctx) {
-  std::string HostTriple = sys::getProcessTriple();
+  Triple HostTriple(sys::getProcessTriple());
 
   if (HOSTJIT == nullptr)
-    HOSTJIT = new Jitter(HostTriple);
+    HOSTJIT = new Jitter(HostTriple.getTriple());
 
   std::uniform_int_distribution<size_t> Dist(0, ROUTINES.size() - 1);
   size_t idx = Dist(*RNG_);
   StringRef R = ROUTINES[idx];
 
   ExitOnError ExitOnErr("Nested clang invocation failed: ");
-  std::string ExternC = (Twine("extern \"C\" {\n") + R + "}\n").str();
+  std::string Routine = (Twine("extern \"C\" {\n") + R + "}\n").str();
 
   {
-    EI.HM = ExitOnErr(generateModule(ExternC, HostTriple, "cpp",
+    EI.HM = ExitOnErr(generateModule(Routine, HostTriple, "cpp",
                                      HOSTJIT->getContext(), {"-std=c++17"}));
   }
 
   {
     Ctx.setDiscardValueNames(false);
-    EI.TM = ExitOnErr(generateModule(ExternC, Triple, "cpp", Ctx,
-                                     {"-target", Triple, "-std=c++17"}));
+    EI.TM = ExitOnErr(
+        generateModule(Routine, TargetTriple, "cpp", Ctx,
+                       {"-target", TargetTriple.getTriple(), "-std=c++17"}));
     annotateRoutine(*EI.TM);
   }
 }
@@ -609,7 +610,7 @@ bool StringEncoding::processOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op,
   EncodingInfo EI(EncodingTy::STACK_LOOP);
   EI.key = key;
 
-  genRoutines(BB.getModule()->getTargetTriple(), EI, BB.getContext());
+  genRoutines(Triple(BB.getModule()->getTargetTriple()), EI, BB.getContext());
 
   auto JIT = StringEncoding::HOSTJIT->compile(*EI.HM);
   if (auto E = JIT->lookup("encode")) {
