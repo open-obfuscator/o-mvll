@@ -53,6 +53,11 @@ O-MVLL can be used with the Android NDK and an iOS toolchain but **it only suppo
 
 For the details, you can checkout the documentation: [obfuscator.re/omvll](https://obfuscator.re/omvll)
 
+### Download
+
+- [Official releases](https://github.com/open-obfuscator/o-mvll/releases)
+- [Experimental builds](https://open-obfuscator.build38.io/ci/index.html)
+
 ### Contact
 
 You can reach out by email at this address: `ping@obfuscator.re`
