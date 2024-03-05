@@ -17,22 +17,30 @@
 #include <llvm/Support/Host.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 
+#include <regex>
+#include <string>
+
 using namespace llvm;
 
-static constexpr std::array InitializerFunctions = {
-    "-[AppDelegate application:didFinishLaunchingWithOptions:]",
-    "AppDelegateC11application_"
-    "29didFinishLaunchingWithOptionsSbSo13UIApplicationC_"
-    "SDySo0m6LaunchL3KeyaypGSgtFTo",
-    "AppDelegateC11application_"
-    "29didFinishLaunchingWithOptionsSbSo13UIApplicationC_"
-    "SDySo0l6LaunchK3KeyaypGSgtFTo"};
-
 static bool isInitializerFunction(const Function &F) {
-  for (const auto &IF : InitializerFunctions)
-    if (F.getName().endswith(IF))
-      return true;
-  return false;
+  const std::string &Name = F.getName().str();
+
+  // So far, we found the following methods signature:
+  // "\U00000001-[AppDelegate application:didFinishLaunchingWithOptions:]"
+  // "$s1511AppDelegateC11application_29didFinishLaunchingWithOptionsSbSo13UIApplicationC_SDySo0m6LaunchL3KeyaypGSgtFTo"
+  // "$s1511AppDelegateC11application_29didFinishLaunchingWithOptionsSbSo13UIApplicationC_SDySo0l6LaunchK3KeyaypGSgtFTo"
+  //
+  // The regex is a or between the ObjC name and the Swift-mangled ones, with
+  // some care for the Unicode char (ObjC) and mangled parameters (Swift).
+  // Note that all Swift-mangled names begin with a common prefix, ref at:
+  // https://github.com/apple/swift/blob/main/docs/ABI/Mangling.rst.
+
+  std::regex Expr(
+      "^(.*-\\[AppDelegate\\sapplication:"
+      "didFinishLaunchingWithOptions:.*|\\$s.*AppDelegate.*application.*"
+      "didFinishLaunchingWithOptions.*UIApplication.*)");
+
+  return std::regex_match(Name, Expr);
 }
 
 static bool injectTakRuntimeProtection(Module &M, const StringRef Name) {
