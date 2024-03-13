@@ -12,3 +12,16 @@
 
 # python cache folders for tests
 __pycache__
+
+# ci dependencies
+ci/distribution/*
+ci/apple*
+*.tar
+
+# Samples build folder
+*/*/build/*
+**/xcuserdata/*
+omvll.log
+
+# Tmp folder
+tmp/*
