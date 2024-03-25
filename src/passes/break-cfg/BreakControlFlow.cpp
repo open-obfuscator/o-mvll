@@ -58,18 +58,10 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   ValueToValueMapTy VMap;
   ClonedCodeInfo info;
   Function* FCopied = CloneFunction(&F, VMap, &info);
-  std::vector<BasicBlock*> BBlocks;
-
-  for (auto& BB : F) {
-    BBlocks.push_back(&BB);
-  }
-
-  for (auto& BB : BBlocks) {
-    BB->eraseFromParent();
-  }
+  F.deleteBody();
 
   Function& Trampoline = F;
-  std::unique_ptr<MemoryBuffer> insts = Jitter_->jitAsm(R"delim(
+  const auto AsmBreakingStub = R"delim(
   // !! This block must be aligned on 32 bytes !!
   adr x1, #0x10;
   ldr x0, [x1, #61];
@@ -79,8 +71,9 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   blr x3;
   .byte 0xF1, 0xFF, 0xF2, 0xA2;
   .byte 0xF8, 0xFF, 0xE2, 0xC2;
-  )delim", 8);
+  )delim";
 
+  std::unique_ptr<MemoryBuffer> insts = Jitter_->jitAsm(AsmBreakingStub, 8);
   if (insts->getBufferSize() % FUNCTION_ALIGNMENT) {
     fatalError(fmt::format("Bad alignment for the ASM block ({})", insts->getBufferSize()));
   }
@@ -181,7 +174,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   }
   Trampoline.addFnAttr(Attribute::OptimizeForSize);
   Trampoline.addFnAttr(Attribute::NoInline);
-
+  Trampoline.setLinkage(GlobalValue::InternalLinkage);
 
   return true;
 }
@@ -196,6 +189,8 @@ PreservedAnalyses BreakControlFlow::run(Module &M,
   bool Changed = false;
   std::vector<Function*> Fs;
   for (Function& F : M) {
+    if (F.isDeclaration() || F.isIntrinsic())
+      continue;
     Fs.push_back(&F);
   }
 
