@@ -1,8 +1,9 @@
-// Prepare test output dir with plugin, yml-config, py-config and fake python-libs dir
+// Prepare test output dir with plugin, yml-config, py-config and python-libs dir
 // RUN: rm -rf %T_plugindir
 // RUN: mkdir -p %T_plugindir
 // RUN: mkdir -p %T_plugindir/Python-3.10.7/Lib
 // RUN: cp %libOMVLL %T_plugindir/libOMVLL.so
+// RUN: cp -R %S/Inputs/Python-3.10.7 %T_plugindir
 // RUN: cp %S/Inputs/omvll.yml %T_plugindir/omvll.yml
 // RUN: cp %S/Inputs/config_empty.py %T_plugindir/config_empty.py
 
