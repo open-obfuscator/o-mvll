@@ -1,0 +1,212 @@
+pipeline {
+    agent { label 'xcode-14.2' }
+    parameters {
+        string(name: 'DEPLOYMENT_PATH_SNAPSHOT_UBUNTU', defaultValue: '', description: 'The deployment path for snapshot in Ubuntu')
+    }
+    environment {
+        NEXUS_CREDENTIALS = credentials('e29f59a5-3fe6-4235-8d9a-ccbea6113412')
+        NEXUS_USERNAME = "${NEXUS_CREDENTIALS_USR}"
+        NEXUS_PASSWORD = "${NEXUS_CREDENTIALS_PSW}"
+        REPO_SLUG = "${env.GIT_URL.tokenize('/')[1].tokenize('.')[0] }"
+        DATE="""${sh(
+                returnStdout: true,
+                script: '/bin/date +%Y%m%d.%H%M%S'
+            )}""".trim()
+        DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
+        DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
+        DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll/${DEPLOYMENT_VERSION}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.dylib"
+        DEPLOYMENT_PATH_SNAPSHOT_UBUNTU = "${params.DEPLOYMENT_PATH_SNAPSHOT_UBUNTU}"
+        DEPLOYMENT_PATH_RELEASE="com/build38/omvll/omvll/${DEPLOYMENT_VERSION_MODIFIED}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${BUILD_NUMBER}.dylib"
+        OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
+
+        WORKSPACE = "${env.WORKSPACE}"
+        ROOT_FOLDER = "${env.WORKSPACE}/../"
+        TMP_FOLDER = "${ROOT_FOLDER}/tmp"
+        DIST_FOLDER = "ci/distribution"
+        OUTPUT_FOLDER = "${ROOT_FOLDER}/src/build_xcode"
+        IOS_SIM_ID = "96D1E505-7D4C-44AD-AC2D-F2F72ABA63AC"
+
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
+    }
+    stages {
+        stage('PreBuild') {
+            steps {
+                script {
+                    sshagent(['8a93fd64-3029-4a20-b830-809bb70593ee	']) {
+                        sh 'git submodule update --init --recursive'
+                    }
+                    echo "Notify job has started:"
+                    bitbucketStatusNotify(
+                        buildState: 'INPROGRESS',
+                        buildName: "${env.JOB_NAME}",
+                        buildKey: "${env.JOB_NAME}",
+                        repoSlug: "${env.REPO_SLUG}",
+                        commitId: "${env.GIT_COMMIT}"
+                    )
+                    echo "BUILD_VARIANT: ${env.JOB_TYPE}"
+                }
+            }
+        }
+        stage('Cleanup MacOS Directories') {
+            steps {
+                script {
+                    sh 'rm -rf tmp/*'
+                    sh 'rm -rf ${OUTPUT_FOLDER}/*'
+                    sh 'rm -f ci/apple-platform-rs.tar.gz'
+                }
+            }
+        }
+
+        stage('Get third party binaries') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                    sh 'mkdir -p tmp'
+                    sh 'mkdir -p ${DIST_FOLDER}'
+                    sh 'mkdir -p ${OUTPUT_FOLDER}'
+
+                    // Get lib
+                    sh 'ci/devtools-bash-utils/nexus.sh -o ${OUTPUT_FOLDER}/omvll_unsigned.dylib.gz -g com.build38.omvll -i omvll -v ${DEPLOYMENT_VERSION} -e dylib download-snapshot'
+                    sh 'gzip -d ${OUTPUT_FOLDER}/omvll_unsigned.dylib.gz'
+                    // Get TAK delivery
+                    sh 'ci/devtools-bash-utils/nexus.sh -o tmp/TAK-Client.zip -g com.build38.tak -i tak-delivery -v 2.14.2 -c 1426 -e zip download-v2'
+                    sh 'unzip ${TMP_FOLDER}/TAK-Client.zip -d tmp/'
+
+                    // Get signer from nexus
+                    sh 'ci/devtools-bash-utils/nexus.sh -o ci/apple-platform-rs.tar.gz -g com.indygreg -i apple-platform-rs -v 0.26.0 -e tar.gz download-v2'
+                    sh 'tar -C ci -xzf ci/apple-platform-rs.tar.gz'
+
+                    // Get Python lib dependency
+                    sh 'ci/devtools-bash-utils/nexus.sh -o tmp/Python-3.10.7.tgz -g org.python -i python -v 3.10.7 -e tgz download-v2'
+                    sh 'tar -C ${DIST_FOLDER} -xvf tmp/Python-3.10.7.tgz'
+                }
+            }
+        }
+
+        stage('Select XCode 14.1') {
+            steps {
+                script{
+                    sh 'sudo xcode-select -s /Applications/Xcode-14-1.app'
+                    sh 'xcode-select -p'
+                }
+            }
+        }
+
+        stage('Sign o-mvll binary') {
+            steps {
+                script {
+                    sh 'tar -xvf ${OUTPUT_FOLDER}/omvll_unsigned.dylib -C ${OUTPUT_FOLDER}'
+                    sh 'cp ${OUTPUT_FOLDER}/src/build_xcode/omvll_unsigned.dylib ${OUTPUT_FOLDER}/omvll.dylib'
+                    sh 'ci/apple-codesign-0.26.0-aarch64-apple-darwin/rcodesign sign --p12-file ci/certificates/SigningCertificate.p12 --p12-password $OMVLL_CERTIFICATE_PWD --code-signature-flags runtime ${OUTPUT_FOLDER}/omvll.dylib'
+                }
+            }
+        }
+
+
+        stage('Build xcode ObjectiveC project') {
+            steps {
+                dir("${WORKSPACE}") {
+                    sh 'mkdir -p src/build_xcode'
+                    sh 'mkdir -p mysimplepass/build_xcode'
+                    sh 'cp ${OUTPUT_FOLDER}/omvll.dylib src/build_xcode/omvll.dylib'
+                    sh 'cp ${OUTPUT_FOLDER}/omvll.dylib mysimplepass/build_xcode/omvll.dylib'
+
+                    // Execute ObjCHelloOmvll
+                    sh '''#!/usr/bin/env bash
+                        cd samples
+                        . ./omvll.env
+                        cd ObjCHelloOmvll
+                        xcodebuild -scheme ObjCHelloOmvll clean build -sdk iphoneos ONLY_ACTIVE_ARCH=YES
+                        ret=$?
+                        exit $ret
+                    '''
+                }
+            }
+        }
+
+
+
+
+        stage('Build xcode Swift project') {
+            steps {
+                script {
+                    dir("${WORKSPACE}") {
+                        sh '''#!/usr/bin/env bash
+                            cd samples
+                            . ./omvll.env
+                            cd SwiftHelloOmvll
+                            xcodebuild -scheme SwiftHelloOmvll clean build -configuration Release -sdk iphoneos ONLY_ACTIVE_ARCH=YES
+                            ret=$?
+                            exit $ret
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Create artifact') {
+            steps {
+                script {
+                    sh 'rm -rf omvll && mkdir ./omvll && cp -r ${DIST_FOLDER}/* ./omvll && cp ./src/build_xcode/omvll.dylib omvll && zip -r omvll.zip omvll'
+                }
+            }
+        }
+
+        stage('Deploy SNAPSHOT') {
+            when {
+                // When we are not in pr
+                expression{env.JOB_TYPE != "pr"}
+            }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                        sh 'ci/devtools-bash-utils/nexus.sh upload snapshot ./omvll.zip ${DEPLOYMENT_PATH_SNAPSHOT}'
+                    }
+                }
+            }
+        }
+
+        stage('Nexus Cleaning') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                        echo "Deleting unsigned lib: ${params.DEPLOYMENT_PATH_SNAPSHOT_UBUNTU}"
+                        sh "curl --request DELETE --user \${NEXUS_USERNAME}:\${NEXUS_PASSWORD} https://nexus.build38.cloud:8081/repository/maven-snapshots/\${DEPLOYMENT_PATH_SNAPSHOT_UBUNTU}"
+                    }
+                }
+            }
+        }
+}
+
+
+    post {
+        always {
+            script {
+                sh 'sudo xcode-select -s /Applications/Xcode.app'
+            }
+            cleanWs()
+        }
+        success {
+          script {
+              bitbucketStatusNotify(
+                  buildState: 'SUCCESSFUL',
+                  buildName: "${env.JOB_NAME}",
+                  buildKey: "${env.JOB_NAME}",
+                  repoSlug: "${env.REPO_SLUG}",
+                  commitId: "${env.GIT_COMMIT}"
+              )
+          }
+        }
+        unsuccessful {
+            script {
+                // Notify BitBucket failed status
+                bitbucketStatusNotify(
+                    buildState: 'FAILED',
+                    buildName: "${env.JOB_NAME}",
+                    buildKey: "${env.JOB_NAME}",
+                    repoSlug: "${env.REPO_SLUG}",
+                    commitId: "${env.GIT_COMMIT}"
+                )
+            }
+        }
+    }
+}

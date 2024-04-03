@@ -30,6 +30,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B139F6B92BAC23A500806ED9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		B15AB9D92B8F52B500A859BC /* libWBC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWBC.a; path = "../../tmp/TAK-Client/iOS/C/libs/libWBC.a"; sourceTree = "<group>"; };
 		B15AB9DA2B8F52B500A859BC /* libTAK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libTAK.a; path = "../../tmp/TAK-Client/iOS/C/libs/libTAK.a"; sourceTree = "<group>"; };
 		B15AB9DD2B8F52C600A859BC /* license.tak */ = {isa = PBXFileReference; lastKnownFileType = file; name = license.tak; path = "../../tmp/TAK-Client/licenses/license.tak"; sourceTree = "<group>"; };
@@ -68,6 +69,7 @@
 		B15AB9D82B8F52B500A859BC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B139F6B92BAC23A500806ED9 /* Foundation.framework */,
 				B15AB9DA2B8F52B500A859BC /* libTAK.a */,
 				B15AB9D92B8F52B500A859BC /* libWBC.a */,
 			);
@@ -298,6 +300,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -358,6 +361,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

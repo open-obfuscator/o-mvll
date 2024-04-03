@@ -1,0 +1,162 @@
+pipeline {
+    agent { label 'ubuntu_22.04' }
+
+    options {
+        timeout(time: 45, unit: 'MINUTES', activity: true)
+        timestamps ()
+    }
+    environment {
+        NEXUS_CREDENTIALS = credentials('e29f59a5-3fe6-4235-8d9a-ccbea6113412')
+        NEXUS_USERNAME = "${NEXUS_CREDENTIALS_USR}"
+        NEXUS_PASSWORD = "${NEXUS_CREDENTIALS_PSW}"
+        REPO_SLUG = "${env.GIT_URL.tokenize('/')[1].tokenize('.')[0] }"
+        DATE="""${sh(
+                returnStdout: true,
+                script: '/bin/date +%Y%m%d.%H%M%S'
+            )}""".trim()
+        DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
+        DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
+        DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll/${DEPLOYMENT_VERSION}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.dylib"
+        DEPLOYMENT_PATH_RELEASE="com/build38/omvll/omvll/${DEPLOYMENT_VERSION_MODIFIED}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${BUILD_NUMBER}.dylib"
+        OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
+
+        WORKSPACE = "${env.WORKSPACE}"
+        ROOT_FOLDER = "${env.WORKSPACE}/../"
+        TMP_FOLDER = "${ROOT_FOLDER}/tmp"
+        DIST_FOLDER = "ci/distribution"
+        OUTPUT_FOLDER = "${ROOT_FOLDER}/src/build_xcode"
+
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
+    }
+    stages {
+        stage('PreBuild') {
+            steps {
+                script {
+                    sshagent(['8a93fd64-3029-4a20-b830-809bb70593ee	']) {
+                        sh 'git submodule update --init --recursive'
+                    }
+                    echo "Notify job has started:"
+                    bitbucketStatusNotify(
+                        buildState: 'INPROGRESS',
+                        buildName: "${env.JOB_NAME}",
+                        buildKey: "${env.JOB_NAME}",
+                        repoSlug: "${env.REPO_SLUG}",
+                        commitId: "${env.GIT_COMMIT}"
+                    )
+                    echo "BUILD_VARIANT: ${env.JOB_TYPE}"
+                }
+            }
+        }
+        stage('Cleanup Created Directories') {
+            steps {
+                script {
+                    sh 'rm -rf ${TMP_FOLDER}/*'
+                    sh 'rm -rf ${DIST_FOLDER}/*'
+                }
+            }
+        }
+
+        stage('Get third party binaries') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                    sh 'mkdir -p ${TMP_FOLDER}'
+                    sh 'mkdir -p ${DIST_FOLDER}'
+                    sh 'mkdir -p ${OUTPUT_FOLDER}'
+
+                    // Get TAK delivery
+                    sh(script: 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/TAK-Client.zip -g com.build38.tak -i tak-delivery -v 2.14.2 -c 1426 -e zip download-v2')
+                    sh(script: 'unzip ${TMP_FOLDER}/TAK-Client.zip -d ${TMP_FOLDER}/')
+
+                    // Get signer from nexus
+                    sh(script: 'ci/devtools-bash-utils/nexus.sh -o ci/apple-platform-rs.tar.gz -g com.indygreg -i apple-platform-rs -v 0.26.0 -e tar.gz download-v2')
+                    sh(script: 'tar -C ci -xzf ci/apple-platform-rs.tar.gz')
+
+                    // Get Python lib dependency
+                    sh(script: 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/Python-3.10.7.tgz -g org.python -i python -v 3.10.7 -e tgz download-v2')
+                    sh(script: 'tar -C ${DIST_FOLDER} -xvf ${TMP_FOLDER}/Python-3.10.7.tgz')
+                }
+            }
+        }
+
+        stage('Compile o-mvll using docker') {
+            steps {
+                sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-14_1.tar'
+                sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode14'
+                sh 'mkdir -p ../dist'
+                sh 'tar xvf ./omvll-deps-xcode-14_1.tar --directory=${TMP_FOLDER}/third-party-xcode14'
+                sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-xcode14:/third-party -v ${WORKSPACE}:/o-mvll openobfuscator/omvll-xcode:latest bash /o-mvll/scripts/docker/xcode_14_compile.sh'
+                sh 'mv ${WORKSPACE}/src/build_xcode/omvll_unsigned.dylib ${OUTPUT_FOLDER}/omvll_unsigned.dylib'
+            }
+        }
+
+
+        stage('Package & Upload Artifacts') {
+            steps {
+                script {
+                    sh '''
+                        #!/bin/bash
+                        tar -czvf "${WORKSPACE}/omvll-${BUILD_NUMBER}.tar.gz" ${OUTPUT_FOLDER}/omvll_unsigned.dylib
+                        ci/devtools-bash-utils/nexus.sh upload snapshot "${WORKSPACE}/omvll-${BUILD_NUMBER}.tar.gz" ${DEPLOYMENT_PATH_SNAPSHOT}
+                    '''
+                }
+            }
+        }
+
+        stage('Start MacOS job ci') {
+            when {
+                // When we are not in pr
+                expression{env.JOB_TYPE != "pr"}
+            }
+            steps {
+                script {
+                    build job: 'o-mvll-part-2_ci',parameters: [string(name: 'DEPLOYMENT_PATH_SNAPSHOT_UBUNTU', value: "${env.DEPLOYMENT_PATH_SNAPSHOT}")]
+                }
+            }
+        }
+
+        stage('Start MacOS job pr') {
+            when {
+                // When we are not in pr
+                expression{env.JOB_TYPE == "pr"}
+            }
+            steps {
+                script {
+                    build job: 'o-mvll-part-2_pr',parameters: [string(name: 'DEPLOYMENT_PATH_SNAPSHOT_UBUNTU', value: "${env.DEPLOYMENT_PATH_SNAPSHOT}"), string(name: 'gitRef', value: "${BITBUCKET_SOURCE_BRANCH}")]
+                }
+            }
+        }
+     }
+
+
+    post {
+        success {
+          script {
+                bitbucketStatusNotify(
+                    buildState: 'SUCCESSFUL',
+                    buildName: "${env.JOB_NAME}",
+                    buildKey: "${env.JOB_NAME}",
+                    repoSlug: "${env.REPO_SLUG}",
+                    commitId: "${env.GIT_COMMIT}"
+              )
+          }
+        }
+        unsuccessful {
+            script {
+                // Notify BitBucket failed status
+                bitbucketStatusNotify(
+                    buildState: 'FAILED',
+                    buildName: "${env.JOB_NAME}",
+                    buildKey: "${env.JOB_NAME}",
+                    repoSlug: "${env.REPO_SLUG}",
+                    commitId: "${env.GIT_COMMIT}"
+                )
+            }
+        }
+        cleanup {
+            script {
+                // Remove workspace
+                cleanWs()
+            }
+        }
+    }
+}

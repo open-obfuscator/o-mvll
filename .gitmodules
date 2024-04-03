@@ -1,0 +1,3 @@
+[submodule "ci/devtools-bash-utils"]
+	path = ci/devtools-bash-utils
+	url = git@bitbucket.org:build38/devtools-bash-utils.git
