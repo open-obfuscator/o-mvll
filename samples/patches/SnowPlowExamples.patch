@@ -1,0 +1,173 @@
+diff --git a/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj b/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj
+index 7d1216d..d9c8975 100644
+--- a/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj
++++ b/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj
+@@ -18,6 +18,9 @@
+ 		043172A91B7366B8008A927D /* DemoUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 043172A81B7366B8008A927D /* DemoUtils.m */; };
+ 		47E8A0EB3ECED58DD2874330 /* Pods_SnowPlowDemoShareExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A1668E8170F8F4A56A036B7 /* Pods_SnowPlowDemoShareExtension.framework */; };
+ 		6B3BF22228BCB7D400170BB9 /* Tracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3BF22128BCB7D400170BB9 /* Tracker.swift */; };
++		B101C2C92BBD49E700E11CBF /* libWBC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2C72BBD49E600E11CBF /* libWBC.a */; };
++		B101C2CA2BBD49E700E11CBF /* libTAK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2C82BBD49E600E11CBF /* libTAK.a */; };
++		B101C2CC2BBD49F100E11CBF /* license.tak in Resources */ = {isa = PBXBuildFile; fileRef = B101C2CB2BBD49F100E11CBF /* license.tak */; };
+ 		B10C0221289B2C0600770C3E /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10C0220289B2C0600770C3E /* ShareViewController.swift */; };
+ 		B10C0224289B2C0600770C3E /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B10C0222289B2C0600770C3E /* MainInterface.storyboard */; };
+ 		B10C0228289B2C0600770C3E /* SnowPlowDemoShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10C021E289B2C0600770C3E /* SnowPlowDemoShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+@@ -106,6 +109,9 @@
+ 		6B3BF22128BCB7D400170BB9 /* Tracker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Tracker.swift; sourceTree = "<group>"; };
+ 		708A613346C83076752DA514 /* Pods-SnowPlowDemoShareExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SnowPlowDemoShareExtension.debug.xcconfig"; path = "Target Support Files/Pods-SnowPlowDemoShareExtension/Pods-SnowPlowDemoShareExtension.debug.xcconfig"; sourceTree = "<group>"; };
+ 		740DCC07B75E8AD9FD1BB20D /* Pods-SnowplowDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SnowplowDemo.release.xcconfig"; path = "Target Support Files/Pods-SnowplowDemo/Pods-SnowplowDemo.release.xcconfig"; sourceTree = "<group>"; };
++		B101C2C72BBD49E600E11CBF /* libWBC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWBC.a; path = "../../../../../tmp/TAK-Client/iOS/C/libs/libWBC.a"; sourceTree = "<group>"; };
++		B101C2C82BBD49E600E11CBF /* libTAK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libTAK.a; path = "../../../../../tmp/TAK-Client/iOS/C/libs/libTAK.a"; sourceTree = "<group>"; };
++		B101C2CB2BBD49F100E11CBF /* license.tak */ = {isa = PBXFileReference; lastKnownFileType = file; name = license.tak; path = "../../../../../tmp/TAK-Client/licenses/license.tak"; sourceTree = "<group>"; };
+ 		B10C021E289B2C0600770C3E /* SnowPlowDemoShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SnowPlowDemoShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+ 		B10C0220289B2C0600770C3E /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+ 		B10C0223289B2C0600770C3E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+@@ -118,6 +124,8 @@
+ 			isa = PBXFrameworksBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B101C2C92BBD49E700E11CBF /* libWBC.a in Frameworks */,
++				B101C2CA2BBD49E700E11CBF /* libTAK.a in Frameworks */,
+ 				E134DAD3C64350D5745090BD /* Pods_SnowplowDemo.framework in Frameworks */,
+ 				B10C023A289B2F8500770C3E /* Analytics.framework in Frameworks */,
+ 			);
+@@ -151,6 +159,7 @@
+ 		043172721B7365D3008A927D = {
+ 			isa = PBXGroup;
+ 			children = (
++				B101C2CB2BBD49F100E11CBF /* license.tak */,
+ 				0431727D1B7365D4008A927D /* SnowplowDemo */,
+ 				0431729A1B7365D4008A927D /* SnowplowDemoTests */,
+ 				B10C021F289B2C0600770C3E /* SnowPlowDemoShareExtension */,
+@@ -229,6 +238,8 @@
+ 		732484D89E64AED2D558B48A /* Frameworks */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				B101C2C82BBD49E600E11CBF /* libTAK.a */,
++				B101C2C72BBD49E600E11CBF /* libWBC.a */,
+ 				3710BBFEF122A6658C1C43E7 /* Pods_SnowplowDemo.framework */,
+ 				3A1668E8170F8F4A56A036B7 /* Pods_SnowPlowDemoShareExtension.framework */,
+ 			);
+@@ -349,13 +360,16 @@
+ 				TargetAttributes = {
+ 					0431727A1B7365D4008A927D = {
+ 						CreatedOnToolsVersion = 6.4;
++						DevelopmentTeam = WCMG6DCKKM;
+ 					};
+ 					043172961B7365D4008A927D = {
+ 						CreatedOnToolsVersion = 6.4;
++						DevelopmentTeam = WCMG6DCKKM;
+ 						TestTargetID = 0431727A1B7365D4008A927D;
+ 					};
+ 					B10C021D289B2C0600770C3E = {
+ 						CreatedOnToolsVersion = 13.4.1;
++						DevelopmentTeam = WCMG6DCKKM;
+ 						ProvisioningStyle = Automatic;
+ 					};
+ 					B10C0233289B2F8500770C3E = {
+@@ -390,6 +404,7 @@
+ 			isa = PBXResourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B101C2CC2BBD49F100E11CBF /* license.tak in Resources */,
+ 				0431728D1B7365D4008A927D /* Main.storyboard in Resources */,
+ 				043172921B7365D4008A927D /* LaunchScreen.xib in Resources */,
+ 				0431728F1B7365D4008A927D /* Images.xcassets in Resources */,
+@@ -684,9 +699,32 @@
+ 			buildSettings = {
+ 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				INFOPLIST_FILE = SnowplowDemo/Info.plist;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
++				LIBRARY_SEARCH_PATHS = (
++					"$(inherited)",
++					"\"${TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}\"",
++					/usr/lib/swift,
++					"$(PROJECT_DIR)/../../../../../tmp/TAK-Client/iOS/C/libs",
++				);
++				OTHER_CFLAGS = (
++					"-fno-legacy-pass-manager",
++					"-fpass-plugin=$(PROJECT_DIR)/../../../../../src/build_xcode/omvll.dylib",
++				);
++				OTHER_LDFLAGS = (
++					"$(inherited)",
++					"-framework",
++					"\"CoreTelephony\"",
++					"-framework",
++					"\"Foundation\"",
++					"-framework",
++					"\"SnowplowTracker\"",
++					"-framework",
++					"\"UIKit\"",
++					"-lstdc++",
++				);
+ 				PRODUCT_BUNDLE_IDENTIFIER = "com.snowplowanalytics.$(PRODUCT_NAME:rfc1034identifier)";
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 			};
+@@ -698,9 +736,32 @@
+ 			buildSettings = {
+ 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				INFOPLIST_FILE = SnowplowDemo/Info.plist;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
++				LIBRARY_SEARCH_PATHS = (
++					"$(inherited)",
++					"\"${TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}\"",
++					/usr/lib/swift,
++					"$(PROJECT_DIR)/../../../../../tmp/TAK-Client/iOS/C/libs",
++				);
++				OTHER_CFLAGS = (
++					"-fno-legacy-pass-manager",
++					"-fpass-plugin=$(PROJECT_DIR)/../../../../../src/build_xcode/omvll.dylib",
++				);
++				OTHER_LDFLAGS = (
++					"$(inherited)",
++					"-framework",
++					"\"CoreTelephony\"",
++					"-framework",
++					"\"Foundation\"",
++					"-framework",
++					"\"SnowplowTracker\"",
++					"-framework",
++					"\"UIKit\"",
++					"-lstdc++",
++				);
+ 				PRODUCT_BUNDLE_IDENTIFIER = "com.snowplowanalytics.$(PRODUCT_NAME:rfc1034identifier)";
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 			};
+@@ -710,6 +771,7 @@
+ 			isa = XCBuildConfiguration;
+ 			buildSettings = {
+ 				BUNDLE_LOADER = "$(TEST_HOST)";
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				FRAMEWORK_SEARCH_PATHS = (
+ 					"$(SDKROOT)/Developer/Library/Frameworks",
+ 					"$(inherited)",
+@@ -730,6 +792,7 @@
+ 			isa = XCBuildConfiguration;
+ 			buildSettings = {
+ 				BUNDLE_LOADER = "$(TEST_HOST)";
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				FRAMEWORK_SEARCH_PATHS = (
+ 					"$(SDKROOT)/Developer/Library/Frameworks",
+ 					"$(inherited)",
+@@ -756,6 +819,7 @@
+ 				CODE_SIGN_STYLE = Automatic;
+ 				CURRENT_PROJECT_VERSION = 1;
+ 				DEBUG_INFORMATION_FORMAT = dwarf;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				GCC_C_LANGUAGE_STANDARD = gnu11;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				INFOPLIST_FILE = SnowPlowDemoShareExtension/Info.plist;
+@@ -790,6 +854,7 @@
+ 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+ 				CODE_SIGN_STYLE = Automatic;
+ 				CURRENT_PROJECT_VERSION = 1;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				GCC_C_LANGUAGE_STANDARD = gnu11;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				INFOPLIST_FILE = SnowPlowDemoShareExtension/Info.plist;

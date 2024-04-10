@@ -25,3 +25,11 @@ omvll.log
 
 # Tmp folder
 tmp/*
+
+# Samples
+samples/GoodNight*
+samples/HackerNews*
+samples/HexaCalc*
+samples/Kotoba*
+samples/SnowPlow*
+**/output/**

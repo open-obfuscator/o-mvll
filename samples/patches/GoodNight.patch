@@ -1,0 +1,229 @@
+diff --git a/GoodNight Widget/GoodNight Widget.entitlements b/GoodNight Widget/GoodNight Widget.entitlements
+index 7a93f66..147b8ee 100644
+--- a/GoodNight Widget/GoodNight Widget.entitlements	
++++ b/GoodNight Widget/GoodNight Widget.entitlements	
+@@ -4,7 +4,7 @@
+ <dict>
+ 	<key>com.apple.security.application-groups</key>
+ 	<array>
+-		<string>group.com.agatiello.GoodNight</string>
++		<string>group.com.build38.signal.group</string>
+ 	</array>
+ </dict>
+ </plist>
+diff --git a/GoodNight.xcodeproj/project.pbxproj b/GoodNight.xcodeproj/project.pbxproj
+index fa96a93..665fad9 100755
+--- a/GoodNight.xcodeproj/project.pbxproj
++++ b/GoodNight.xcodeproj/project.pbxproj
+@@ -55,6 +55,9 @@
+ 		92F23AC21BD72AE700A097CB /* Storyboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 92F23AC41BD72AE700A097CB /* Storyboard.storyboard */; };
+ 		92FEA6B11DE6B324001EA06B /* TemperatureTouchBarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 92FEA6B01DE6B324001EA06B /* TemperatureTouchBarController.m */; };
+ 		ACCE45A21C1B6D3100CD094C /* SpringBoardServicesClient.m in Sources */ = {isa = PBXBuildFile; fileRef = ACCE45A11C1B6D3100CD094C /* SpringBoardServicesClient.m */; };
++		B101C2B62BBC339100E11CBF /* libWBC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2B42BBC339100E11CBF /* libWBC.a */; };
++		B101C2B72BBC339100E11CBF /* libTAK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2B52BBC339100E11CBF /* libTAK.a */; };
++		B101C2B92BBC33A400E11CBF /* license.tak in Resources */ = {isa = PBXBuildFile; fileRef = B101C2B82BBC33A400E11CBF /* license.tak */; };
+ 		B96BB64F1B38D96600F1C3AE /* GammaController.m in Sources */ = {isa = PBXBuildFile; fileRef = B96BB64E1B38D96600F1C3AE /* GammaController.m */; };
+ 		B9E5364B1B38D90D0097BF90 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B9E5364A1B38D90D0097BF90 /* main.m */; };
+ 		B9E5364E1B38D90D0097BF90 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B9E5364D1B38D90D0097BF90 /* AppDelegate.m */; };
+@@ -186,6 +189,9 @@
+ 		92FEA6B01DE6B324001EA06B /* TemperatureTouchBarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TemperatureTouchBarController.m; sourceTree = "<group>"; };
+ 		ACCE45A01C1B6D3100CD094C /* SpringBoardServicesClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpringBoardServicesClient.h; sourceTree = "<group>"; };
+ 		ACCE45A11C1B6D3100CD094C /* SpringBoardServicesClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpringBoardServicesClient.m; sourceTree = "<group>"; };
++		B101C2B42BBC339100E11CBF /* libWBC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWBC.a; path = "../../tmp/TAK-Client/iOS/C/libs/libWBC.a"; sourceTree = "<group>"; };
++		B101C2B52BBC339100E11CBF /* libTAK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libTAK.a; path = "../../tmp/TAK-Client/iOS/C/libs/libTAK.a"; sourceTree = "<group>"; };
++		B101C2B82BBC33A400E11CBF /* license.tak */ = {isa = PBXFileReference; lastKnownFileType = file; name = license.tak; path = "../../tmp/TAK-Client/licenses/license.tak"; sourceTree = "<group>"; };
+ 		B96BB64D1B38D96600F1C3AE /* GammaController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GammaController.h; sourceTree = "<group>"; };
+ 		B96BB64E1B38D96600F1C3AE /* GammaController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GammaController.m; sourceTree = "<group>"; };
+ 		B9E536461B38D90D0097BF90 /* GoodNight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GoodNight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+@@ -220,6 +226,8 @@
+ 			isa = PBXFrameworksBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B101C2B62BBC339100E11CBF /* libWBC.a in Frameworks */,
++				B101C2B72BBC339100E11CBF /* libTAK.a in Frameworks */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+ 		};
+@@ -347,6 +355,8 @@
+ 		925B811F1BE2BCE1003A6C4B /* Frameworks */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				B101C2B52BBC339100E11CBF /* libTAK.a */,
++				B101C2B42BBC339100E11CBF /* libWBC.a */,
+ 				928F58251DED09B100BB52B8 /* MASShortcut.framework */,
+ 				926B25451DEBC35B00F19980 /* Sparkle.framework */,
+ 				925B81201BE2BCE1003A6C4B /* NotificationCenter.framework */,
+@@ -617,6 +627,7 @@
+ 		B9E5363D1B38D90D0097BF90 = {
+ 			isa = PBXGroup;
+ 			children = (
++				B101C2B82BBC33A400E11CBF /* license.tak */,
+ 				75885DCC1C2027A500B57791 /* Shared */,
+ 				B9E536481B38D90D0097BF90 /* GoodNight */,
+ 				925B81221BE2BCE1003A6C4B /* GoodNight Widget */,
+@@ -734,8 +745,8 @@
+ 					};
+ 					925B811D1BE2BCE1003A6C4B = {
+ 						CreatedOnToolsVersion = 7.2;
+-						DevelopmentTeam = 9QKLXG4845;
+-						ProvisioningStyle = Manual;
++						DevelopmentTeam = WCMG6DCKKM;
++						ProvisioningStyle = Automatic;
+ 						SystemCapabilities = {
+ 							com.apple.ApplicationGroups.iOS = {
+ 								enabled = 1;
+@@ -747,8 +758,8 @@
+ 					};
+ 					B9E536451B38D90D0097BF90 = {
+ 						CreatedOnToolsVersion = 7.0;
+-						DevelopmentTeam = 9QKLXG4845;
+-						ProvisioningStyle = Manual;
++						DevelopmentTeam = WCMG6DCKKM;
++						ProvisioningStyle = Automatic;
+ 						SystemCapabilities = {
+ 							com.apple.ApplicationGroups.iOS = {
+ 								enabled = 1;
+@@ -768,8 +779,13 @@
+ 			developmentRegion = English;
+ 			hasScannedForEncodings = 0;
+ 			knownRegions = (
++				English,
+ 				en,
+ 				Base,
++				ja,
++				nl,
++				de,
++				fr,
+ 			);
+ 			mainGroup = B9E5363D1B38D90D0097BF90;
+ 			productRefGroup = B9E536471B38D90D0097BF90 /* Products */;
+@@ -806,6 +822,7 @@
+ 			isa = PBXResourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B101C2B92BBC33A400E11CBF /* license.tak in Resources */,
+ 				0025148E1CDCCFCC00482F87 /* Localizable.strings in Resources */,
+ 				75885DCB1C2026B700B57791 /* Defaults.plist in Resources */,
+ 				92F23ABF1BD72ADD00A097CB /* LaunchScreen.storyboard in Resources */,
+@@ -1075,8 +1092,9 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+ 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
+ 				CODE_SIGN_ENTITLEMENTS = GoodNight/GoodNight.entitlements;
+-				CODE_SIGN_IDENTITY = "iPhone Distribution: ADA Tech, LLC";
+-				DEVELOPMENT_TEAM = 9QKLXG4845;
++				CODE_SIGN_IDENTITY = "Apple Development";
++				CODE_SIGN_STYLE = Automatic;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				ENABLE_BITCODE = NO;
+ 				FRAMEWORK_SEARCH_PATHS = (
+ 					"$(inherited)",
+@@ -1086,10 +1104,15 @@
+ 				GCC_THUMB_SUPPORT = NO;
+ 				INFOPLIST_FILE = "$(SRCROOT)/GoodNight/Info.plist";
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+-				PRODUCT_BUNDLE_IDENTIFIER = com.agatiello.GoodNight;
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../tmp/TAK-Client/iOS/C/libs";
++				OTHER_CFLAGS = (
++					"-fno-legacy-pass-manager",
++					"-fpass-plugin=$(PROJECT_DIR)/../../src/build_xcode/omvll.dylib",
++				);
++				OTHER_LDFLAGS = "-lstdc++";
++				PRODUCT_BUNDLE_IDENTIFIER = com.build38.GoodNight;
+ 				PRODUCT_NAME = GoodNight;
+-				PROVISIONING_PROFILE = "d859dcdf-12a2-465a-8ed2-3cb6ab6bf02b";
+-				PROVISIONING_PROFILE_SPECIFIER = GoodNight;
++				PROVISIONING_PROFILE_SPECIFIER = "";
+ 				TARGETED_DEVICE_FAMILY = "1,2";
+ 			};
+ 			name = Enterprise;
+@@ -1100,15 +1123,16 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+ 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+ 				CODE_SIGN_ENTITLEMENTS = "GoodNight Widget/GoodNight Widget.entitlements";
+-				DEVELOPMENT_TEAM = 9QKLXG4845;
++				CODE_SIGN_IDENTITY = "Apple Development";
++				CODE_SIGN_STYLE = Automatic;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				ENABLE_BITCODE = NO;
+ 				GCC_PREFIX_HEADER = GoodNight/PrefixHeader.pch;
+ 				INFOPLIST_FILE = "GoodNight Widget/Info.plist";
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+-				PRODUCT_BUNDLE_IDENTIFIER = "com.agatiello.GoodNight.GoodNight-Widget";
++				PRODUCT_BUNDLE_IDENTIFIER = "com.build38.GoodNight.GoodNight-Widget";
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+-				PROVISIONING_PROFILE = "0294b426-e9c0-493a-bf93-262f3f9d5307";
+-				PROVISIONING_PROFILE_SPECIFIER = "GoodNight Widget (Development)";
++				PROVISIONING_PROFILE_SPECIFIER = "";
+ 				SKIP_INSTALL = YES;
+ 			};
+ 			name = Debug;
+@@ -1133,9 +1157,11 @@
+ 				CLANG_WARN_UNREACHABLE_CODE = YES;
+ 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+ 				CODE_SIGN_ENTITLEMENTS = "GoodNight Widget/GoodNight Widget.entitlements";
++				CODE_SIGN_IDENTITY = "Apple Development";
++				CODE_SIGN_STYLE = Automatic;
+ 				COPY_PHASE_STRIP = NO;
+ 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+-				DEVELOPMENT_TEAM = 9QKLXG4845;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				ENABLE_BITCODE = NO;
+ 				ENABLE_NS_ASSERTIONS = NO;
+ 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+@@ -1151,10 +1177,9 @@
+ 				INFOPLIST_FILE = "GoodNight Widget/Info.plist";
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+ 				MTL_ENABLE_DEBUG_INFO = NO;
+-				PRODUCT_BUNDLE_IDENTIFIER = "com.agatiello.GoodNight.GoodNight-Widget";
++				PRODUCT_BUNDLE_IDENTIFIER = "com.build38.GoodNight.GoodNight-Widget";
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+-				PROVISIONING_PROFILE = "877dad75-3f5b-4e87-83cc-3f39379469bf";
+-				PROVISIONING_PROFILE_SPECIFIER = "GoodNight Widget";
++				PROVISIONING_PROFILE_SPECIFIER = "";
+ 				SDKROOT = iphoneos;
+ 				SKIP_INSTALL = YES;
+ 				VALIDATE_PRODUCT = YES;
+@@ -1215,8 +1240,9 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+ 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
+ 				CODE_SIGN_ENTITLEMENTS = GoodNight/GoodNight.entitlements;
+-				CODE_SIGN_IDENTITY = "iPhone Developer: Anthony Agatiello (J9M2GPP36A)";
+-				DEVELOPMENT_TEAM = 9QKLXG4845;
++				CODE_SIGN_IDENTITY = "Apple Development";
++				CODE_SIGN_STYLE = Automatic;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				ENABLE_BITCODE = NO;
+ 				FRAMEWORK_SEARCH_PATHS = (
+ 					"$(inherited)",
+@@ -1226,10 +1252,15 @@
+ 				GCC_THUMB_SUPPORT = NO;
+ 				INFOPLIST_FILE = "$(SRCROOT)/GoodNight/Info.plist";
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+-				PRODUCT_BUNDLE_IDENTIFIER = com.agatiello.GoodNight;
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../tmp/TAK-Client/iOS/C/libs";
++				OTHER_CFLAGS = (
++					"-fno-legacy-pass-manager",
++					"-fpass-plugin=$(PROJECT_DIR)/../../src/build_xcode/omvll.dylib",
++				);
++				OTHER_LDFLAGS = "-lstdc++";
++				PRODUCT_BUNDLE_IDENTIFIER = com.build38.GoodNight;
+ 				PRODUCT_NAME = GoodNight;
+-				PROVISIONING_PROFILE = "588851c4-c84d-4ac4-a98d-e468ce1eca1e";
+-				PROVISIONING_PROFILE_SPECIFIER = "GoodNight (Development)";
++				PROVISIONING_PROFILE_SPECIFIER = "";
+ 				TARGETED_DEVICE_FAMILY = "1,2";
+ 			};
+ 			name = Debug;
+diff --git a/GoodNight/GoodNight.entitlements b/GoodNight/GoodNight.entitlements
+index 7a93f66..147b8ee 100644
+--- a/GoodNight/GoodNight.entitlements
++++ b/GoodNight/GoodNight.entitlements
+@@ -4,7 +4,7 @@
+ <dict>
+ 	<key>com.apple.security.application-groups</key>
+ 	<array>
+-		<string>group.com.agatiello.GoodNight</string>
++		<string>group.com.build38.signal.group</string>
+ 	</array>
+ </dict>
+ </plist>

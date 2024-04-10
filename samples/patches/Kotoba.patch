@@ -1,0 +1,194 @@
+diff --git a/code/Kotoba.xcodeproj/project.pbxproj b/code/Kotoba.xcodeproj/project.pbxproj
+index 621986b..b0e0ea1 100644
+--- a/code/Kotoba.xcodeproj/project.pbxproj
++++ b/code/Kotoba.xcodeproj/project.pbxproj
+@@ -22,6 +22,12 @@
+ 		967E998BC07D453DE26EEE83 /* WordListDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967E990F894B4E27CE8337A4 /* WordListDataSource.swift */; };
+ 		967E99DE08067E1B31567C98 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE918C4F1A22A5F5006043CF /* AppDelegate.swift */; };
+ 		967E9E3969BCBD8408ADCB69 /* WordListDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967E990F894B4E27CE8337A4 /* WordListDataSource.swift */; };
++		B101C2B02BBC135100E11CBF /* libWBC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2AE2BBC135100E11CBF /* libWBC.a */; };
++		B101C2B12BBC135100E11CBF /* libTAK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2AF2BBC135100E11CBF /* libTAK.a */; };
++		B101C2B32BBC136A00E11CBF /* license.tak in Resources */ = {isa = PBXBuildFile; fileRef = B101C2B22BBC136A00E11CBF /* license.tak */; };
++		B101C2D52BC3F7DD00E11CBF /* libWBC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2D32BC3F7DD00E11CBF /* libWBC.a */; };
++		B101C2D62BC3F7DD00E11CBF /* libTAK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2D42BC3F7DD00E11CBF /* libTAK.a */; };
++		B101C2D92BC3F80000E11CBF /* license.tak in Resources */ = {isa = PBXBuildFile; fileRef = B101C2B22BBC136A00E11CBF /* license.tak */; };
+ 		B6232DEF24A7881700B0CC38 /* RoundedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967E98DD562220BBE20A8C1F /* RoundedView.swift */; };
+ 		B62B309823B7F60900583D3D /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = B62B309A23B7F60900583D3D /* Localizable.stringsdict */; };
+ 		B65A4E02238435ED000C9A4F /* Debug.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CFA6AA2381F0CB00D7ECCC /* Debug.swift */; };
+@@ -110,6 +116,11 @@
+ 		967E9C49B74C80223D273414 /* Chocktuba.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Chocktuba.swift; sourceTree = "<group>"; };
+ 		967E9CB9914B758828733936 /* WordListStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WordListStore.swift; sourceTree = "<group>"; };
+ 		967E9EDA541A0A73088A86DC /* WordListStrings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WordListStrings.swift; sourceTree = "<group>"; };
++		B101C2AE2BBC135100E11CBF /* libWBC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWBC.a; path = "../../tmp/TAK-Client/iOS/C/libs/libWBC.a"; sourceTree = "<group>"; };
++		B101C2AF2BBC135100E11CBF /* libTAK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libTAK.a; path = "../../tmp/TAK-Client/iOS/C/libs/libTAK.a"; sourceTree = "<group>"; };
++		B101C2B22BBC136A00E11CBF /* license.tak */ = {isa = PBXFileReference; lastKnownFileType = file; name = license.tak; path = "../../../tmp/TAK-Client/licenses/license.tak"; sourceTree = "<group>"; };
++		B101C2D32BC3F7DD00E11CBF /* libWBC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWBC.a; path = "../../../tmp/TAK-Client/iOS/C/libs/libWBC.a"; sourceTree = "<group>"; };
++		B101C2D42BC3F7DD00E11CBF /* libTAK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libTAK.a; path = "../../../tmp/TAK-Client/iOS/C/libs/libTAK.a"; sourceTree = "<group>"; };
+ 		B62B309923B7F60900583D3D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+ 		B62B309D23B7FA0B00583D3D /* chock */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = chock; path = chock.lproj/Main.strings; sourceTree = "<group>"; };
+ 		B62B309E23B7FA2B00583D3D /* chock */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = chock; path = chock.lproj/Localizable.strings; sourceTree = "<group>"; };
+@@ -152,6 +163,8 @@
+ 			buildActionMask = 2147483647;
+ 			files = (
+ 				B6F3964724629E77009E0B7C /* CloudKit.framework in Frameworks */,
++				B101C2D52BC3F7DD00E11CBF /* libWBC.a in Frameworks */,
++				B101C2D62BC3F7DD00E11CBF /* libTAK.a in Frameworks */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+ 		};
+@@ -160,6 +173,8 @@
+ 			buildActionMask = 2147483647;
+ 			files = (
+ 				B6F3964824629E7A009E0B7C /* CloudKit.framework in Frameworks */,
++				B101C2B02BBC135100E11CBF /* libWBC.a in Frameworks */,
++				B101C2B12BBC135100E11CBF /* libTAK.a in Frameworks */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+ 		};
+@@ -183,6 +198,10 @@
+ 		B6F3964524629E77009E0B7C /* Frameworks */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				B101C2AF2BBC135100E11CBF /* libTAK.a */,
++				B101C2D42BC3F7DD00E11CBF /* libTAK.a */,
++				B101C2AE2BBC135100E11CBF /* libWBC.a */,
++				B101C2D32BC3F7DD00E11CBF /* libWBC.a */,
+ 				B6F3964624629E77009E0B7C /* CloudKit.framework */,
+ 			);
+ 			name = Frameworks;
+@@ -202,6 +221,7 @@
+ 		BE918C411A22A5F5006043CF = {
+ 			isa = PBXGroup;
+ 			children = (
++				B101C2B22BBC136A00E11CBF /* license.tak */,
+ 				BE918C4C1A22A5F5006043CF /* Kotoba */,
+ 				BEA413B81D1CABB600D177C2 /* KotobaTests */,
+ 				BEB2324D1D1DD3B800369560 /* KotobaUITests */,
+@@ -374,12 +394,12 @@
+ 				TargetAttributes = {
+ 					B6F4594A2460E15100E2174D = {
+ 						CreatedOnToolsVersion = 11.4.1;
+-						DevelopmentTeam = 8B38X92RJ6;
++						DevelopmentTeam = WCMG6DCKKM;
+ 						ProvisioningStyle = Automatic;
+ 					};
+ 					BE918C491A22A5F5006043CF = {
+ 						CreatedOnToolsVersion = 6.2;
+-						DevelopmentTeam = 8B38X92RJ6;
++						DevelopmentTeam = WCMG6DCKKM;
+ 						LastSwiftMigration = 1120;
+ 					};
+ 					BEA413B61D1CABB600D177C2 = {
+@@ -423,6 +443,7 @@
+ 			isa = PBXResourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B101C2D92BC3F80000E11CBF /* license.tak in Resources */,
+ 				4475E234286F8A2200E2B0B3 /* Colors.xcassets in Resources */,
+ 				B6F459512460E15100E2174D /* ShareExtension.storyboard in Resources */,
+ 				B6F73C542478FE1A0003F394 /* .bartycrouch.toml in Resources */,
+@@ -433,6 +454,7 @@
+ 			isa = PBXResourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B101C2B32BBC136A00E11CBF /* license.tak in Resources */,
+ 				44D1096623A84262007C477C /* Localizable.strings in Resources */,
+ 				BE918C551A22A5F5006043CF /* Main.storyboard in Resources */,
+ 				4440B41D236CF92100369CE8 /* Colors.xcassets in Resources */,
+@@ -652,14 +674,16 @@
+ 				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+ 				CODE_SIGN_STYLE = Automatic;
+ 				DEBUG_INFORMATION_FORMAT = dwarf;
+-				DEVELOPMENT_TEAM = 8B38X92RJ6;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				GCC_C_LANGUAGE_STANDARD = gnu11;
+ 				INFOPLIST_FILE = ShareExtension/Info.plist;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../../tmp/TAK-Client/iOS/C/libs";
+ 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+ 				MTL_FAST_MATH = YES;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.willhains.Kotoba.ShareExtension;
++				OTHER_LDFLAGS = "-lstdc++";
++				PRODUCT_BUNDLE_IDENTIFIER = com.build38.Kotoba.ShareExtension;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				SKIP_INSTALL = YES;
+ 				SUPPORTS_MACCATALYST = NO;
+@@ -682,13 +706,15 @@
+ 				CODE_SIGN_STYLE = Automatic;
+ 				COPY_PHASE_STRIP = NO;
+ 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+-				DEVELOPMENT_TEAM = 8B38X92RJ6;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				GCC_C_LANGUAGE_STANDARD = gnu11;
+ 				INFOPLIST_FILE = ShareExtension/Info.plist;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../../tmp/TAK-Client/iOS/C/libs";
+ 				MTL_FAST_MATH = YES;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.willhains.Kotoba.ShareExtension;
++				OTHER_LDFLAGS = "-lstdc++";
++				PRODUCT_BUNDLE_IDENTIFIER = com.build38.Kotoba.ShareExtension;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				SKIP_INSTALL = YES;
+ 				SUPPORTS_MACCATALYST = NO;
+@@ -811,12 +837,14 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-red";
+ 				CODE_SIGN_ENTITLEMENTS = Kotoba/Kotoba.entitlements;
+ 				CURRENT_PROJECT_VERSION = 1592141211;
+-				DEVELOPMENT_TEAM = 8B38X92RJ6;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				INFOPLIST_FILE = Kotoba/Info.plist;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../../tmp/TAK-Client/iOS/C/libs";
+ 				MARKETING_VERSION = 2.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.willhains.Kotoba;
++				OTHER_LDFLAGS = "-lstdc++";
++				PRODUCT_BUNDLE_IDENTIFIER = com.build38.Kotoba;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				PROVISIONING_PROFILE = "";
+ 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+@@ -836,12 +864,14 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-red";
+ 				CODE_SIGN_ENTITLEMENTS = Kotoba/Kotoba.entitlements;
+ 				CURRENT_PROJECT_VERSION = 1592141211;
+-				DEVELOPMENT_TEAM = 8B38X92RJ6;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				INFOPLIST_FILE = Kotoba/Info.plist;
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+ 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../../tmp/TAK-Client/iOS/C/libs";
+ 				MARKETING_VERSION = 2.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.willhains.Kotoba;
++				OTHER_LDFLAGS = "-lstdc++";
++				PRODUCT_BUNDLE_IDENTIFIER = com.build38.Kotoba;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				PROVISIONING_PROFILE = "";
+ 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+diff --git a/code/Kotoba/Kotoba.entitlements b/code/Kotoba/Kotoba.entitlements
+index 6effa6c..f5fe7ca 100644
+--- a/code/Kotoba/Kotoba.entitlements
++++ b/code/Kotoba/Kotoba.entitlements
+@@ -14,7 +14,7 @@
+ 	<true/>
+ 	<key>com.apple.security.application-groups</key>
+ 	<array>
+-		<string>group.com.willhains.Kotoba</string>
++		<string>group.com.build38.tak</string>
+ 	</array>
+ 	<key>com.apple.security.files.user-selected.read-only</key>
+ 	<true/>
+diff --git a/code/ShareExtension/ShareExtension.entitlements b/code/ShareExtension/ShareExtension.entitlements
+index 90fb769..945503c 100644
+--- a/code/ShareExtension/ShareExtension.entitlements
++++ b/code/ShareExtension/ShareExtension.entitlements
+@@ -14,7 +14,7 @@
+ 	<true/>
+ 	<key>com.apple.security.application-groups</key>
+ 	<array>
+-		<string>group.com.willhains.Kotoba</string>
++		<string>group.com.build38.tak</string>
+ 	</array>
+ 	<key>com.apple.security.network.client</key>
+ 	<true/>

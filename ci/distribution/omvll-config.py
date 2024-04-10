@@ -9,13 +9,7 @@ class MyConfig(omvll.ObfuscationConfig):
                                    fun: omvll.Function) -> omvll.ArithmeticOpt:
         return True
 
-    def break_control_flow(self, mod: omvll.Module, func: omvll.Function):
-        return True
-
     def flatten_cfg(self, mod: omvll.Module, func: omvll.Function):
-        return True
-
-    def obfuscate_constants(_, __, func: omvll.Function):
         return True
 
     def obfuscate_string(self, _, __, string: bytes):

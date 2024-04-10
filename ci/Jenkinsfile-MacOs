@@ -20,13 +20,10 @@ pipeline {
         OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
 
         WORKSPACE = "${env.WORKSPACE}"
-        ROOT_FOLDER = "${env.WORKSPACE}/../"
+        ROOT_FOLDER = "${WORKSPACE}/"
         TMP_FOLDER = "${ROOT_FOLDER}/tmp"
         DIST_FOLDER = "ci/distribution"
         OUTPUT_FOLDER = "${ROOT_FOLDER}/src/build_xcode"
-        IOS_SIM_ID = "96D1E505-7D4C-44AD-AC2D-F2F72ABA63AC"
-
-        BUILD_NUMBER = "${env.BUILD_NUMBER}"
     }
     stages {
         stage('PreBuild') {
@@ -68,16 +65,19 @@ pipeline {
                     sh 'ci/devtools-bash-utils/nexus.sh -o ${OUTPUT_FOLDER}/omvll_unsigned.dylib.gz -g com.build38.omvll -i omvll -v ${DEPLOYMENT_VERSION} -e dylib download-snapshot'
                     sh 'gzip -d ${OUTPUT_FOLDER}/omvll_unsigned.dylib.gz'
                     // Get TAK delivery
-                    sh 'ci/devtools-bash-utils/nexus.sh -o tmp/TAK-Client.zip -g com.build38.tak -i tak-delivery -v 2.14.2 -c 1426 -e zip download-v2'
-                    sh 'unzip ${TMP_FOLDER}/TAK-Client.zip -d tmp/'
+                    sh 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/TAK-Client.zip -g com.build38.tak -i tak-delivery -v 2.14.2 -c 1426 -e zip download-v2'
+                    sh 'unzip ${TMP_FOLDER}/TAK-Client.zip -d ${TMP_FOLDER}/'
 
                     // Get signer from nexus
                     sh 'ci/devtools-bash-utils/nexus.sh -o ci/apple-platform-rs.tar.gz -g com.indygreg -i apple-platform-rs -v 0.26.0 -e tar.gz download-v2'
                     sh 'tar -C ci -xzf ci/apple-platform-rs.tar.gz'
 
                     // Get Python lib dependency
-                    sh 'ci/devtools-bash-utils/nexus.sh -o tmp/Python-3.10.7.tgz -g org.python -i python -v 3.10.7 -e tgz download-v2'
-                    sh 'tar -C ${DIST_FOLDER} -xvf tmp/Python-3.10.7.tgz'
+                    sh 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/Python-3.10.7.tgz -g org.python -i python -v 3.10.7 -e tgz download-v2'
+                    sh 'tar -C ${DIST_FOLDER} -xvf ${TMP_FOLDER}/Python-3.10.7.tgz'
+
+                    // Get Samples repo
+                    sh 'ci/getSampleRepositories.sh'
                 }
             }
         }
@@ -105,20 +105,24 @@ pipeline {
         stage('Build xcode ObjectiveC project') {
             steps {
                 dir("${WORKSPACE}") {
-                    sh 'mkdir -p src/build_xcode'
-                    sh 'mkdir -p mysimplepass/build_xcode'
-                    sh 'cp ${OUTPUT_FOLDER}/omvll.dylib src/build_xcode/omvll.dylib'
-                    sh 'cp ${OUTPUT_FOLDER}/omvll.dylib mysimplepass/build_xcode/omvll.dylib'
-
-                    // Execute ObjCHelloOmvll
+                    // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
                     sh '''#!/usr/bin/env bash
                         cd samples
                         . ./omvll.env
                         cd ObjCHelloOmvll
-                        xcodebuild -scheme ObjCHelloOmvll clean build -sdk iphoneos ONLY_ACTIVE_ARCH=YES
+                        xcodebuild -scheme ObjCHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
                         ret=$?
+                        cd -
                         exit $ret
                     '''
+
+                    // Check omvll.log exists
+                    script {
+                        if(!fileExists("samples/ObjCHelloOmvll/omvll.log")) {
+                            echo("samples/ObjCHelloOmvll/omvll.log is not in place..")
+                            return 1
+                        }
+                    }
                 }
             }
         }
@@ -130,14 +134,78 @@ pipeline {
             steps {
                 script {
                     dir("${WORKSPACE}") {
+                        // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
                         sh '''#!/usr/bin/env bash
                             cd samples
                             . ./omvll.env
                             cd SwiftHelloOmvll
-                            xcodebuild -scheme SwiftHelloOmvll clean build -configuration Release -sdk iphoneos ONLY_ACTIVE_ARCH=YES
+                            xcodebuild -scheme SwiftHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
                             ret=$?
+                            cd -
                             exit $ret
                         '''
+
+                        // Check omvll.log exists
+                        script {
+                            if(!fileExists("samples/SwiftHelloOmvll/omvll.log")) {
+                                echo("samples/SwiftHelloOmvll/omvll.log is not in place..")
+                                return 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Test apps') {
+            steps {
+                script {
+                    dir("${WORKSPACE}") {
+                        // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
+                        sh '''#!/usr/bin/env bash
+                            source ci/devtools-bash-utils/utils.sh
+                            cd samples
+                            . ./omvll.env
+                            cd GoodNight
+                            execute xcodebuild -project GoodNight.xcodeproj -scheme GoodNight -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            cd HexaCalc
+                            execute xcodebuild -project HexaCalc.xcodeproj -scheme HexaCalc -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            cd Kotoba
+                            execute xcodebuild -project code/Kotoba.xcodeproj -scheme Kotoba -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            cd HackerNews
+                            execute xcodebuild -workspace HackerNews.xcworkspace -scheme HackerNews -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            cd SnowPlow
+                            execute xcodebuild -workspace Examples/demo/SnowplowObjcDemo/SnowplowDemo.xcworkspace -scheme SnowplowDemo -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                        '''
+
+                        // Check omvll.log exists
+                        script {
+                            if(!fileExists("samples/GoodNight/omvll.log")) {
+                                echo("samples/GoodNight/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/HexaCalc/omvll.log")) {
+                                echo("samples/HexaCalc/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/Kotoba/code/omvll.log")) {
+                                echo("samples/Kotoba/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/HackerNews/omvll.log")) {
+                                echo("samples/HackerNews/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log")) {
+                                echo("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                        }
                     }
                 }
             }
@@ -175,26 +243,31 @@ pipeline {
                 }
             }
         }
-}
+    }
 
 
     post {
-        always {
+        success {
             script {
-                sh 'sudo xcode-select -s /Applications/Xcode.app'
+                // Upload android artifacts when failed
+                archiveArtifacts allowEmptyArchive: true, artifacts:
+                    // iOS Apps
+                    "samples/ObjCHelloOmvll/output/Build/Products/Release-iphoneos/ObjCHelloOmvll.app/**," +
+                    "samples/SwiftHelloOmvll/output/Build/Products/Release-iphoneos/SwiftHelloOmvll.app/**," +
+                    "samples/HexaCalc/output/Build/Products/Release-iphoneos/HexaCalc.app/**," +
+                    "samples/GoodNight/output/Build/Products/Debug-iphoneos/GoodNight.app/**," +
+                    "samples/HackerNews/output/Build/Products/Release-iphoneos/HackerNews.app/**," +
+                    "samples/Kotoba/output/Build/Products/Release-iphoneos/Kotoba.app/**," +
+                    "samples/SnowPlow/output/Build/Products/Release-iphoneos/SnowplowDemo.app/**,", fingerprint: true
+                bitbucketStatusNotify(
+                    buildState: 'SUCCESSFUL',
+                    buildName: "${env.JOB_NAME}",
+                    buildKey: "${env.JOB_NAME}",
+                    repoSlug: "${env.REPO_SLUG}",
+                    commitId: "${env.GIT_COMMIT}"
+                )
             }
             cleanWs()
-        }
-        success {
-          script {
-              bitbucketStatusNotify(
-                  buildState: 'SUCCESSFUL',
-                  buildName: "${env.JOB_NAME}",
-                  buildKey: "${env.JOB_NAME}",
-                  repoSlug: "${env.REPO_SLUG}",
-                  commitId: "${env.GIT_COMMIT}"
-              )
-          }
         }
         unsuccessful {
             script {
@@ -206,6 +279,11 @@ pipeline {
                     repoSlug: "${env.REPO_SLUG}",
                     commitId: "${env.GIT_COMMIT}"
                 )
+            }
+        }
+        always {
+            script {
+                sh 'sudo xcode-select -s /Applications/Xcode.app'
             }
         }
     }

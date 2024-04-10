@@ -66,14 +66,6 @@ pipeline {
                     // Get TAK delivery
                     sh(script: 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/TAK-Client.zip -g com.build38.tak -i tak-delivery -v 2.14.2 -c 1426 -e zip download-v2')
                     sh(script: 'unzip ${TMP_FOLDER}/TAK-Client.zip -d ${TMP_FOLDER}/')
-
-                    // Get signer from nexus
-                    sh(script: 'ci/devtools-bash-utils/nexus.sh -o ci/apple-platform-rs.tar.gz -g com.indygreg -i apple-platform-rs -v 0.26.0 -e tar.gz download-v2')
-                    sh(script: 'tar -C ci -xzf ci/apple-platform-rs.tar.gz')
-
-                    // Get Python lib dependency
-                    sh(script: 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/Python-3.10.7.tgz -g org.python -i python -v 3.10.7 -e tgz download-v2')
-                    sh(script: 'tar -C ${DIST_FOLDER} -xvf ${TMP_FOLDER}/Python-3.10.7.tgz')
                 }
             }
         }

@@ -1,0 +1,418 @@
+diff --git a/HexaCalc.xcodeproj/project.pbxproj b/HexaCalc.xcodeproj/project.pbxproj
+index 84319f0..2512b33 100644
+--- a/HexaCalc.xcodeproj/project.pbxproj
++++ b/HexaCalc.xcodeproj/project.pbxproj
+@@ -12,43 +12,26 @@
+ 		9D7C09BF25EC61E700771D52 /* HexaCalcIconIndigo-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099625EC61E500771D52 /* HexaCalcIconIndigo-83.5@3x~ipad.png */; };
+ 		9D7C09C025EC61E700771D52 /* HexaCalcIconBlue@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099725EC61E500771D52 /* HexaCalcIconBlue@2x~ipad.png */; };
+ 		9D7C09C125EC61E700771D52 /* HexaCalcIconOrange~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099825EC61E500771D52 /* HexaCalcIconOrange~ipad.png */; };
+-		9D7C09C225EC61E700771D52 /* HexaCalcIconRed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099925EC61E500771D52 /* HexaCalcIconRed@2x.png */; };
+ 		9D7C09C325EC61E700771D52 /* HexaCalcIconGreen-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099A25EC61E500771D52 /* HexaCalcIconGreen-83.5@3x~ipad.png */; };
+-		9D7C09C425EC61E700771D52 /* HexaCalcIconIndigo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099B25EC61E500771D52 /* HexaCalcIconIndigo@2x.png */; };
+ 		9D7C09C525EC61E700771D52 /* HexaCalcIconRed~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099C25EC61E500771D52 /* HexaCalcIconRed~ipad.png */; };
+ 		9D7C09C625EC61E700771D52 /* HexaCalcIconPurple-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099D25EC61E500771D52 /* HexaCalcIconPurple-83.5@3x~ipad.png */; };
+ 		9D7C09C725EC61E700771D52 /* HexaCalcIconPurple@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099E25EC61E500771D52 /* HexaCalcIconPurple@2x~ipad.png */; };
+-		9D7C09C825EC61E700771D52 /* HexaCalcIconGreen@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C099F25EC61E500771D52 /* HexaCalcIconGreen@2x.png */; };
+ 		9D7C09C925EC61E700771D52 /* HexaCalcIconGreen@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A025EC61E500771D52 /* HexaCalcIconGreen@2x~ipad.png */; };
+ 		9D7C09CA25EC61E700771D52 /* HexaCalcIconYellow-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A125EC61E500771D52 /* HexaCalcIconYellow-83.5@3x~ipad.png */; };
+ 		9D7C09CB25EC61E700771D52 /* HexaCalcIconYellow~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A225EC61E500771D52 /* HexaCalcIconYellow~ipad.png */; };
+ 		9D7C09CC25EC61E700771D52 /* HexaCalcIconTeal~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A325EC61E500771D52 /* HexaCalcIconTeal~ipad.png */; };
+-		9D7C09CD25EC61E700771D52 /* HexaCalcIconGreen@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A425EC61E500771D52 /* HexaCalcIconGreen@3x.png */; };
+-		9D7C09CE25EC61E700771D52 /* HexaCalcIconPurple@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A525EC61E600771D52 /* HexaCalcIconPurple@3x.png */; };
+-		9D7C09CF25EC61E700771D52 /* HexaCalcIconOrange@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A625EC61E600771D52 /* HexaCalcIconOrange@2x.png */; };
+-		9D7C09D025EC61E700771D52 /* HexaCalcIconIndigo@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A725EC61E600771D52 /* HexaCalcIconIndigo@3x.png */; };
+-		9D7C09D125EC61E700771D52 /* HexaCalcIconRed@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A825EC61E600771D52 /* HexaCalcIconRed@3x.png */; };
+ 		9D7C09D225EC61E700771D52 /* HexaCalcIconOrange-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09A925EC61E600771D52 /* HexaCalcIconOrange-83.5@3x~ipad.png */; };
+-		9D7C09D325EC61E700771D52 /* HexaCalcIconPurple@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09AA25EC61E600771D52 /* HexaCalcIconPurple@2x.png */; };
+ 		9D7C09D425EC61E700771D52 /* HexaCalcIconPurple~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09AB25EC61E600771D52 /* HexaCalcIconPurple~ipad.png */; };
+-		9D7C09D525EC61E700771D52 /* HexaCalcIconYellow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09AC25EC61E600771D52 /* HexaCalcIconYellow@2x.png */; };
+ 		9D7C09D625EC61E700771D52 /* HexaCalcIconBlue~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09AD25EC61E600771D52 /* HexaCalcIconBlue~ipad.png */; };
+ 		9D7C09D725EC61E700771D52 /* HexaCalcIconYellow@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09AE25EC61E600771D52 /* HexaCalcIconYellow@2x~ipad.png */; };
+ 		9D7C09D825EC61E700771D52 /* HexaCalcIconOrange@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09AF25EC61E600771D52 /* HexaCalcIconOrange@2x~ipad.png */; };
+ 		9D7C09D925EC61E700771D52 /* HexaCalcIconBlue-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B025EC61E600771D52 /* HexaCalcIconBlue-83.5@3x~ipad.png */; };
+-		9D7C09DA25EC61E700771D52 /* HexaCalcIconTeal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B125EC61E600771D52 /* HexaCalcIconTeal@3x.png */; };
+ 		9D7C09DB25EC61E700771D52 /* HexaCalcIconTeal@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B225EC61E600771D52 /* HexaCalcIconTeal@2x~ipad.png */; };
+ 		9D7C09DC25EC61E700771D52 /* HexaCalcIconRed-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B325EC61E600771D52 /* HexaCalcIconRed-83.5@3x~ipad.png */; };
+-		9D7C09DD25EC61E700771D52 /* HexaCalcIconGreen1024.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B425EC61E600771D52 /* HexaCalcIconGreen1024.png */; };
+ 		9D7C09DE25EC61E700771D52 /* HexaCalcIconGreen~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B525EC61E600771D52 /* HexaCalcIconGreen~ipad.png */; };
+ 		9D7C09DF25EC61E700771D52 /* HexaCalcIconTeal-83.5@3x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B625EC61E600771D52 /* HexaCalcIconTeal-83.5@3x~ipad.png */; };
+-		9D7C09E025EC61E700771D52 /* HexaCalcIconBlue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B725EC61E600771D52 /* HexaCalcIconBlue@2x.png */; };
+-		9D7C09E125EC61E700771D52 /* HexaCalcIconYellow@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B825EC61E600771D52 /* HexaCalcIconYellow@3x.png */; };
+ 		9D7C09E225EC61E700771D52 /* HexaCalcIconIndigo~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09B925EC61E600771D52 /* HexaCalcIconIndigo~ipad.png */; };
+-		9D7C09E325EC61E700771D52 /* HexaCalcIconOrange@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09BA25EC61E600771D52 /* HexaCalcIconOrange@3x.png */; };
+-		9D7C09E425EC61E700771D52 /* HexaCalcIconTeal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09BB25EC61E600771D52 /* HexaCalcIconTeal@2x.png */; };
+ 		9D7C09E525EC61E700771D52 /* HexaCalcIconIndigo@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09BC25EC61E700771D52 /* HexaCalcIconIndigo@2x~ipad.png */; };
+-		9D7C09E625EC61E700771D52 /* HexaCalcIconBlue@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09BD25EC61E700771D52 /* HexaCalcIconBlue@3x.png */; };
+ 		9D7C09E725EC61E700771D52 /* HexaCalcIconRed@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D7C09BE25EC61E700771D52 /* HexaCalcIconRed@2x~ipad.png */; };
+ 		9D8460252A46C182008C5A99 /* HistoryButtonViewConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D8460242A46C182008C5A99 /* HistoryButtonViewConverter.swift */; };
+ 		9D8A805524CB82A0008CDECE /* Formatter+BinaryString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D8A805424CB82A0008CDECE /* Formatter+BinaryString.swift */; };
+@@ -85,6 +68,9 @@
+ 		9DEF24A824C553F100701F5B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9DEF24A624C553F100701F5B /* LaunchScreen.storyboard */; };
+ 		9DEF24BE24C5578300701F5B /* DecimalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DEF24BD24C5578300701F5B /* DecimalViewController.swift */; };
+ 		9DF9A11A294C30730074C07D /* SettingsHexaCalcUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF9A119294C30730074C07D /* SettingsHexaCalcUITests.swift */; };
++		B101C2BD2BBD47C900E11CBF /* libTAK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2BB2BBD47C900E11CBF /* libTAK.a */; };
++		B101C2BE2BBD47C900E11CBF /* libWBC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B101C2BC2BBD47C900E11CBF /* libWBC.a */; };
++		B101C2C02BBD47D400E11CBF /* license.tak in Resources */ = {isa = PBXBuildFile; fileRef = B101C2BF2BBD47D400E11CBF /* license.tak */; };
+ 		C272D50A28E75D7C00E6C374 /* CalculationData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C272D50928E75D7C00E6C374 /* CalculationData.swift */; };
+ 		C2D2E1C428DDF90A0094DA13 /* CalculationHistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D2E1C328DDF90A0094DA13 /* CalculationHistoryViewController.swift */; };
+ /* End PBXBuildFile section */
+@@ -181,6 +167,9 @@
+ 		9DEF24A924C553F100701F5B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+ 		9DEF24BD24C5578300701F5B /* DecimalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecimalViewController.swift; sourceTree = "<group>"; };
+ 		9DF9A119294C30730074C07D /* SettingsHexaCalcUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsHexaCalcUITests.swift; sourceTree = "<group>"; };
++		B101C2BB2BBD47C900E11CBF /* libTAK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libTAK.a; path = "../../tmp/TAK-Client/iOS/C/libs/libTAK.a"; sourceTree = "<group>"; };
++		B101C2BC2BBD47C900E11CBF /* libWBC.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWBC.a; path = "../../tmp/TAK-Client/iOS/C/libs/libWBC.a"; sourceTree = "<group>"; };
++		B101C2BF2BBD47D400E11CBF /* license.tak */ = {isa = PBXFileReference; lastKnownFileType = file; name = license.tak; path = "../../tmp/TAK-Client/licenses/license.tak"; sourceTree = "<group>"; };
+ 		C272D50928E75D7C00E6C374 /* CalculationData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculationData.swift; sourceTree = "<group>"; };
+ 		C2D2E1C328DDF90A0094DA13 /* CalculationHistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculationHistoryViewController.swift; sourceTree = "<group>"; };
+ /* End PBXFileReference section */
+@@ -197,6 +186,8 @@
+ 			isa = PBXFrameworksBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B101C2BD2BBD47C900E11CBF /* libTAK.a in Frameworks */,
++				B101C2BE2BBD47C900E11CBF /* libWBC.a in Frameworks */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+ 		};
+@@ -350,9 +341,11 @@
+ 		9DEF248A24C553F000701F5B = {
+ 			isa = PBXGroup;
+ 			children = (
++				B101C2BF2BBD47D400E11CBF /* license.tak */,
+ 				9DEF249524C553F000701F5B /* HexaCalc */,
+ 				9DE32E3428DEDBDF00BB222C /* HexaCalcUITests */,
+ 				9DEF249424C553F000701F5B /* Products */,
++				B101C2BA2BBD47C900E11CBF /* Frameworks */,
+ 			);
+ 			sourceTree = "<group>";
+ 		};
+@@ -380,6 +373,15 @@
+ 			path = HexaCalc;
+ 			sourceTree = "<group>";
+ 		};
++		B101C2BA2BBD47C900E11CBF /* Frameworks */ = {
++			isa = PBXGroup;
++			children = (
++				B101C2BB2BBD47C900E11CBF /* libTAK.a */,
++				B101C2BC2BBD47C900E11CBF /* libWBC.a */,
++			);
++			name = Frameworks;
++			sourceTree = "<group>";
++		};
+ /* End PBXGroup section */
+ 
+ /* Begin PBXNativeTarget section */
+@@ -469,22 +471,15 @@
+ 			isa = PBXResourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
+-				9D7C09D025EC61E700771D52 /* HexaCalcIconIndigo@3x.png in Resources */,
++				B101C2C02BBD47D400E11CBF /* license.tak in Resources */,
+ 				9D7C09E725EC61E700771D52 /* HexaCalcIconRed@2x~ipad.png in Resources */,
+ 				9D7C09C525EC61E700771D52 /* HexaCalcIconRed~ipad.png in Resources */,
+-				9D7C09CE25EC61E700771D52 /* HexaCalcIconPurple@3x.png in Resources */,
+ 				9D7C09C125EC61E700771D52 /* HexaCalcIconOrange~ipad.png in Resources */,
+ 				9DEF24A824C553F100701F5B /* LaunchScreen.storyboard in Resources */,
+ 				9DC7581B27ED88A800BB2953 /* SwitchTableViewCell.xib in Resources */,
+-				9D7C09E125EC61E700771D52 /* HexaCalcIconYellow@3x.png in Resources */,
+-				9D7C09CF25EC61E700771D52 /* HexaCalcIconOrange@2x.png in Resources */,
+-				9D7C09E625EC61E700771D52 /* HexaCalcIconBlue@3x.png in Resources */,
+-				9D7C09DD25EC61E700771D52 /* HexaCalcIconGreen1024.png in Resources */,
+ 				9DEF24A524C553F100701F5B /* Assets.xcassets in Resources */,
+ 				9D7C09D625EC61E700771D52 /* HexaCalcIconBlue~ipad.png in Resources */,
+ 				9DEF24A024C553F000701F5B /* Main.storyboard in Resources */,
+-				9D7C09D525EC61E700771D52 /* HexaCalcIconYellow@2x.png in Resources */,
+-				9D7C09D325EC61E700771D52 /* HexaCalcIconPurple@2x.png in Resources */,
+ 				9D7C09C725EC61E700771D52 /* HexaCalcIconPurple@2x~ipad.png in Resources */,
+ 				9D7C09D825EC61E700771D52 /* HexaCalcIconOrange@2x~ipad.png in Resources */,
+ 				9D7C09DC25EC61E700771D52 /* HexaCalcIconRed-83.5@3x~ipad.png in Resources */,
+@@ -493,27 +488,18 @@
+ 				9D7C09CC25EC61E700771D52 /* HexaCalcIconTeal~ipad.png in Resources */,
+ 				9D7C09C925EC61E700771D52 /* HexaCalcIconGreen@2x~ipad.png in Resources */,
+ 				9D7C09D225EC61E700771D52 /* HexaCalcIconOrange-83.5@3x~ipad.png in Resources */,
+-				9D7C09CD25EC61E700771D52 /* HexaCalcIconGreen@3x.png in Resources */,
+ 				9D7C09CB25EC61E700771D52 /* HexaCalcIconYellow~ipad.png in Resources */,
+ 				9D7C09E525EC61E700771D52 /* HexaCalcIconIndigo@2x~ipad.png in Resources */,
+ 				9D7C09C325EC61E700771D52 /* HexaCalcIconGreen-83.5@3x~ipad.png in Resources */,
+-				9D7C09D125EC61E700771D52 /* HexaCalcIconRed@3x.png in Resources */,
+-				9D7C09C425EC61E700771D52 /* HexaCalcIconIndigo@2x.png in Resources */,
+ 				9D7C09D425EC61E700771D52 /* HexaCalcIconPurple~ipad.png in Resources */,
+-				9D7C09E425EC61E700771D52 /* HexaCalcIconTeal@2x.png in Resources */,
+-				9D7C09E025EC61E700771D52 /* HexaCalcIconBlue@2x.png in Resources */,
+ 				9D7C09D925EC61E700771D52 /* HexaCalcIconBlue-83.5@3x~ipad.png in Resources */,
+-				9D7C09E325EC61E700771D52 /* HexaCalcIconOrange@3x.png in Resources */,
+-				9D7C09C225EC61E700771D52 /* HexaCalcIconRed@2x.png in Resources */,
+ 				9D7C09C025EC61E700771D52 /* HexaCalcIconBlue@2x~ipad.png in Resources */,
+ 				9D7C09DE25EC61E700771D52 /* HexaCalcIconGreen~ipad.png in Resources */,
+ 				9D7C09C625EC61E700771D52 /* HexaCalcIconPurple-83.5@3x~ipad.png in Resources */,
+-				9D7C09DA25EC61E700771D52 /* HexaCalcIconTeal@3x.png in Resources */,
+ 				9D7C09E225EC61E700771D52 /* HexaCalcIconIndigo~ipad.png in Resources */,
+ 				9D7C09D725EC61E700771D52 /* HexaCalcIconYellow@2x~ipad.png in Resources */,
+ 				9D7C09DB25EC61E700771D52 /* HexaCalcIconTeal@2x~ipad.png in Resources */,
+ 				9D7C09CA25EC61E700771D52 /* HexaCalcIconYellow-83.5@3x~ipad.png in Resources */,
+-				9D7C09C825EC61E700771D52 /* HexaCalcIconGreen@2x.png in Resources */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+ 		};
+@@ -769,7 +755,7 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+ 				CODE_SIGN_STYLE = Automatic;
+ 				CURRENT_PROJECT_VERSION = 10;
+-				DEVELOPMENT_TEAM = QMBJV5C74X;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				INFOPLIST_FILE = HexaCalc/Info.plist;
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+@@ -777,7 +763,9 @@
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+ 				);
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../tmp/TAK-Client/iOS/C/libs";
+ 				MARKETING_VERSION = 1.5.0;
++				OTHER_LDFLAGS = "-lstdc++";
+ 				PRODUCT_BUNDLE_IDENTIFIER = com.example.HexaCalc;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				SWIFT_VERSION = 5.0;
+@@ -791,7 +779,7 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+ 				CODE_SIGN_STYLE = Automatic;
+ 				CURRENT_PROJECT_VERSION = 10;
+-				DEVELOPMENT_TEAM = QMBJV5C74X;
++				DEVELOPMENT_TEAM = WCMG6DCKKM;
+ 				INFOPLIST_FILE = HexaCalc/Info.plist;
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+ 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+@@ -799,7 +787,9 @@
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+ 				);
++				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../tmp/TAK-Client/iOS/C/libs";
+ 				MARKETING_VERSION = 1.5.0;
++				OTHER_LDFLAGS = "-lstdc++";
+ 				PRODUCT_BUNDLE_IDENTIFIER = com.example.HexaCalc;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				SWIFT_VERSION = 5.0;
+diff --git a/HexaCalc/Info.plist b/HexaCalc/Info.plist
+index ec6056c..eed4117 100644
+--- a/HexaCalc/Info.plist
++++ b/HexaCalc/Info.plist
+@@ -10,81 +10,6 @@
+ 	<string>$(EXECUTABLE_NAME)</string>
+ 	<key>CFBundleIcons</key>
+ 	<dict>
+-		<key>CFBundleAlternateIcons</key>
+-		<dict>
+-			<key>HexaCalcIconBlue</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconBlue</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconGreen</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconGreen</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconIndigo</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconIndigo</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconOrange</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconOrange</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconPurple</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconPurple</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconRed</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconRed</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconTeal</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconTeal</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconYellow</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconYellow</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-		</dict>
+ 		<key>CFBundlePrimaryIcon</key>
+ 		<dict>
+ 			<key>CFBundleIconFiles</key>
+@@ -97,81 +22,6 @@
+ 	</dict>
+ 	<key>CFBundleIcons~ipad</key>
+ 	<dict>
+-		<key>CFBundleAlternateIcons</key>
+-		<dict>
+-			<key>HexaCalcIconBlue</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconBlue</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconGreen</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconGreen</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconIndigo</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconIndigo</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconOrange</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconOrange</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconPurple</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconPurple</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconRed</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconRed</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconTeal</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconTeal</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-			<key>HexaCalcIconYellow</key>
+-			<dict>
+-				<key>CFBundleIconFiles</key>
+-				<array>
+-					<string>HexaCalcIconYellow</string>
+-				</array>
+-				<key>UIPrerenderedIcon</key>
+-				<string>NO</string>
+-			</dict>
+-		</dict>
+ 		<key>CFBundlePrimaryIcon</key>
+ 		<dict>
+ 			<key>CFBundleIconFiles</key>
+diff --git a/HexaCalc/Model/ColourNumberConverter.swift b/HexaCalc/Model/ColourNumberConverter.swift
+index a04a064..3a47afd 100644
+--- a/HexaCalc/Model/ColourNumberConverter.swift
++++ b/HexaCalc/Model/ColourNumberConverter.swift
+@@ -58,48 +58,10 @@ class ColourNumberConverter {
+     }
+     
+     static func getAppIconNameFromIndex(index: Int) -> String {
+-        switch index {
+-        case 0:
+-            return "HexaCalcIconRed"
+-        case 1:
+-            return "HexaCalcIconOrange"
+-        case 2:
+-            return "HexaCalcIconYellow"
+-        case 3:
+-            return "HexaCalcIconGreen"
+-        case 4:
+-            return "HexaCalcIconBlue"
+-        case 5:
+-            return "HexaCalcIconTeal"
+-        case 6:
+-            return "HexaCalcIconIndigo"
+-        case 7:
+-            return "HexaCalcIconPurple"
+-        default:
+-            return "HexaCalcIconGreen"
+-        }
++        return "HexaCalcIconGreen"
+     }
+     
+     static func getColourNameFromIndex(index: Int) -> String {
+-        switch index {
+-        case 0:
+-            return "Red"
+-        case 1:
+-            return "Orange"
+-        case 2:
+-            return "Yellow"
+-        case 3:
+-            return "Green"
+-        case 4:
+-            return "Blue"
+-        case 5:
+-            return "Teal"
+-        case 6:
+-            return "Indigo"
+-        case 7:
+-            return "Violet"
+-        default:
+-            return "Green"
+-        }
++        return "Green"
+     }
+ }
