@@ -174,7 +174,6 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   }
   Trampoline.addFnAttr(Attribute::OptimizeForSize);
   Trampoline.addFnAttr(Attribute::NoInline);
-  Trampoline.setLinkage(GlobalValue::InternalLinkage);
 
   return true;
 }
