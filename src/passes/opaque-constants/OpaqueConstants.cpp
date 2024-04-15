@@ -267,6 +267,9 @@ PreservedAnalyses OpaqueConstants::run(Module &M,
     }
 
     for (BasicBlock& BB : F) {
+      // Don't try opaque constants when potentially handling infinite loops.
+      if (is_contained(successors(&BB), &BB))
+        continue;
       Changed |= runOnBasicBlock(BB, inserted);
     }
   }
