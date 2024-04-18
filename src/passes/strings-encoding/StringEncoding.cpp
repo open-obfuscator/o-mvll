@@ -12,6 +12,7 @@
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/CodeGen/StableHashing.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/Constants.h>
@@ -479,7 +480,12 @@ bool StringEncoding::processGlobal(BasicBlock& BB, Instruction&, Use& Op, Global
   LLVMContext& Ctx = BB.getContext();
   FunctionType* FTy = FunctionType::get(Type::getVoidTy(BB.getContext()),
                                         /* no args */{}, /* no var args */ false);
-  FunctionCallee FCallee = M->getOrInsertFunction(G.getGlobalIdentifier(), FTy);
+  unsigned GlobalIDHashVal =
+      llvm::stable_hash_combine_string(G.getGlobalIdentifier());
+  unsigned HashCombinedVal =
+      llvm::stable_hash_combine(GlobalIDHashVal, str.size(), key);
+  std::string Name = "__omvll_ctor_" + utostr(HashCombinedVal);
+  FunctionCallee FCallee = M->getOrInsertFunction(Name, FTy);
   auto* F = cast<Function>(FCallee.getCallee());
   F->setLinkage(llvm::GlobalValue::PrivateLinkage);
 
