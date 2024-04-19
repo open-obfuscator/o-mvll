@@ -108,7 +108,10 @@ pipeline {
                     // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
                     sh '''#!/usr/bin/env bash
                         cd samples
+                        # Generic configuration
                         . ./omvll.env
+                        # Config for ObjCHelloOmvll
+                        export OMVLL_CONFIG=$(pwd)/configs/ObjCHelloOmvll.py
                         cd ObjCHelloOmvll
                         xcodebuild -scheme ObjCHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
                         ret=$?
@@ -137,7 +140,10 @@ pipeline {
                         // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
                         sh '''#!/usr/bin/env bash
                             cd samples
+                            # Generic configuration
                             . ./omvll.env
+                            # Config for SwiftHelloOmvll
+                            export OMVLL_CONFIG=$(pwd)/configs/SwiftHelloOmvll.py
                             cd SwiftHelloOmvll
                             xcodebuild -scheme SwiftHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
                             ret=$?
@@ -165,19 +171,30 @@ pipeline {
                         sh '''#!/usr/bin/env bash
                             source ci/devtools-bash-utils/utils.sh
                             cd samples
+                            # Generic configuration
                             . ./omvll.env
+                            # Config for GoodNight
+                            export OMVLL_CONFIG=$(pwd)/configs/GoodNight.py
                             cd GoodNight
                             execute xcodebuild -project GoodNight.xcodeproj -scheme GoodNight -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
+                            # Config for HexaCalc
+                            export OMVLL_CONFIG=$(pwd)/configs/HexaCalc.py
                             cd HexaCalc
                             execute xcodebuild -project HexaCalc.xcodeproj -scheme HexaCalc -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
+                            # Config for Kotoba
+                            export OMVLL_CONFIG=$(pwd)/configs/Kotoba.py
                             cd Kotoba
                             execute xcodebuild -project code/Kotoba.xcodeproj -scheme Kotoba -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
+                            # Config for HackerNews
+                            export OMVLL_CONFIG=$(pwd)/configs/HackerNews.py
                             cd HackerNews
                             execute xcodebuild -workspace HackerNews.xcworkspace -scheme HackerNews -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
+                            # Config for SnowPlowExamples
+                            export OMVLL_CONFIG=$(pwd)/configs/SnowPlowExamples.py
                             cd SnowPlow
                             execute xcodebuild -workspace Examples/demo/SnowplowObjcDemo/SnowplowDemo.xcworkspace -scheme SnowplowDemo -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
