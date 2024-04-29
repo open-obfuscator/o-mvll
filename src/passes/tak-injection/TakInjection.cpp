@@ -4,6 +4,7 @@
 #include "omvll/PyConfig.hpp"
 #include "omvll/log.hpp"
 #include "omvll/passes/tak-injection/PostCoding.hpp"
+#include "omvll/passes/tak-injection/TakInjectionOpt.hpp"
 #include "omvll/utils.hpp"
 
 #include "llvm/Support/Path.h"
@@ -22,8 +23,10 @@
 
 #include <regex>
 #include <string>
+#include <system_error>
 
 using namespace llvm;
+using namespace omvll;
 
 static bool isInitializerFunction(const Function &F) {
   const std::string &Name = F.getName().str();
@@ -50,6 +53,33 @@ static bool isInitializerFunction(const Function &F) {
   return std::regex_match(Name, Expr);
 }
 
+static bool
+isTargetToBeSkipped(const Module &M,
+                    const std::vector<std::string> &ExcludedTargets) {
+  if (ExcludedTargets.empty())
+    return false;
+
+  auto Identifier = M.getModuleIdentifier();
+  for (const auto &Target : ExcludedTargets)
+    if (Identifier.find(Target) != std::string::npos)
+      return true;
+  return false;
+}
+
+static bool isSkip(const TakInjectionOpt &opt) {
+  return std::get_if<TakInjectionSkip>(&opt) != nullptr;
+}
+
+static std::string replacePlaceholder(const std::string &TakFunction,
+                                      const std::string &Placeholder,
+                                      const std::string &Value) {
+  std::string Result = TakFunction;
+  size_t Pos = Result.find(Placeholder);
+  assert(Pos != std::string::npos);
+  Result.replace(Pos, Placeholder.length(), Value);
+  return Result;
+}
+
 static bool recordInjectionOrFail() {
   SmallString<256> Path;
   sys::path::system_temp_directory(true, Path);
@@ -67,7 +97,8 @@ static bool recordInjectionOrFail() {
   return true;
 }
 
-static bool injectTakRuntimeProtection(Module &M, const StringRef Name) {
+static bool injectTakRuntimeProtection(Module &M, TakInjectionConfig *TakConfig,
+                                       const StringRef Name) {
   bool Changed = false;
 
   for (Function &F : M) {
@@ -75,6 +106,32 @@ static bool injectTakRuntimeProtection(Module &M, const StringRef Name) {
       continue;
 
     auto &Ctx = M.getContext();
+
+    std::string TakFunctionFinal;
+    const std::string &TakHeaderDirPath = TakConfig->TAKHeaderPath;
+    {
+      // Validate and add configuration parameters.
+#define MAX_INTERVAL_TIME 10000
+      unsigned IntervalTime = TakConfig->intervalTime < MAX_INTERVAL_TIME
+                                  ? TakConfig->intervalTime
+                                  : MAX_INTERVAL_TIME;
+
+      bool IsPathDirectory;
+      auto EC = llvm::sys::fs::is_directory(TakHeaderDirPath, IsPathDirectory);
+      if (EC == std::errc::no_such_file_or_directory ||
+          (!EC && !IsPathDirectory))
+        report_fatal_error("Directory path for TAK header not found, wrong "
+                           "configuration. Please contact Build38.");
+
+      SmallString<128> FilePath(TakHeaderDirPath);
+      sys::path::append(FilePath, "./iOS/C/include/tak.h");
+      if (!sys::fs::exists(FilePath))
+        report_fatal_error("TAK header not found. Please contact Build38.");
+
+      TakFunctionFinal = replacePlaceholder(omvll::TakInjectionFunction,
+                                            "{{ TAK_INTERVAL_TIME }}",
+                                            std::to_string(IntervalTime));
+    }
 
     // Invoke host clang and lower the __tak_injection Objective-C++ function to
     // an LLVM IR module.
@@ -85,8 +142,8 @@ static bool injectTakRuntimeProtection(Module &M, const StringRef Name) {
       // Generate module.
       Ctx.setDiscardValueNames(false);
       TakInjectionIRModule = ExitOnErr(omvll::generateModule(
-          omvll::TakInjectionFunction, Triple(M.getTargetTriple()), "mm", Ctx,
-          {"-fblocks"}));
+          std::move(TakFunctionFinal), Triple(M.getTargetTriple()), "mm", Ctx,
+          {"-fblocks", "-I" + TakHeaderDirPath}));
     }
 
     // Verify the newly-created module is not broken.
@@ -135,9 +192,22 @@ static bool injectTakRuntimeProtection(Module &M, const StringRef Name) {
 namespace omvll {
 
 PreservedAnalyses TakInjection::run(Module &M, ModuleAnalysisManager &FAM) {
+  PyConfig &config = PyConfig::instance();
+  TakInjectionOpt TakInjOpt = config.getUserConfig()->inject_tak(&M);
+  if (isSkip(TakInjOpt))
+    return PreservedAnalyses::all();
+
+  auto *Config = std::get_if<TakInjectionConfig>(&TakInjOpt);
+  if (!Config)
+    report_fatal_error("Retrieving configuration for injecting TAK failed, "
+                       "please contact Build38.");
+
+  if (isTargetToBeSkipped(M, Config->excludedTargets))
+    return PreservedAnalyses::all();
+
   bool Changed = false;
 
-  Changed |= injectTakRuntimeProtection(M, name());
+  Changed |= injectTakRuntimeProtection(M, Config, name());
   if (Changed)
     SINFO("[{}] Done!", name());
 

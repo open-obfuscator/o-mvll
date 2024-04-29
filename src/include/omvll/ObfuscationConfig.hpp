@@ -36,6 +36,8 @@ struct ObfuscationConfig {
   virtual ArithmeticOpt obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func) = 0;
 
   virtual AntiHookOpt anti_hooking(llvm::Module* mod, llvm::Function* func) = 0;
+
+  virtual TakInjectionOpt inject_tak(llvm::Module *mod) = 0;
 };
 
 }

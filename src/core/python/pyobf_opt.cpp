@@ -1,5 +1,6 @@
 #include "init.hpp"
 #include "omvll/passes/ObfuscationOpt.hpp"
+#include <pybind11/pytypes.h>
 
 namespace omvll {
 
@@ -150,6 +151,24 @@ py::module_& py_init_obf_opt(py::module_& m) {
     )delim")
     .def(py::init<std::vector<uint64_t>>(), "constants"_a);
 
+  // TAK Injection
+  py::class_<TakInjectionSkip>(m, "TakInjectionSkip",
+                               R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.inject_tak` protection.
+
+    Alias for returning no Tak Injection configuration.
+    )delim")
+      .def(py::init<>());
+
+  py::class_<TakInjectionConfig>(m, "TakInjectionConfig",
+                                 R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.inject_tak` protection.
+
+    This option takes a tuple consisting of a string (configuration path),
+    an unsigned integer (wait time), and a vector of strings (excluded targets list).
+    )delim")
+      .def(py::init<std::string, unsigned, std::vector<std::string>>(),
+           "string"_a, "val"_a, "list"_a);
   return m;
 }
 

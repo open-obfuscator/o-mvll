@@ -126,15 +126,14 @@ void omvll_ctor(py::module_& m) {
   py_init_log(m);
 
   py::class_<ObfuscationConfig, PyObfuscationConfig>(m, "ObfuscationConfig",
-    R"delim(
+                                                     R"delim(
     This class must be inherited by the user to define where and how the obfuscation
     passes must be enabled.
     )delim")
-    .def(py::init<>())
+      .def(py::init<>())
 
-    .def("obfuscate_string",
-         &ObfuscationConfig::obfuscate_string,
-         R"delim(
+      .def("obfuscate_string", &ObfuscationConfig::obfuscate_string,
+           R"delim(
          The default user-callback used to configure strings obfuscation.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -154,11 +153,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+-------------------------------------+
 
          See the :omvll:`strings-encoding` documentation.
-         )delim", "module"_a, "function"_a, "string"_a)
+         )delim",
+           "module"_a, "function"_a, "string"_a)
 
-    .def("break_control_flow",
-         &ObfuscationConfig::break_control_flow,
-         R"delim(
+      .def("break_control_flow", &ObfuscationConfig::break_control_flow,
+           R"delim(
          The default user-callback for the pass that breaks
          the control flow.
 
@@ -175,11 +174,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+-------------------------------------------------+
 
          See the :omvll:`control-flow-breaking` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("flatten_cfg",
-         &ObfuscationConfig::flatten_cfg,
-         R"delim(
+      .def("flatten_cfg", &ObfuscationConfig::flatten_cfg,
+           R"delim(
          The default user-callback used to configure the
          control-flow flattening pass.
 
@@ -196,11 +195,12 @@ void omvll_ctor(py::module_& m) {
          +--------------+------------------------------------------------------+
 
          See the :omvll:`control-flow-flattening` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("obfuscate_struct_access",
-         &ObfuscationConfig::obfuscate_struct_access,
-         R"delim(
+      .def("obfuscate_struct_access",
+           &ObfuscationConfig::obfuscate_struct_access,
+           R"delim(
          The default user-callback when obfuscating structures accesses.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -216,11 +216,12 @@ void omvll_ctor(py::module_& m) {
          +--------------+---------------------------------------------+
 
          See the :omvll:`opaque-fields-access` documentation.
-         )delim", "module"_a, "function"_a, "struct"_a)
+         )delim",
+           "module"_a, "function"_a, "struct"_a)
 
-    .def("obfuscate_variable_access",
-         &ObfuscationConfig::obfuscate_variable_access,
-         R"delim(
+      .def("obfuscate_variable_access",
+           &ObfuscationConfig::obfuscate_variable_access,
+           R"delim(
          The default user-callback when obfuscating global variables access.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -236,11 +237,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+------------------------------------------+
 
          See the :omvll:`opaque-fields-access` documentation.
-         )delim", "module"_a, "function"_a, "variable"_a)
+         )delim",
+           "module"_a, "function"_a, "variable"_a)
 
-    .def("obfuscate_constants",
-         &ObfuscationConfig::obfuscate_constants,
-         R"delim(
+      .def("obfuscate_constants", &ObfuscationConfig::obfuscate_constants,
+           R"delim(
          The default user-callback to obfuscate constants.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -258,11 +259,11 @@ void omvll_ctor(py::module_& m) {
          +-------------------+--------------------------------------------------------+
 
          See the :omvll:`opaque-constants` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("obfuscate_arithmetic",
-         &ObfuscationConfig::obfuscate_arithmetic,
-         R"delim(
+      .def("obfuscate_arithmetic", &ObfuscationConfig::obfuscate_arithmetic,
+           R"delim(
          The default user-callback when obfuscating arithmetic operations.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -278,11 +279,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+-------------------------------------------+
 
          See the :omvll:`arithmetic` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("anti_hooking",
-         &ObfuscationConfig::anti_hooking,
-         R"delim(
+      .def("anti_hooking", &ObfuscationConfig::anti_hooking,
+           R"delim(
          The default user-callback to enable hooking protection.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -298,8 +299,14 @@ void omvll_ctor(py::module_& m) {
          +--------------+-----------------------------------------+
 
          See the :omvll:`anti-hook` documentation.
-         )delim", "module"_a, "function"_a);
+         )delim",
+           "module"_a, "function"_a)
 
+      .def("inject_tak", &ObfuscationConfig::inject_tak,
+           R"delim(
+         The default user-callback to enable injection of TAK.
+         )delim",
+           "module"_a);
 }
 
 std::unique_ptr<py::module_> init_omvll_core(py::dict modules) {

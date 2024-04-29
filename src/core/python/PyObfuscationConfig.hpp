@@ -19,6 +19,7 @@ class PyObfuscationConfig : public ObfuscationConfig {
   AntiHookOpt anti_hooking(llvm::Module* mod, llvm::Function* func) override;
   ArithmeticOpt obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func) override;
   OpaqueConstantsOpt obfuscate_constants(llvm::Module* mod, llvm::Function* func) override;
+  TakInjectionOpt inject_tak(llvm::Module *mod) override;
 };
 }
 #endif
