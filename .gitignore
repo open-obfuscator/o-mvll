@@ -33,3 +33,6 @@ samples/HexaCalc*
 samples/Kotoba*
 samples/SnowPlow*
 **/output/**
+
+# Deps for local compilation
+deps

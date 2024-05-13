@@ -1,0 +1,318 @@
+pipeline {
+    agent { label 'xcode-14.2' }
+    environment {
+        NEXUS_CREDENTIALS = credentials('e29f59a5-3fe6-4235-8d9a-ccbea6113412')
+        NEXUS_USERNAME = "${NEXUS_CREDENTIALS_USR}"
+        NEXUS_PASSWORD = "${NEXUS_CREDENTIALS_PSW}"
+        REPO_SLUG = "${env.GIT_URL.tokenize('/')[1].tokenize('.')[0] }"
+        DATE="""${sh(
+                returnStdout: true,
+                script: '/bin/date +%Y%m%d.%H%M%S'
+            )}""".trim()
+        DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
+        DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
+        DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll/${DEPLOYMENT_VERSION}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.dylib"
+        DEPLOYMENT_PATH_RELEASE="com/build38/omvll/omvll/${DEPLOYMENT_VERSION_MODIFIED}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${BUILD_NUMBER}.dylib"
+        OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
+
+        WORKSPACE = "${env.WORKSPACE}"
+        ROOT_FOLDER = "${WORKSPACE}/"
+        TMP_FOLDER = "${ROOT_FOLDER}/tmp"
+        DIST_FOLDER = "${ROOT_FOLDER}/ci/distribution"
+        OUTPUT_FOLDER = "${ROOT_FOLDER}/src/build_xcode"
+
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
+    }
+    stages {
+        stage('PreBuild') {
+            steps {
+                script {
+                    sshagent(['8a93fd64-3029-4a20-b830-809bb70593ee	']) {
+                        sh 'git submodule update --init --recursive'
+                    }
+                    echo "Notify job has started:"
+                    bitbucketStatusNotify(
+                        buildState: 'INPROGRESS',
+                        buildName: "${env.JOB_NAME}",
+                        buildKey: "${env.JOB_NAME}",
+                        repoSlug: "${env.REPO_SLUG}",
+                        commitId: "${env.GIT_COMMIT}"
+                    )
+                    echo "BUILD_VARIANT: ${env.JOB_TYPE}"
+                }
+            }
+        }
+
+        stage('Compile lit') {
+            steps {
+                script {
+                    sh 'git clone https://github.com/apple/llvm-project'
+                    sh 'git -C llvm-project checkout swift/release/5.7'
+                    sh 'cmake -GNinja -S llvm-project/llvm -B llvm-project/build \
+                        -DCMAKE_BUILD_TYPE=Release \
+                        -DLLVM_TARGETS_TO_BUILD="AArch64;ARM;X86" \
+                        -DLLVM_ENABLE_PROJECTS=clang'
+                    sh 'ninja -C llvm-project/build llvm-config FileCheck count not clang'
+                }
+            }
+        }
+
+        stage('Cleanup MacOS Directories') {
+            steps {
+                script {
+                    sh 'rm -rf ${TMP_FOLDER}/*'
+                    sh 'rm -rf ${OUTPUT_FOLDER}/*'
+                    sh 'rm -f ci/apple-platform-rs.tar.gz'
+                }
+            }
+        }
+
+
+        stage('Get third party binaries') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                    sh 'mkdir -p ${TMP_FOLDER}'
+                    sh 'mkdir -p ${DIST_FOLDER}'
+                    sh 'mkdir -p ${OUTPUT_FOLDER}'
+
+                    // Get TAK delivery
+                    sh(script: 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/TAK-Client.zip -g com.build38.tak -i tak-delivery -v 2.14.2 -c 1426 -e zip download-v2')
+                    sh(script: 'unzip ${TMP_FOLDER}/TAK-Client.zip -d ${TMP_FOLDER}/')
+
+                    // Get signer from nexus
+                    sh 'ci/devtools-bash-utils/nexus.sh -o ci/apple-platform-rs.tar.gz -g com.indygreg -i apple-platform-rs -v 0.26.0 -e tar.gz download-v2'
+                    sh 'tar -C ci -xzf ci/apple-platform-rs.tar.gz'
+
+                    // Get Python lib dependency
+                    sh 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/Python-3.10.7.tgz -g org.python -i python -v 3.10.7 -e tgz download-v2'
+                    sh 'tar -C ${DIST_FOLDER} -xvf ${TMP_FOLDER}/Python-3.10.7.tgz'
+
+                    // Get Samples repo
+                    sh 'ci/getSampleRepositories.sh'
+                }
+            }
+        }
+
+        stage('Select XCode 14.1') {
+            steps {
+                script{
+                    sh 'sudo xcode-select -s /Applications/Xcode-14-1.app'
+                    sh 'xcode-select -p'
+                }
+            }
+        }
+
+        stage('Compile o-mvll in the native machine') {
+            steps {
+                script{
+                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-14_1.tar'
+                    sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode14'
+                    sh 'tar xvf ./omvll-deps-xcode-14_1.tar --directory=${TMP_FOLDER}/third-party-xcode14'
+                    sh './scripts/docker/xcode_14_compile_macos.sh'
+                }
+            }
+        }
+
+        stage('Sign o-mvll binary') {
+            steps {
+                script {
+                    sh 'cp ${OUTPUT_FOLDER}/omvll_unsigned.dylib ${OUTPUT_FOLDER}/omvll.dylib'
+                    sh 'ci/apple-codesign-0.26.0-aarch64-apple-darwin/rcodesign sign --p12-file ci/certificates/SigningCertificate.p12 --p12-password $OMVLL_CERTIFICATE_PWD --code-signature-flags runtime ${OUTPUT_FOLDER}/omvll.dylib'
+                }
+            }
+        }
+
+
+        stage('Build xcode ObjectiveC project') {
+            steps {
+                dir("${WORKSPACE}") {
+                    // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
+                    sh '''#!/usr/bin/env bash
+                        cd samples
+                        # Generic configuration
+                        . ./omvll.env
+                        # Config for ObjCHelloOmvll
+                        export OMVLL_CONFIG=$(pwd)/configs/ObjCHelloOmvll.py
+                        cd ObjCHelloOmvll
+                        xcodebuild -scheme ObjCHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
+                        ret=$?
+                        cd -
+                        exit $ret
+                    '''
+
+                    // Check omvll.log exists
+                    script {
+                        if(!fileExists("samples/ObjCHelloOmvll/omvll.log")) {
+                            echo("samples/ObjCHelloOmvll/omvll.log is not in place..")
+                            return 1
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+        stage('Build xcode Swift project') {
+            steps {
+                script {
+                    dir("${WORKSPACE}") {
+                        // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
+                        sh '''#!/usr/bin/env bash
+                            cd samples
+                            # Generic configuration
+                            . ./omvll.env
+                            # Config for SwiftHelloOmvll
+                            export OMVLL_CONFIG=$(pwd)/configs/SwiftHelloOmvll.py
+                            cd SwiftHelloOmvll
+                            xcodebuild -scheme SwiftHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
+                            ret=$?
+                            cd -
+                            exit $ret
+                        '''
+
+                        // Check omvll.log exists
+                        script {
+                            if(!fileExists("samples/SwiftHelloOmvll/omvll.log")) {
+                                echo("samples/SwiftHelloOmvll/omvll.log is not in place..")
+                                return 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Test apps') {
+            steps {
+                script {
+                    dir("${WORKSPACE}") {
+                        // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
+                        sh '''#!/usr/bin/env bash
+                            source ci/devtools-bash-utils/utils.sh
+                            cd samples
+                            # Generic configuration
+                            . ./omvll.env
+                            # Config for GoodNight
+                            export OMVLL_CONFIG=$(pwd)/configs/GoodNight.py
+                            cd GoodNight
+                            execute xcodebuild -project GoodNight.xcodeproj -scheme GoodNight -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            # Config for HexaCalc
+                            export OMVLL_CONFIG=$(pwd)/configs/HexaCalc.py
+                            cd HexaCalc
+                            execute xcodebuild -project HexaCalc.xcodeproj -scheme HexaCalc -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            # Config for Kotoba
+                            export OMVLL_CONFIG=$(pwd)/configs/Kotoba.py
+                            cd Kotoba
+                            execute xcodebuild -project code/Kotoba.xcodeproj -scheme Kotoba -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            # Config for HackerNews
+                            export OMVLL_CONFIG=$(pwd)/configs/HackerNews.py
+                            cd HackerNews
+                            execute xcodebuild -workspace HackerNews.xcworkspace -scheme HackerNews -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            # Config for SnowPlowExamples
+                            export OMVLL_CONFIG=$(pwd)/configs/SnowPlowExamples.py
+                            cd SnowPlow
+                            execute xcodebuild -workspace Examples/demo/SnowplowObjcDemo/SnowplowDemo.xcworkspace -scheme SnowplowDemo -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                        '''
+
+                        // Check omvll.log exists
+                        script {
+                            if(!fileExists("samples/GoodNight/omvll.log")) {
+                                echo("samples/GoodNight/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/HexaCalc/omvll.log")) {
+                                echo("samples/HexaCalc/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/Kotoba/code/omvll.log")) {
+                                echo("samples/Kotoba/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/HackerNews/omvll.log")) {
+                                echo("samples/HackerNews/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log")) {
+                                echo("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Create artifact') {
+            steps {
+                script {
+                    sh 'rm -rf omvll && mkdir ./omvll && cp -r ${DIST_FOLDER}/* ./omvll && cp ./src/build_xcode/omvll.dylib omvll && zip -r omvll.zip omvll'
+                }
+            }
+        }
+
+        stage('Deploy SNAPSHOT') {
+            when {
+                // When we are not in pr
+                expression{env.JOB_TYPE != "pr"}
+            }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                        sh 'ci/devtools-bash-utils/nexus.sh upload snapshot ./omvll.zip ${DEPLOYMENT_PATH_SNAPSHOT}'
+                    }
+                }
+            }
+        }
+
+    }
+
+
+    post {
+        success {
+            script {
+                // Upload android artifacts when failed
+                archiveArtifacts allowEmptyArchive: true, artifacts:
+                    // iOS Apps
+                    "samples/ObjCHelloOmvll/output/Build/Products/Release-iphoneos/ObjCHelloOmvll.app/**," +
+                    "samples/SwiftHelloOmvll/output/Build/Products/Release-iphoneos/SwiftHelloOmvll.app/**," +
+                    "samples/HexaCalc/output/Build/Products/Release-iphoneos/HexaCalc.app/**," +
+                    "samples/GoodNight/output/Build/Products/Debug-iphoneos/GoodNight.app/**," +
+                    "samples/HackerNews/output/Build/Products/Release-iphoneos/HackerNews.app/**," +
+                    "samples/Kotoba/output/Build/Products/Release-iphoneos/Kotoba.app/**," +
+                    "samples/SnowPlow/output/Build/Products/Release-iphoneos/SnowplowDemo.app/**,", fingerprint: true
+                bitbucketStatusNotify(
+                    buildState: 'SUCCESSFUL',
+                    buildName: "${env.JOB_NAME}",
+                    buildKey: "${env.JOB_NAME}",
+                    repoSlug: "${env.REPO_SLUG}",
+                    commitId: "${env.GIT_COMMIT}"
+                )
+            }
+        }
+        unsuccessful {
+            script {
+                // Notify BitBucket failed status
+                bitbucketStatusNotify(
+                    buildState: 'FAILED',
+                    buildName: "${env.JOB_NAME}",
+                    buildKey: "${env.JOB_NAME}",
+                    repoSlug: "${env.REPO_SLUG}",
+                    commitId: "${env.GIT_COMMIT}"
+                )
+            }
+        }
+        always {
+            script {
+                sh 'sudo xcode-select -s /Applications/Xcode.app'
+            }
+            cleanWs()
+        }
+    }
+}
