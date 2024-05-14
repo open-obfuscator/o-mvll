@@ -7,6 +7,9 @@
 # Nested build directory
 /src/build*
 
+# Build directory
+build
+
 # clangd cache folder
 .cache
 

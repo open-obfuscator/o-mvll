@@ -19,7 +19,7 @@ mkdir -p build_xcode && cd build_xcode
 
 export OSXCROSS_TARGET_DIR=/osxcross
 export OSXCROSS_SDK=${OSXCROSS_TARGET_DIR}/SDK/MacOSX13.0.sdk
-
+export OMVLL_PYTHONPATH=/omvll/ci/distribution/Python-3.10.7/Lib
 mkdir -p arm64 && cd arm64
 
 export OSXCROSS_HOST="arm64-apple-darwin22"
@@ -39,7 +39,7 @@ cmake -GNinja ../.. \
       -DPython3_INCLUDE_DIR=/deps/include/python3.10 \
       -Dpybind11_DIR=/deps/share/cmake/pybind11 \
       -Dspdlog_DIR=/deps/lib/cmake/spdlog \
-      -DLLVM_DIR=/deps/LLVM-14.0.0git-arm64-Darwin/lib/cmake/llvm \
+      -DLLVM_DIR=/deps/LLVM-14.0.0git-arm64-Darwin/lib/cmake/llvm
 
 ninja
 
@@ -63,7 +63,7 @@ cmake -GNinja ../.. \
       -DPython3_INCLUDE_DIR=/deps/include/python3.10 \
       -Dpybind11_DIR=/deps/share/cmake/pybind11 \
       -Dspdlog_DIR=/deps/lib/cmake/spdlog \
-      -DLLVM_DIR=/deps/LLVM-14.0.0git-x86_64-Darwin/lib/cmake/llvm \
+      -DLLVM_DIR=/deps/LLVM-14.0.0git-x86_64-Darwin/lib/cmake/llvm
 
 ninja
 cd ..
