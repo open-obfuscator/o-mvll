@@ -7,8 +7,14 @@
 # Nested build directory
 /src/build*
 
+# Build directory
+build
+
 # clangd cache folder
 .cache
 
 # python cache folders for tests
 __pycache__
+
+# tmp folder for deps generation
+tmp
