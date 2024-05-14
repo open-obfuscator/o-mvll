@@ -11,14 +11,13 @@ pipeline {
             )}""".trim()
         DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
         DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
-        DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll/${DEPLOYMENT_VERSION}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.dylib"
-        DEPLOYMENT_PATH_RELEASE="com/build38/omvll/omvll/${DEPLOYMENT_VERSION_MODIFIED}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${BUILD_NUMBER}.dylib"
+        DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll-macos/${DEPLOYMENT_VERSION}/omvll-macos-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.tar.gz"
         OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
 
         WORKSPACE = "${env.WORKSPACE}"
         ROOT_FOLDER = "${WORKSPACE}/"
         TMP_FOLDER = "${ROOT_FOLDER}/tmp"
-        DIST_FOLDER = "${ROOT_FOLDER}/ci/distribution"
+        DIST_FOLDER = "${ROOT_FOLDER}/dist"
         OUTPUT_FOLDER = "${ROOT_FOLDER}/src/build_xcode"
 
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
@@ -43,20 +42,6 @@ pipeline {
             }
         }
 
-        stage('Compile lit') {
-            steps {
-                script {
-                    sh 'git clone https://github.com/apple/llvm-project'
-                    sh 'git -C llvm-project checkout swift/release/5.7'
-                    sh 'cmake -GNinja -S llvm-project/llvm -B llvm-project/build \
-                        -DCMAKE_BUILD_TYPE=Release \
-                        -DLLVM_TARGETS_TO_BUILD="AArch64;ARM;X86" \
-                        -DLLVM_ENABLE_PROJECTS=clang'
-                    sh 'ninja -C llvm-project/build llvm-config FileCheck count not clang'
-                }
-            }
-        }
-
         stage('Cleanup MacOS Directories') {
             steps {
                 script {
@@ -72,7 +57,6 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
                     sh 'mkdir -p ${TMP_FOLDER}'
-                    sh 'mkdir -p ${DIST_FOLDER}'
                     sh 'mkdir -p ${OUTPUT_FOLDER}'
 
                     // Get TAK delivery
@@ -89,6 +73,7 @@ pipeline {
 
                     // Get Samples repo
                     sh 'ci/getSampleRepositories.sh'
+
                 }
             }
         }
@@ -252,7 +237,8 @@ pipeline {
         stage('Create artifact') {
             steps {
                 script {
-                    sh 'rm -rf omvll && mkdir ./omvll && cp -r ${DIST_FOLDER}/* ./omvll && cp ./src/build_xcode/omvll.dylib omvll && zip -r omvll.zip omvll'
+                    sh 'cp ./src/build_xcode/omvll.dylib ${DIST_FOLDER}'
+                    sh 'cd ${DIST_FOLDER} && tar czf ${WORKSPACE}/omvll.tar.gz ./*'
                 }
             }
         }
@@ -265,7 +251,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                        sh 'ci/devtools-bash-utils/nexus.sh upload snapshot ./omvll.zip ${DEPLOYMENT_PATH_SNAPSHOT}'
+                        sh 'ci/devtools-bash-utils/nexus.sh upload snapshot ${WORKSPACE}/omvll.tar.gz ${DEPLOYMENT_PATH_SNAPSHOT}'
                     }
                 }
             }

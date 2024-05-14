@@ -22,9 +22,6 @@ mkdir -p build_xcode && cd build_xcode
 # Need to execute ninja check
 export OMVLL_PYTHONPATH=${DIST_FOLDER}/Python-3.10.7/Lib
 
-
-export TEST_UTILS_ROOT=${ROOT_FOLDER}/llvm-project/build
-
 mkdir -p arm64 && cd arm64
 
 cmake -GNinja ../.. \
@@ -40,8 +37,8 @@ cmake -GNinja ../.. \
       -Dpybind11_DIR=${DEPS_FOLDER}/share/cmake/pybind11 \
       -Dspdlog_DIR=${DEPS_FOLDER}/lib/cmake/spdlog \
       -DLLVM_DIR=${DEPS_FOLDER}/LLVM-14.0.0git-arm64-Darwin/lib/cmake/llvm \
-      -DLLVM_TOOLS_DIR=${TEST_UTILS_ROOT} \
-      -DLLVM_EXTERNAL_LIT=${TEST_UTILS_ROOT}/bin/llvm-lit
+      -DLLVM_TOOLS_DIR=${OMVLL_LLVM_TOOLS_DIR} \
+      -DLLVM_EXTERNAL_LIT=${OMVLL_LLVM_TOOLS_DIR}/bin/llvm-lit
 
 ninja check
 
@@ -61,8 +58,8 @@ cmake -GNinja ../.. \
       -Dpybind11_DIR=${DEPS_FOLDER}/share/cmake/pybind11 \
       -Dspdlog_DIR=${DEPS_FOLDER}/lib/cmake/spdlog \
       -DLLVM_DIR=${DEPS_FOLDER}/LLVM-14.0.0git-x86_64-Darwin/lib/cmake/llvm \
-      -DLLVM_TOOLS_DIR=${TEST_UTILS_ROOT} \
-      -DLLVM_EXTERNAL_LIT=${TEST_UTILS_ROOT}/bin/llvm-lit
+      -DLLVM_TOOLS_DIR=${OMVLL_LLVM_TOOLS_DIR} \
+      -DLLVM_EXTERNAL_LIT=${OMVLL_LLVM_TOOLS_DIR}/bin/llvm-lit
 
 ninja
 cd ..

@@ -16,15 +16,14 @@ pipeline {
             )}""".trim()
         DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
         DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
-        DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll/${DEPLOYMENT_VERSION}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.dylib"
-        DEPLOYMENT_PATH_RELEASE="com/build38/omvll/omvll/${DEPLOYMENT_VERSION_MODIFIED}/omvll-${DEPLOYMENT_VERSION_MODIFIED}-${BUILD_NUMBER}.dylib"
+        DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll/${DEPLOYMENT_VERSION}/omvll-ndk-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.tar.gz"
         OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
 
         WORKSPACE = "${env.WORKSPACE}"
-        ROOT_FOLDER = "${env.WORKSPACE}/../"
+        ROOT_FOLDER = "${env.WORKSPACE}/"
         TMP_FOLDER = "${ROOT_FOLDER}/tmp"
-        DIST_FOLDER = "ci/distribution"
-        OUTPUT_FOLDER = "${ROOT_FOLDER}/src/build_xcode"
+        DIST_FOLDER = "${ROOT_FOLDER}/dist"
+        OUTPUT_FOLDER = "${ROOT_FOLDER}/src/o-mvll-build_ndk_r25c"
 
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
     }
@@ -51,7 +50,6 @@ pipeline {
             steps {
                 script {
                     sh 'rm -rf ${TMP_FOLDER}/*'
-                    sh 'rm -rf ${DIST_FOLDER}/*'
                 }
             }
         }
@@ -60,63 +58,48 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
                     sh 'mkdir -p ${TMP_FOLDER}'
-                    sh 'mkdir -p ${DIST_FOLDER}'
                     sh 'mkdir -p ${OUTPUT_FOLDER}'
-
-                    // Get TAK delivery
-                    sh(script: 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/TAK-Client.zip -g com.build38.tak -i tak-delivery -v 2.14.2 -c 1426 -e zip download-v2')
-                    sh(script: 'unzip ${TMP_FOLDER}/TAK-Client.zip -d ${TMP_FOLDER}/')
+                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-ndk-r25c.tar'
+                    sh 'mkdir -p ${TMP_FOLDER}/third-party-ndk25'
+                    sh 'tar xvf omvll-deps-ndk-r25c.tar --directory=${TMP_FOLDER}/third-party-ndk25'
+                    sh 'ls -la ${TMP_FOLDER}/third-party-ndk25'
+                    sh 'mkdir -p ../dist'
+                    sh 'curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz'
+                    sh 'tar xzvf Python-3.10.7.tgz --directory=${DIST_FOLDER}'
                 }
             }
         }
 
         stage('Compile o-mvll using docker') {
             steps {
-                sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-14_1.tar'
-                sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode14'
-                sh 'mkdir -p ../dist'
-                sh 'tar xvf ./omvll-deps-xcode-14_1.tar --directory=${TMP_FOLDER}/third-party-xcode14'
-                sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-xcode14:/third-party -v ${WORKSPACE}:/o-mvll openobfuscator/omvll-xcode:latest bash /o-mvll/scripts/docker/xcode_14_compile.sh'
-                sh 'mv ${WORKSPACE}/src/build_xcode/omvll_unsigned.dylib ${OUTPUT_FOLDER}/omvll_unsigned.dylib'
+                sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-ndk25:/third-party -v ${WORKSPACE}:/o-mvll -v ${DIST_FOLDER}/Python-3.10.7:/Python-3.10.7 openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/ndk_r25_compile.sh'
             }
         }
 
 
-        stage('Package & Upload Artifacts') {
+        stage('Create artifact') {
             steps {
                 script {
-                    sh '''
-                        #!/bin/bash
-                        tar -czvf "${WORKSPACE}/omvll-${BUILD_NUMBER}.tar.gz" ${OUTPUT_FOLDER}/omvll_unsigned.dylib
-                        ci/devtools-bash-utils/nexus.sh upload snapshot "${WORKSPACE}/omvll-${BUILD_NUMBER}.tar.gz" ${DEPLOYMENT_PATH_SNAPSHOT}
-                    '''
+                    sh 'cp ${OUTPUT_FOLDER}/libOMVLL.so ${DIST_FOLDER}'
+                    sh 'cd ${DIST_FOLDER} && tar -czvf ${WORKSPACE}/omvll.tar.gz ./*'
                 }
             }
         }
 
-        stage('Start MacOS job ci') {
+        stage('Deploy SNAPSHOT') {
             when {
                 // When we are not in pr
                 expression{env.JOB_TYPE != "pr"}
             }
             steps {
                 script {
-                    build job: 'o-mvll-part-2_ci',parameters: [string(name: 'DEPLOYMENT_PATH_SNAPSHOT_UBUNTU', value: "${env.DEPLOYMENT_PATH_SNAPSHOT}")]
+                    withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                        sh 'ci/devtools-bash-utils/nexus.sh upload snapshot ${WORKSPACE}/omvll.tar.gz ${DEPLOYMENT_PATH_SNAPSHOT}'
+                    }
                 }
             }
         }
 
-        stage('Start MacOS job pr') {
-            when {
-                // When we are not in pr
-                expression{env.JOB_TYPE == "pr"}
-            }
-            steps {
-                script {
-                    build job: 'o-mvll-part-2_pr',parameters: [string(name: 'DEPLOYMENT_PATH_SNAPSHOT_UBUNTU', value: "${env.DEPLOYMENT_PATH_SNAPSHOT}"), string(name: 'gitRef', value: "${BITBUCKET_SOURCE_BRANCH}")]
-                }
-            }
-        }
      }
 
 
