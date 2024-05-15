@@ -15,12 +15,23 @@ jobs:
           mkdir -p /tmp/third-party-ndk25
           tar xvf ./omvll-deps-ndk-r25c.tar --directory=/tmp/third-party-ndk25
           curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz
-          tar xzvf Python-3.10.7.tgz --directory=/tmp
+          tar xzvf Python-3.10.7.tgz --directory=${{ github.workspace }}/dist
           docker run --rm \
             -v /tmp/third-party-ndk25:/third-party \
-            -v /tmp/Python-3.10.7:/Python-3.10.7 \
+            -v ${{ github.workspace }}/dist/Python-3.10.7:/Python-3.10.7 \
             -v $GITHUB_WORKSPACE:/o-mvll \
             openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/ndk_r25_compile.sh
+      - name: Generate deployment tar
+        uses: a7ul/tar-action@v1.1.3
+        id: compress
+        with:
+          command: c
+          cwd: ${{ github.workspace }}/dist/
+          files: |
+            ./omvll_ndk_r25c.so
+            ./sample-omvll-config.py
+            ./Python-3.10.7
+          outPath: ${{ github.workspace }}/dist/omvll_ndk_r25.tar.gz
       - name: O-MVLL Deployment
         env:
           BUILD38_S3_KEY: ${{ secrets.BUILD38_S3_KEY }}
