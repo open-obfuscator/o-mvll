@@ -80,7 +80,6 @@ pipeline {
         stage('Create artifact') {
             steps {
                 script {
-                    sh 'cp ${OUTPUT_FOLDER}/libOMVLL.so ${DIST_FOLDER}'
                     sh 'cd ${DIST_FOLDER} && tar -czvf ${WORKSPACE}/omvll.tar.gz ./*'
                 }
             }
