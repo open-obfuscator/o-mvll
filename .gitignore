@@ -18,3 +18,8 @@ __pycache__
 
 # tmp folder for deps generation
 tmp
+
+# dist folder tmp contents
+dist/omvll_ndk_r25c.so
+dist/omvll_xcode_14.dylib
+dist/Python-3.10.7
