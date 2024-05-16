@@ -12,7 +12,7 @@ index 7a93f66..147b8ee 100644
  </dict>
  </plist>
 diff --git a/GoodNight.xcodeproj/project.pbxproj b/GoodNight.xcodeproj/project.pbxproj
-index fa96a93..665fad9 100755
+index fa96a93..bf09571 100755
 --- a/GoodNight.xcodeproj/project.pbxproj
 +++ b/GoodNight.xcodeproj/project.pbxproj
 @@ -55,6 +55,9 @@
@@ -61,7 +61,15 @@ index fa96a93..665fad9 100755
  				75885DCC1C2027A500B57791 /* Shared */,
  				B9E536481B38D90D0097BF90 /* GoodNight */,
  				925B81221BE2BCE1003A6C4B /* GoodNight Widget */,
-@@ -734,8 +745,8 @@
+@@ -706,6 +717,7 @@
+ 				B9E536421B38D90D0097BF90 /* Sources */,
+ 				B9E536431B38D90D0097BF90 /* Frameworks */,
+ 				B9E536441B38D90D0097BF90 /* Resources */,
++				D8BF1E102BF616220034D35F /* ShellScript */,
+ 				B9B6D3161BA636DA00A8E999 /* Embed App Extensions */,
+ 			);
+ 			buildRules = (
+@@ -734,8 +746,8 @@
  					};
  					925B811D1BE2BCE1003A6C4B = {
  						CreatedOnToolsVersion = 7.2;
@@ -72,7 +80,7 @@ index fa96a93..665fad9 100755
  						SystemCapabilities = {
  							com.apple.ApplicationGroups.iOS = {
  								enabled = 1;
-@@ -747,8 +758,8 @@
+@@ -747,8 +759,8 @@
  					};
  					B9E536451B38D90D0097BF90 = {
  						CreatedOnToolsVersion = 7.0;
@@ -83,7 +91,7 @@ index fa96a93..665fad9 100755
  						SystemCapabilities = {
  							com.apple.ApplicationGroups.iOS = {
  								enabled = 1;
-@@ -768,8 +779,13 @@
+@@ -768,8 +780,13 @@
  			developmentRegion = English;
  			hasScannedForEncodings = 0;
  			knownRegions = (
@@ -97,7 +105,7 @@ index fa96a93..665fad9 100755
  			);
  			mainGroup = B9E5363D1B38D90D0097BF90;
  			productRefGroup = B9E536471B38D90D0097BF90 /* Products */;
-@@ -806,6 +822,7 @@
+@@ -806,6 +823,7 @@
  			isa = PBXResourcesBuildPhase;
  			buildActionMask = 2147483647;
  			files = (
@@ -105,7 +113,34 @@ index fa96a93..665fad9 100755
  				0025148E1CDCCFCC00482F87 /* Localizable.strings in Resources */,
  				75885DCB1C2026B700B57791 /* Defaults.plist in Resources */,
  				92F23ABF1BD72ADD00A097CB /* LaunchScreen.storyboard in Resources */,
-@@ -1075,8 +1092,9 @@
+@@ -816,6 +834,26 @@
+ 		};
+ /* End PBXResourcesBuildPhase section */
+ 
++/* Begin PBXShellScriptBuildPhase section */
++		D8BF1E102BF616220034D35F /* ShellScript */ = {
++			isa = PBXShellScriptBuildPhase;
++			buildActionMask = 2147483647;
++			files = (
++			);
++			inputFileListPaths = (
++			);
++			inputPaths = (
++			);
++			outputFileListPaths = (
++			);
++			outputPaths = (
++			);
++			runOnlyForDeploymentPostprocessing = 0;
++			shellPath = /bin/sh;
++			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n../../scripts/build/verify-tak-injection.sh\n";
++		};
++/* End PBXShellScriptBuildPhase section */
++
+ /* Begin PBXSourcesBuildPhase section */
+ 		922B28191DDE81CF0075C274 /* Sources */ = {
+ 			isa = PBXSourcesBuildPhase;
+@@ -1075,8 +1113,9 @@
  				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
  				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
  				CODE_SIGN_ENTITLEMENTS = GoodNight/GoodNight.entitlements;
@@ -117,7 +152,7 @@ index fa96a93..665fad9 100755
  				ENABLE_BITCODE = NO;
  				FRAMEWORK_SEARCH_PATHS = (
  					"$(inherited)",
-@@ -1086,10 +1104,15 @@
+@@ -1086,10 +1125,15 @@
  				GCC_THUMB_SUPPORT = NO;
  				INFOPLIST_FILE = "$(SRCROOT)/GoodNight/Info.plist";
  				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -136,7 +171,7 @@ index fa96a93..665fad9 100755
  				TARGETED_DEVICE_FAMILY = "1,2";
  			};
  			name = Enterprise;
-@@ -1100,15 +1123,16 @@
+@@ -1100,15 +1144,16 @@
  				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
  				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
  				CODE_SIGN_ENTITLEMENTS = "GoodNight Widget/GoodNight Widget.entitlements";
@@ -157,7 +192,7 @@ index fa96a93..665fad9 100755
  				SKIP_INSTALL = YES;
  			};
  			name = Debug;
-@@ -1133,9 +1157,11 @@
+@@ -1133,9 +1178,11 @@
  				CLANG_WARN_UNREACHABLE_CODE = YES;
  				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
  				CODE_SIGN_ENTITLEMENTS = "GoodNight Widget/GoodNight Widget.entitlements";
@@ -170,7 +205,7 @@ index fa96a93..665fad9 100755
  				ENABLE_BITCODE = NO;
  				ENABLE_NS_ASSERTIONS = NO;
  				ENABLE_STRICT_OBJC_MSGSEND = YES;
-@@ -1151,10 +1177,9 @@
+@@ -1151,10 +1198,9 @@
  				INFOPLIST_FILE = "GoodNight Widget/Info.plist";
  				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
  				MTL_ENABLE_DEBUG_INFO = NO;
@@ -183,7 +218,7 @@ index fa96a93..665fad9 100755
  				SDKROOT = iphoneos;
  				SKIP_INSTALL = YES;
  				VALIDATE_PRODUCT = YES;
-@@ -1215,8 +1240,9 @@
+@@ -1215,8 +1261,9 @@
  				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
  				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
  				CODE_SIGN_ENTITLEMENTS = GoodNight/GoodNight.entitlements;
@@ -195,7 +230,7 @@ index fa96a93..665fad9 100755
  				ENABLE_BITCODE = NO;
  				FRAMEWORK_SEARCH_PATHS = (
  					"$(inherited)",
-@@ -1226,10 +1252,15 @@
+@@ -1226,10 +1273,15 @@
  				GCC_THUMB_SUPPORT = NO;
  				INFOPLIST_FILE = "$(SRCROOT)/GoodNight/Info.plist";
  				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

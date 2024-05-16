@@ -127,6 +127,7 @@
 			buildPhases = (
 				B1C82D2F2B88981000F1A5AB /* Sources */,
 				B1C82D302B88981000F1A5AB /* Frameworks */,
+				D8BF1E0C2BF4ED820034D35F /* ShellScript */,
 				B1C82D312B88981000F1A5AB /* Resources */,
 			);
 			buildRules = (
@@ -214,6 +215,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D8BF1E0C2BF4ED820034D35F /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n../../scripts/build/verify-tak-injection.sh\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B1C82D2F2B88981000F1A5AB /* Sources */ = {

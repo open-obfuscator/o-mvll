@@ -6,6 +6,7 @@
 #include "omvll/passes/tak-injection/PostCoding.hpp"
 #include "omvll/utils.hpp"
 
+#include "llvm/Support/Path.h"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
@@ -14,7 +15,9 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/ErrorHandling.h>
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Host.h>
+#include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 
 #include <regex>
@@ -41,6 +44,23 @@ static bool isInitializerFunction(const Function &F) {
       "didFinishLaunchingWithOptions.*UIApplication.*)");
 
   return std::regex_match(Name, Expr);
+}
+
+static bool recordInjectionOrFail() {
+  SmallString<256> Path;
+  sys::path::system_temp_directory(true, Path);
+  SDEBUG("Temporary folder: {}", Path.str());
+  sys::path::append(Path, "omvll_tak_injection");
+
+  int ResultFD;
+  std::error_code EC = sys::fs::openFileForReadWrite(
+      Path, ResultFD, sys::fs::CD_CreateNew, sys::fs::OF_None);
+  if (EC) {
+    if (EC == std::errc::file_exists)
+      SDEBUG("File already exists.");
+    return false;
+  }
+  return true;
 }
 
 static bool injectTakRuntimeProtection(Module &M, const StringRef Name) {
@@ -96,6 +116,10 @@ static bool injectTakRuntimeProtection(Module &M, const StringRef Name) {
     InlineFunctionInfo IFI;
     if (!InlineFunction(*CI, IFI).isSuccess())
       SDEBUG("[{}] Could not inline call-site.", Name);
+
+    if (!recordInjectionOrFail())
+      report_fatal_error("Ensuring TAK was injected only once failed, please "
+                         "contact Build38.");
 
     Changed = true;
     break;

@@ -107,6 +107,33 @@ pipeline {
             }
         }
 
+        stage('Clean potential resources used by TakInjection') {
+            steps {
+                script {
+                    // Ensure temporary file used by TakInjection is cleaned from previous builds.
+                    sh '''#!/usr/bin/env bash
+                    TEMP_DIR=$(getconf DARWIN_USER_TEMP_DIR)
+                    CACHE_DIR=$(getconf DARWIN_USER_CACHE_DIR)
+
+                    TEMP_FILE_PATH="${TEMP_DIR}omvll_tak_injection"
+                    CACHE_FILE_PATH="${CACHE_DIR}omvll_tak_injection"
+
+                    check_and_remove() {
+                        local file_path=$1
+                        if [ -f "$file_path" ]; then
+                            rm "$file_path"
+                            exit $?
+                        fi
+                        return 1
+                    }
+
+                    check_and_remove "$TEMP_FILE_PATH"
+                    check_and_remove "$CACHE_FILE_PATH"
+                    exit 0
+                    '''
+                }
+            }
+        }
 
         stage('Build xcode ObjectiveC project') {
             steps {
@@ -238,6 +265,7 @@ pipeline {
             steps {
                 script {
                     sh 'cp ./src/build_xcode/omvll.dylib ${DIST_FOLDER}'
+                    sh 'cp ./scripts/build/verify-tak-injection.sh ${DIST_FOLDER}'
                     sh 'cd ${DIST_FOLDER} && tar czf ${WORKSPACE}/omvll.tar.gz ./*'
                 }
             }
