@@ -1,5 +1,5 @@
 diff --git a/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj b/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj
-index 7d1216d..d9c8975 100644
+index 7d1216d..4efc4e4 100644
 --- a/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj
 +++ b/demo/SnowplowObjcDemo/SnowplowDemo.xcodeproj/project.pbxproj
 @@ -18,6 +18,9 @@
@@ -48,7 +48,15 @@ index 7d1216d..d9c8975 100644
  				3710BBFEF122A6658C1C43E7 /* Pods_SnowplowDemo.framework */,
  				3A1668E8170F8F4A56A036B7 /* Pods_SnowPlowDemoShareExtension.framework */,
  			);
-@@ -349,13 +360,16 @@
+@@ -266,6 +277,7 @@
+ 				A974532DDBB5F7BE0E3DBE0A /* [CP] Check Pods Manifest.lock */,
+ 				043172771B7365D4008A927D /* Sources */,
+ 				043172781B7365D4008A927D /* Frameworks */,
++				D8BF1E112BF618F10034D35F /* ShellScript */,
+ 				043172791B7365D4008A927D /* Resources */,
+ 				835E31B75ADCE1EE0BD101FD /* [CP] Embed Pods Frameworks */,
+ 				B10C0229289B2C0600770C3E /* Embed App Extensions */,
+@@ -349,13 +361,16 @@
  				TargetAttributes = {
  					0431727A1B7365D4008A927D = {
  						CreatedOnToolsVersion = 6.4;
@@ -65,7 +73,7 @@ index 7d1216d..d9c8975 100644
  						ProvisioningStyle = Automatic;
  					};
  					B10C0233289B2F8500770C3E = {
-@@ -390,6 +404,7 @@
+@@ -390,6 +405,7 @@
  			isa = PBXResourcesBuildPhase;
  			buildActionMask = 2147483647;
  			files = (
@@ -73,7 +81,31 @@ index 7d1216d..d9c8975 100644
  				0431728D1B7365D4008A927D /* Main.storyboard in Resources */,
  				043172921B7365D4008A927D /* LaunchScreen.xib in Resources */,
  				0431728F1B7365D4008A927D /* Images.xcassets in Resources */,
-@@ -684,9 +699,32 @@
+@@ -483,6 +499,23 @@
+ 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+ 			showEnvVarsInLog = 0;
+ 		};
++		D8BF1E112BF618F10034D35F /* ShellScript */ = {
++			isa = PBXShellScriptBuildPhase;
++			buildActionMask = 2147483647;
++			files = (
++			);
++			inputFileListPaths = (
++			);
++			inputPaths = (
++			);
++			outputFileListPaths = (
++			);
++			outputPaths = (
++			);
++			runOnlyForDeploymentPostprocessing = 0;
++			shellPath = /bin/sh;
++			shellScript = "chmod +x ../../../../../scripts/build/verify-tak-injection.sh\n../../../../../scripts/build/verify-tak-injection.sh\n";
++		};
+ /* End PBXShellScriptBuildPhase section */
+ 
+ /* Begin PBXSourcesBuildPhase section */
+@@ -684,9 +717,32 @@
  			buildSettings = {
  				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
  				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -106,7 +138,7 @@ index 7d1216d..d9c8975 100644
  				PRODUCT_BUNDLE_IDENTIFIER = "com.snowplowanalytics.$(PRODUCT_NAME:rfc1034identifier)";
  				PRODUCT_NAME = "$(TARGET_NAME)";
  			};
-@@ -698,9 +736,32 @@
+@@ -698,9 +754,32 @@
  			buildSettings = {
  				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
  				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -139,7 +171,7 @@ index 7d1216d..d9c8975 100644
  				PRODUCT_BUNDLE_IDENTIFIER = "com.snowplowanalytics.$(PRODUCT_NAME:rfc1034identifier)";
  				PRODUCT_NAME = "$(TARGET_NAME)";
  			};
-@@ -710,6 +771,7 @@
+@@ -710,6 +789,7 @@
  			isa = XCBuildConfiguration;
  			buildSettings = {
  				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -147,7 +179,7 @@ index 7d1216d..d9c8975 100644
  				FRAMEWORK_SEARCH_PATHS = (
  					"$(SDKROOT)/Developer/Library/Frameworks",
  					"$(inherited)",
-@@ -730,6 +792,7 @@
+@@ -730,6 +810,7 @@
  			isa = XCBuildConfiguration;
  			buildSettings = {
  				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -155,7 +187,7 @@ index 7d1216d..d9c8975 100644
  				FRAMEWORK_SEARCH_PATHS = (
  					"$(SDKROOT)/Developer/Library/Frameworks",
  					"$(inherited)",
-@@ -756,6 +819,7 @@
+@@ -756,6 +837,7 @@
  				CODE_SIGN_STYLE = Automatic;
  				CURRENT_PROJECT_VERSION = 1;
  				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -163,7 +195,7 @@ index 7d1216d..d9c8975 100644
  				GCC_C_LANGUAGE_STANDARD = gnu11;
  				GENERATE_INFOPLIST_FILE = YES;
  				INFOPLIST_FILE = SnowPlowDemoShareExtension/Info.plist;
-@@ -790,6 +854,7 @@
+@@ -790,6 +872,7 @@
  				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
  				CODE_SIGN_STYLE = Automatic;
  				CURRENT_PROJECT_VERSION = 1;

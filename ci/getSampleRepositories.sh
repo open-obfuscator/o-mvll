@@ -101,7 +101,6 @@ function getSnowPlow() {
 export LANG=en_US.UTF-8
 
 # Start download dependencies
-getKotobaSample
 getGoodNightSample
 getHackerNewsSample
 getHexaCalcSample

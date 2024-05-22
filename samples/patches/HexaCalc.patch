@@ -1,5 +1,5 @@
 diff --git a/HexaCalc.xcodeproj/project.pbxproj b/HexaCalc.xcodeproj/project.pbxproj
-index 84319f0..2512b33 100644
+index 84319f0..d2fe120 100644
 --- a/HexaCalc.xcodeproj/project.pbxproj
 +++ b/HexaCalc.xcodeproj/project.pbxproj
 @@ -12,43 +12,26 @@
@@ -103,7 +103,15 @@ index 84319f0..2512b33 100644
  /* End PBXGroup section */
  
  /* Begin PBXNativeTarget section */
-@@ -469,22 +471,15 @@
+@@ -407,6 +409,7 @@
+ 			buildPhases = (
+ 				9DEF248F24C553F000701F5B /* Sources */,
+ 				9DEF249024C553F000701F5B /* Frameworks */,
++				D8BF1E0D2BF6117F0034D35F /* ShellScript */,
+ 				9DEF249124C553F000701F5B /* Resources */,
+ 			);
+ 			buildRules = (
+@@ -469,22 +472,15 @@
  			isa = PBXResourcesBuildPhase;
  			buildActionMask = 2147483647;
  			files = (
@@ -127,7 +135,7 @@ index 84319f0..2512b33 100644
  				9D7C09C725EC61E700771D52 /* HexaCalcIconPurple@2x~ipad.png in Resources */,
  				9D7C09D825EC61E700771D52 /* HexaCalcIconOrange@2x~ipad.png in Resources */,
  				9D7C09DC25EC61E700771D52 /* HexaCalcIconRed-83.5@3x~ipad.png in Resources */,
-@@ -493,27 +488,18 @@
+@@ -493,32 +489,43 @@
  				9D7C09CC25EC61E700771D52 /* HexaCalcIconTeal~ipad.png in Resources */,
  				9D7C09C925EC61E700771D52 /* HexaCalcIconGreen@2x~ipad.png in Resources */,
  				9D7C09D225EC61E700771D52 /* HexaCalcIconOrange-83.5@3x~ipad.png in Resources */,
@@ -155,7 +163,32 @@ index 84319f0..2512b33 100644
  			);
  			runOnlyForDeploymentPostprocessing = 0;
  		};
-@@ -769,7 +755,7 @@
+ /* End PBXResourcesBuildPhase section */
+ 
++/* Begin PBXShellScriptBuildPhase section */
++		D8BF1E0D2BF6117F0034D35F /* ShellScript */ = {
++			isa = PBXShellScriptBuildPhase;
++			buildActionMask = 2147483647;
++			files = (
++			);
++			inputFileListPaths = (
++			);
++			inputPaths = (
++			);
++			outputFileListPaths = (
++			);
++			outputPaths = (
++			);
++			runOnlyForDeploymentPostprocessing = 0;
++			shellPath = /bin/sh;
++			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n../../scripts/build/verify-tak-injection.sh\n";
++		};
++/* End PBXShellScriptBuildPhase section */
++
+ /* Begin PBXSourcesBuildPhase section */
+ 		9DE32E2F28DEDBDF00BB222C /* Sources */ = {
+ 			isa = PBXSourcesBuildPhase;
+@@ -769,7 +776,7 @@
  				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
  				CODE_SIGN_STYLE = Automatic;
  				CURRENT_PROJECT_VERSION = 10;
@@ -164,7 +197,7 @@ index 84319f0..2512b33 100644
  				INFOPLIST_FILE = HexaCalc/Info.plist;
  				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
  				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-@@ -777,7 +763,9 @@
+@@ -777,7 +784,9 @@
  					"$(inherited)",
  					"@executable_path/Frameworks",
  				);
@@ -174,7 +207,7 @@ index 84319f0..2512b33 100644
  				PRODUCT_BUNDLE_IDENTIFIER = com.example.HexaCalc;
  				PRODUCT_NAME = "$(TARGET_NAME)";
  				SWIFT_VERSION = 5.0;
-@@ -791,7 +779,7 @@
+@@ -791,7 +800,7 @@
  				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
  				CODE_SIGN_STYLE = Automatic;
  				CURRENT_PROJECT_VERSION = 10;
@@ -183,7 +216,7 @@ index 84319f0..2512b33 100644
  				INFOPLIST_FILE = HexaCalc/Info.plist;
  				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
  				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-@@ -799,7 +787,9 @@
+@@ -799,7 +808,9 @@
  					"$(inherited)",
  					"@executable_path/Frameworks",
  				);

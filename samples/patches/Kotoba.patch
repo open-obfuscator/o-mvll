@@ -1,5 +1,5 @@
 diff --git a/code/Kotoba.xcodeproj/project.pbxproj b/code/Kotoba.xcodeproj/project.pbxproj
-index 621986b..b0e0ea1 100644
+index 621986b..12c1a00 100644
 --- a/code/Kotoba.xcodeproj/project.pbxproj
 +++ b/code/Kotoba.xcodeproj/project.pbxproj
 @@ -22,6 +22,12 @@
@@ -64,7 +64,15 @@ index 621986b..b0e0ea1 100644
  				BE918C4C1A22A5F5006043CF /* Kotoba */,
  				BEA413B81D1CABB600D177C2 /* KotobaTests */,
  				BEB2324D1D1DD3B800369560 /* KotobaUITests */,
-@@ -374,12 +394,12 @@
+@@ -311,6 +331,7 @@
+ 				B680288724965C8600FD5780 /* ShellScript */,
+ 				B6A919572478F32800B08C37 /* ShellScript */,
+ 				BE918C461A22A5F5006043CF /* Sources */,
++				D8BF1E0F2BF615460034D35F /* ShellScript */,
+ 				BE918C471A22A5F5006043CF /* Frameworks */,
+ 				BE918C481A22A5F5006043CF /* Resources */,
+ 				B6F459562460E15100E2174D /* Embed App Extensions */,
+@@ -374,12 +395,12 @@
  				TargetAttributes = {
  					B6F4594A2460E15100E2174D = {
  						CreatedOnToolsVersion = 11.4.1;
@@ -79,7 +87,7 @@ index 621986b..b0e0ea1 100644
  						LastSwiftMigration = 1120;
  					};
  					BEA413B61D1CABB600D177C2 = {
-@@ -423,6 +443,7 @@
+@@ -423,6 +444,7 @@
  			isa = PBXResourcesBuildPhase;
  			buildActionMask = 2147483647;
  			files = (
@@ -87,7 +95,7 @@ index 621986b..b0e0ea1 100644
  				4475E234286F8A2200E2B0B3 /* Colors.xcassets in Resources */,
  				B6F459512460E15100E2174D /* ShareExtension.storyboard in Resources */,
  				B6F73C542478FE1A0003F394 /* .bartycrouch.toml in Resources */,
-@@ -433,6 +454,7 @@
+@@ -433,6 +455,7 @@
  			isa = PBXResourcesBuildPhase;
  			buildActionMask = 2147483647;
  			files = (
@@ -95,7 +103,31 @@ index 621986b..b0e0ea1 100644
  				44D1096623A84262007C477C /* Localizable.strings in Resources */,
  				BE918C551A22A5F5006043CF /* Main.storyboard in Resources */,
  				4440B41D236CF92100369CE8 /* Colors.xcassets in Resources */,
-@@ -652,14 +674,16 @@
+@@ -511,6 +534,23 @@
+ 			shellPath = /bin/sh;
+ 			shellScript = "if which bartycrouch > /dev/null; then\n    bartycrouch update -x\n    bartycrouch lint -x\nelse\n    echo \"warning: BartyCrouch not installed, download it from https://github.com/Flinesoft/BartyCrouch\"\nfi\n";
+ 		};
++		D8BF1E0F2BF615460034D35F /* ShellScript */ = {
++			isa = PBXShellScriptBuildPhase;
++			buildActionMask = 2147483647;
++			files = (
++			);
++			inputFileListPaths = (
++			);
++			inputPaths = (
++			);
++			outputFileListPaths = (
++			);
++			outputPaths = (
++			);
++			runOnlyForDeploymentPostprocessing = 0;
++			shellPath = /bin/sh;
++			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n../../scripts/build/verify-tak-injection.sh\n";
++		};
+ /* End PBXShellScriptBuildPhase section */
+ 
+ /* Begin PBXSourcesBuildPhase section */
+@@ -652,14 +692,16 @@
  				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
  				CODE_SIGN_STYLE = Automatic;
  				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -114,7 +146,7 @@ index 621986b..b0e0ea1 100644
  				PRODUCT_NAME = "$(TARGET_NAME)";
  				SKIP_INSTALL = YES;
  				SUPPORTS_MACCATALYST = NO;
-@@ -682,13 +706,15 @@
+@@ -682,13 +724,15 @@
  				CODE_SIGN_STYLE = Automatic;
  				COPY_PHASE_STRIP = NO;
  				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -132,7 +164,7 @@ index 621986b..b0e0ea1 100644
  				PRODUCT_NAME = "$(TARGET_NAME)";
  				SKIP_INSTALL = YES;
  				SUPPORTS_MACCATALYST = NO;
-@@ -811,12 +837,14 @@
+@@ -811,12 +855,14 @@
  				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-red";
  				CODE_SIGN_ENTITLEMENTS = Kotoba/Kotoba.entitlements;
  				CURRENT_PROJECT_VERSION = 1592141211;
@@ -149,7 +181,7 @@ index 621986b..b0e0ea1 100644
  				PRODUCT_NAME = "$(TARGET_NAME)";
  				PROVISIONING_PROFILE = "";
  				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-@@ -836,12 +864,14 @@
+@@ -836,12 +882,14 @@
  				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-red";
  				CODE_SIGN_ENTITLEMENTS = Kotoba/Kotoba.entitlements;
  				CURRENT_PROJECT_VERSION = 1592141211;
