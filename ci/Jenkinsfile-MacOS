@@ -216,11 +216,6 @@ pipeline {
                             cd HexaCalc
                             execute xcodebuild -project HexaCalc.xcodeproj -scheme HexaCalc -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
-                            # Config for Kotoba
-                            export OMVLL_CONFIG=$(pwd)/configs/Kotoba.py
-                            cd Kotoba
-                            execute xcodebuild -project code/Kotoba.xcodeproj -scheme Kotoba -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
                             # Config for HackerNews
                             export OMVLL_CONFIG=$(pwd)/configs/HackerNews.py
                             cd HackerNews
@@ -241,10 +236,6 @@ pipeline {
                             }
                             if(!fileExists("samples/HexaCalc/omvll.log")) {
                                 echo("samples/HexaCalc/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                            if(!fileExists("samples/Kotoba/code/omvll.log")) {
-                                echo("samples/Kotoba/omvll.log is not in place..")
                                 sh 'false'
                             }
                             if(!fileExists("samples/HackerNews/omvll.log")) {
@@ -299,7 +290,6 @@ pipeline {
                     "samples/HexaCalc/output/Build/Products/Release-iphoneos/HexaCalc.app/**," +
                     "samples/GoodNight/output/Build/Products/Debug-iphoneos/GoodNight.app/**," +
                     "samples/HackerNews/output/Build/Products/Release-iphoneos/HackerNews.app/**," +
-                    "samples/Kotoba/output/Build/Products/Release-iphoneos/Kotoba.app/**," +
                     "samples/SnowPlow/output/Build/Products/Release-iphoneos/SnowplowDemo.app/**,", fingerprint: true
                 bitbucketStatusNotify(
                     buildState: 'SUCCESSFUL',
