@@ -38,9 +38,13 @@ static bool isInitializerFunction(const Function &F) {
   // Note that all Swift-mangled names begin with a common prefix, ref at:
   // https://github.com/apple/swift/blob/main/docs/ABI/Mangling.rst.
 
+  // Extra note: it seems like certain applications (e.g., those coming from RN
+  // / ionic) encode the class name length in the mangling scheme as well.
+  // Consequently, match "App.*Delegate" instead of "AppDelegate".
+
   std::regex Expr(
       "^(.*-\\[AppDelegate\\sapplication:"
-      "didFinishLaunchingWithOptions:.*|\\$s.*AppDelegate.*application.*"
+      "didFinishLaunchingWithOptions:.*|\\$s.*App.*Delegate.*application.*"
       "didFinishLaunchingWithOptions.*UIApplication.*)");
 
   return std::regex_match(Name, Expr);
