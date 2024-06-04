@@ -1,0 +1,416 @@
+{
+  "api": {
+    "name": "SplashScreenPlugin",
+    "slug": "splashscreenplugin",
+    "docs": "",
+    "tags": [],
+    "methods": [
+      {
+        "name": "show",
+        "signature": "(options?: ShowOptions | undefined) => Promise<void>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "ShowOptions | undefined"
+          }
+        ],
+        "returns": "Promise<void>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "1.0.0"
+          }
+        ],
+        "docs": "Show the splash screen",
+        "complexTypes": [
+          "ShowOptions"
+        ],
+        "slug": "show"
+      },
+      {
+        "name": "hide",
+        "signature": "(options?: HideOptions | undefined) => Promise<void>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "HideOptions | undefined"
+          }
+        ],
+        "returns": "Promise<void>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "1.0.0"
+          }
+        ],
+        "docs": "Hide the splash screen",
+        "complexTypes": [
+          "HideOptions"
+        ],
+        "slug": "hide"
+      }
+    ],
+    "properties": []
+  },
+  "interfaces": [
+    {
+      "name": "ShowOptions",
+      "slug": "showoptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "autoHide",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Whether to auto hide the splash after showDuration",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "fadeInDuration",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "200",
+              "name": "default"
+            }
+          ],
+          "docs": "How long (in ms) to fade in.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "fadeOutDuration",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "200",
+              "name": "default"
+            }
+          ],
+          "docs": "How long (in ms) to fade out.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "showDuration",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "3000",
+              "name": "default"
+            }
+          ],
+          "docs": "How long to show the splash screen when autoHide is enabled (in ms)",
+          "complexTypes": [],
+          "type": "number | undefined"
+        }
+      ]
+    },
+    {
+      "name": "HideOptions",
+      "slug": "hideoptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "fadeOutDuration",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "200",
+              "name": "default"
+            }
+          ],
+          "docs": "How long (in ms) to fade out.\n\nOn Android, if using the Android 12 Splash Screen API, it's not being used.\nUse launchFadeOutDuration configuration option instead.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        }
+      ]
+    }
+  ],
+  "enums": [],
+  "typeAliases": [],
+  "pluginConfigs": [
+    {
+      "name": "SplashScreen",
+      "slug": "splashscreen",
+      "properties": [
+        {
+          "name": "launchShowDuration",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "500",
+              "name": "default"
+            },
+            {
+              "text": "3000",
+              "name": "example"
+            }
+          ],
+          "docs": "How long to show the launch splash screen when autoHide is enabled (in ms)",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "launchAutoHide",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "true",
+              "name": "default"
+            },
+            {
+              "text": "true",
+              "name": "example"
+            }
+          ],
+          "docs": "Whether to auto hide the splash after launchShowDuration.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "launchFadeOutDuration",
+          "tags": [
+            {
+              "text": "4.2.0",
+              "name": "since"
+            },
+            {
+              "text": "200",
+              "name": "default"
+            },
+            {
+              "text": "3000",
+              "name": "example"
+            }
+          ],
+          "docs": "Duration for the fade out animation of the launch splash screen (in ms)\n\nOnly available for Android, when using the Android 12 Splash Screen API.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "backgroundColor",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "\"#ffffffff\"",
+              "name": "example"
+            }
+          ],
+          "docs": "Color of the background of the Splash Screen in hex format, #RRGGBB or #RRGGBBAA.\nDoesn't work if `useDialog` is true or on launch when using the Android 12 API.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "androidSplashResourceName",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "splash",
+              "name": "default"
+            },
+            {
+              "text": "\"splash\"",
+              "name": "example"
+            }
+          ],
+          "docs": "Name of the resource to be used as Splash Screen.\n\nDoesn't work on launch when using the Android 12 API.\n\nOnly available on Android.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "androidScaleType",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "FIT_XY",
+              "name": "default"
+            },
+            {
+              "text": "\"CENTER_CROP\"",
+              "name": "example"
+            }
+          ],
+          "docs": "The [ImageView.ScaleType](https://developer.android.com/reference/android/widget/ImageView.ScaleType) used to scale\nthe Splash Screen image.\nDoesn't work if `useDialog` is true or on launch when using the Android 12 API.\n\nOnly available on Android.",
+          "complexTypes": [],
+          "type": "'CENTER' | 'CENTER_CROP' | 'CENTER_INSIDE' | 'FIT_CENTER' | 'FIT_END' | 'FIT_START' | 'FIT_XY' | 'MATRIX' | undefined"
+        },
+        {
+          "name": "showSpinner",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "true",
+              "name": "example"
+            }
+          ],
+          "docs": "Show a loading spinner on the Splash Screen.\nDoesn't work if `useDialog` is true or on launch when using the Android 12 API.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "androidSpinnerStyle",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "large",
+              "name": "default"
+            },
+            {
+              "text": "\"large\"",
+              "name": "example"
+            }
+          ],
+          "docs": "Style of the Android spinner.\nDoesn't work if `useDialog` is true or on launch when using the Android 12 API.",
+          "complexTypes": [],
+          "type": "'horizontal' | 'small' | 'large' | 'inverse' | 'smallInverse' | 'largeInverse' | undefined"
+        },
+        {
+          "name": "iosSpinnerStyle",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "large",
+              "name": "default"
+            },
+            {
+              "text": "\"small\"",
+              "name": "example"
+            }
+          ],
+          "docs": "Style of the iOS spinner.\nDoesn't work if `useDialog` is true.\n\nOnly available on iOS.",
+          "complexTypes": [],
+          "type": "'small' | 'large' | undefined"
+        },
+        {
+          "name": "spinnerColor",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "\"#999999\"",
+              "name": "example"
+            }
+          ],
+          "docs": "Color of the spinner in hex format, #RRGGBB or #RRGGBBAA.\nDoesn't work if `useDialog` is true or on launch when using the Android 12 API.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "splashFullScreen",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "true",
+              "name": "example"
+            }
+          ],
+          "docs": "Hide the status bar on the Splash Screen.\n\nDoesn't work on launch when using the Android 12 API.\n\nOnly available on Android.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "splashImmersive",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            },
+            {
+              "text": "true",
+              "name": "example"
+            }
+          ],
+          "docs": "Hide the status bar and the software navigation buttons on the Splash Screen.\n\nDoesn't work on launch when using the Android 12 API.\n\nOnly available on Android.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "layoutName",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            },
+            {
+              "text": "\"launch_screen\"",
+              "name": "example"
+            }
+          ],
+          "docs": "If `useDialog` is set to true, configure the Dialog layout.\nIf `useDialog` is not set or false, use a layout instead of the ImageView.\n\nDoesn't work on launch when using the Android 12 API.\n\nOnly available on Android.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "useDialog",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            },
+            {
+              "text": "true",
+              "name": "example"
+            }
+          ],
+          "docs": "Use a Dialog instead of an ImageView.\nIf `layoutName` is not configured, it will use\na layout that uses the splash image as background.\n\nDoesn't work on launch when using the Android 12 API.\n\nOnly available on Android.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        }
+      ],
+      "docs": "These config values are available:"
+    }
+  ]
+}

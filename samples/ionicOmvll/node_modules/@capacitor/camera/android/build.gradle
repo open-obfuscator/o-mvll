@@ -1,0 +1,83 @@
+ext {
+    capacitorVersion = System.getenv('CAPACITOR_VERSION')
+    junitVersion = project.hasProperty('junitVersion') ? rootProject.ext.junitVersion : '4.13.2'
+    androidxAppCompatVersion = project.hasProperty('androidxAppCompatVersion') ? rootProject.ext.androidxAppCompatVersion : '1.6.1'
+    androidxEspressoCoreVersion = project.hasProperty('androidxEspressoCoreVersion') ? rootProject.ext.androidxEspressoCoreVersion : '3.5.1'
+    androidxExifInterfaceVersion = project.hasProperty('androidxExifInterfaceVersion') ? rootProject.ext.androidxExifInterfaceVersion : '1.3.6'
+    androidxJunitVersion = project.hasProperty('androidxJunitVersion') ? rootProject.ext.androidxJunitVersion : '1.1.5'
+    androidxMaterialVersion = project.hasProperty('androidxMaterialVersion') ? rootProject.ext.androidxMaterialVersion : '1.10.0'
+}
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.1'
+        if (System.getenv("CAP_PLUGIN_PUBLISH") == "true") {
+            classpath 'io.github.gradle-nexus:publish-plugin:1.3.0'
+        }
+    }
+}
+
+apply plugin: 'com.android.library'
+if (System.getenv("CAP_PLUGIN_PUBLISH") == "true") {
+    apply plugin: 'io.github.gradle-nexus.publish-plugin'
+    apply from: file('../../scripts/android/publish-root.gradle')
+    apply from: file('../../scripts/android/publish-module.gradle')
+}
+
+android {
+    namespace "com.capacitorjs.plugins.camera"
+    compileSdk project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 34
+    defaultConfig {
+        minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 22
+        targetSdkVersion project.hasProperty('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 34
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    lintOptions {
+        abortOnError false
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    publishing {
+        singleVariant("release")
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    if (System.getenv("CAP_PLUGIN_PUBLISH") == "true") {
+        implementation "com.capacitorjs:core:$capacitorVersion"
+    } else {
+        implementation project(':capacitor-android')
+    }
+
+    implementation "androidx.exifinterface:exifinterface:$androidxExifInterfaceVersion"
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "com.google.android.material:material:$androidxMaterialVersion"
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+}

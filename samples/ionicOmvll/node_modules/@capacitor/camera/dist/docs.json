@@ -1,0 +1,804 @@
+{
+  "api": {
+    "name": "CameraPlugin",
+    "slug": "cameraplugin",
+    "docs": "",
+    "tags": [],
+    "methods": [
+      {
+        "name": "getPhoto",
+        "signature": "(options: ImageOptions) => Promise<Photo>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "ImageOptions"
+          }
+        ],
+        "returns": "Promise<Photo>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "1.0.0"
+          }
+        ],
+        "docs": "Prompt the user to pick a photo from an album, or take a new photo\nwith the camera.",
+        "complexTypes": [
+          "Photo",
+          "ImageOptions"
+        ],
+        "slug": "getphoto"
+      },
+      {
+        "name": "pickImages",
+        "signature": "(options: GalleryImageOptions) => Promise<GalleryPhotos>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "GalleryImageOptions"
+          }
+        ],
+        "returns": "Promise<GalleryPhotos>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "1.2.0"
+          }
+        ],
+        "docs": "Allows the user to pick multiple pictures from the photo gallery.\nOn iOS 13 and older it only allows to pick one picture.",
+        "complexTypes": [
+          "GalleryPhotos",
+          "GalleryImageOptions"
+        ],
+        "slug": "pickimages"
+      },
+      {
+        "name": "pickLimitedLibraryPhotos",
+        "signature": "() => Promise<GalleryPhotos>",
+        "parameters": [],
+        "returns": "Promise<GalleryPhotos>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "4.1.0"
+          }
+        ],
+        "docs": "iOS 14+ Only: Allows the user to update their limited photo library selection.\nOn iOS 15+ returns all the limited photos after the picker dismissal.\nOn iOS 14 or if the user gave full access to the photos it returns an empty array.",
+        "complexTypes": [
+          "GalleryPhotos"
+        ],
+        "slug": "picklimitedlibraryphotos"
+      },
+      {
+        "name": "getLimitedLibraryPhotos",
+        "signature": "() => Promise<GalleryPhotos>",
+        "parameters": [],
+        "returns": "Promise<GalleryPhotos>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "4.1.0"
+          }
+        ],
+        "docs": "iOS 14+ Only: Return an array of photos selected from the limited photo library.",
+        "complexTypes": [
+          "GalleryPhotos"
+        ],
+        "slug": "getlimitedlibraryphotos"
+      },
+      {
+        "name": "checkPermissions",
+        "signature": "() => Promise<PermissionStatus>",
+        "parameters": [],
+        "returns": "Promise<PermissionStatus>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "1.0.0"
+          }
+        ],
+        "docs": "Check camera and photo album permissions",
+        "complexTypes": [
+          "PermissionStatus"
+        ],
+        "slug": "checkpermissions"
+      },
+      {
+        "name": "requestPermissions",
+        "signature": "(permissions?: CameraPluginPermissions | undefined) => Promise<PermissionStatus>",
+        "parameters": [
+          {
+            "name": "permissions",
+            "docs": "",
+            "type": "CameraPluginPermissions | undefined"
+          }
+        ],
+        "returns": "Promise<PermissionStatus>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "1.0.0"
+          }
+        ],
+        "docs": "Request camera and photo album permissions",
+        "complexTypes": [
+          "PermissionStatus",
+          "CameraPluginPermissions"
+        ],
+        "slug": "requestpermissions"
+      }
+    ],
+    "properties": []
+  },
+  "interfaces": [
+    {
+      "name": "Photo",
+      "slug": "photo",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "base64String",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The base64 encoded string representation of the image, if using CameraResultType.Base64.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "dataUrl",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The url starting with 'data:image/jpeg;base64,' and the base64 encoded string representation of the image, if using CameraResultType.DataUrl.\n\nNote: On web, the file format could change depending on the browser.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "path",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "If using CameraResultType.Uri, the path will contain a full,\nplatform-specific file URL that can be read later using the Filesystem API.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "webPath",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "webPath returns a path that can be used to set the src attribute of an image for efficient\nloading and rendering.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "exif",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Exif data, if any, retrieved from the image",
+          "complexTypes": [],
+          "type": "any"
+        },
+        {
+          "name": "format",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The format of the image, ex: jpeg, png, gif.\n\niOS and Android only support jpeg.\nWeb supports jpeg, png and gif, but the exact availability may vary depending on the browser.\ngif is only supported if `webUseInput` is set to `true` or if `source` is set to `Photos`.",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "saved",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Whether if the image was saved to the gallery or not.\n\nOn Android and iOS, saving to the gallery can fail if the user didn't\ngrant the required permissions.\nOn Web there is no gallery, so always returns false.",
+          "complexTypes": [],
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "ImageOptions",
+      "slug": "imageoptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "quality",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The quality of image to return as JPEG, from 0-100\nNote: This option is only supported on Android and iOS",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "allowEditing",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Whether to allow the user to crop or make small edits (platform specific).\nOn iOS 14+ it's only supported for CameraSource.Camera, but not for CameraSource.Photos.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "resultType",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "How the data should be returned. Currently, only 'Base64', 'DataUrl' or 'Uri' is supported",
+          "complexTypes": [
+            "CameraResultType"
+          ],
+          "type": "CameraResultType"
+        },
+        {
+          "name": "saveToGallery",
+          "tags": [
+            {
+              "text": ": false",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Whether to save the photo to the gallery.\nIf the photo was picked from the gallery, it will only be saved if edited.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "width",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The desired maximum width of the saved image. The aspect ratio is respected.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "height",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The desired maximum height of the saved image. The aspect ratio is respected.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "correctOrientation",
+          "tags": [
+            {
+              "text": ": true",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Whether to automatically rotate the image \"up\" to correct for orientation\nin portrait mode",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "source",
+          "tags": [
+            {
+              "text": ": CameraSource.Prompt",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The source to get the photo from. By default this prompts the user to select\neither the photo album or take a photo.",
+          "complexTypes": [
+            "CameraSource"
+          ],
+          "type": "CameraSource"
+        },
+        {
+          "name": "direction",
+          "tags": [
+            {
+              "text": ": CameraDirection.Rear",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "iOS and Web only: The camera direction.",
+          "complexTypes": [
+            "CameraDirection"
+          ],
+          "type": "CameraDirection"
+        },
+        {
+          "name": "presentationStyle",
+          "tags": [
+            {
+              "text": ": 'fullscreen'",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "iOS only: The presentation style of the Camera.",
+          "complexTypes": [],
+          "type": "'fullscreen' | 'popover' | undefined"
+        },
+        {
+          "name": "webUseInput",
+          "tags": [
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Web only: Whether to use the PWA Element experience or file input. The\ndefault is to use PWA Elements if installed and fall back to file input.\nTo always use file input, set this to `true`.\n\nLearn more about PWA Elements: https://capacitorjs.com/docs/web/pwa-elements",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "promptLabelHeader",
+          "tags": [
+            {
+              "text": ": 'Photo'",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Text value to use when displaying the prompt.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "promptLabelCancel",
+          "tags": [
+            {
+              "text": ": 'Cancel'",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Text value to use when displaying the prompt.\niOS only: The label of the 'cancel' button.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "promptLabelPhoto",
+          "tags": [
+            {
+              "text": ": 'From Photos'",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Text value to use when displaying the prompt.\nThe label of the button to select a saved image.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "promptLabelPicture",
+          "tags": [
+            {
+              "text": ": 'Take Picture'",
+              "name": "default"
+            },
+            {
+              "text": "1.0.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Text value to use when displaying the prompt.\nThe label of the button to open the camera.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        }
+      ]
+    },
+    {
+      "name": "GalleryPhotos",
+      "slug": "galleryphotos",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "photos",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Array of all the picked photos.",
+          "complexTypes": [
+            "GalleryPhoto"
+          ],
+          "type": "GalleryPhoto[]"
+        }
+      ]
+    },
+    {
+      "name": "GalleryPhoto",
+      "slug": "galleryphoto",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "path",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Full, platform-specific file URL that can be read later using the Filesystem API.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "webPath",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "webPath returns a path that can be used to set the src attribute of an image for efficient\nloading and rendering.",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "exif",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Exif data, if any, retrieved from the image",
+          "complexTypes": [],
+          "type": "any"
+        },
+        {
+          "name": "format",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The format of the image, ex: jpeg, png, gif.\n\niOS and Android only support jpeg.\nWeb supports jpeg, png and gif.",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "GalleryImageOptions",
+      "slug": "galleryimageoptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "quality",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The quality of image to return as JPEG, from 0-100\nNote: This option is only supported on Android and iOS.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "width",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The desired maximum width of the saved image. The aspect ratio is respected.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "height",
+          "tags": [
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The desired maximum height of the saved image. The aspect ratio is respected.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "correctOrientation",
+          "tags": [
+            {
+              "text": ": true",
+              "name": "default"
+            },
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Whether to automatically rotate the image \"up\" to correct for orientation\nin portrait mode",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "presentationStyle",
+          "tags": [
+            {
+              "text": ": 'fullscreen'",
+              "name": "default"
+            },
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "iOS only: The presentation style of the Camera.",
+          "complexTypes": [],
+          "type": "'fullscreen' | 'popover' | undefined"
+        },
+        {
+          "name": "limit",
+          "tags": [
+            {
+              "text": "0 (unlimited)",
+              "name": "default"
+            },
+            {
+              "text": "1.2.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Maximum number of pictures the user will be able to choose.\nNote: This option is only supported on Android 13+ and iOS.",
+          "complexTypes": [],
+          "type": "number | undefined"
+        }
+      ]
+    },
+    {
+      "name": "PermissionStatus",
+      "slug": "permissionstatus",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "camera",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "CameraPermissionState"
+          ],
+          "type": "CameraPermissionState"
+        },
+        {
+          "name": "photos",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "CameraPermissionState"
+          ],
+          "type": "CameraPermissionState"
+        }
+      ]
+    },
+    {
+      "name": "CameraPluginPermissions",
+      "slug": "camerapluginpermissions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "permissions",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "CameraPermissionType"
+          ],
+          "type": "CameraPermissionType[]"
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "CameraResultType",
+      "slug": "cameraresulttype",
+      "members": [
+        {
+          "name": "Uri",
+          "value": "'uri'",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "Base64",
+          "value": "'base64'",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "DataUrl",
+          "value": "'dataUrl'",
+          "tags": [],
+          "docs": ""
+        }
+      ]
+    },
+    {
+      "name": "CameraSource",
+      "slug": "camerasource",
+      "members": [
+        {
+          "name": "Prompt",
+          "value": "'PROMPT'",
+          "tags": [],
+          "docs": "Prompts the user to select either the photo album or take a photo."
+        },
+        {
+          "name": "Camera",
+          "value": "'CAMERA'",
+          "tags": [],
+          "docs": "Take a new photo using the camera."
+        },
+        {
+          "name": "Photos",
+          "value": "'PHOTOS'",
+          "tags": [],
+          "docs": "Pick an existing photo from the gallery or photo album."
+        }
+      ]
+    },
+    {
+      "name": "CameraDirection",
+      "slug": "cameradirection",
+      "members": [
+        {
+          "name": "Rear",
+          "value": "'REAR'",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "Front",
+          "value": "'FRONT'",
+          "tags": [],
+          "docs": ""
+        }
+      ]
+    }
+  ],
+  "typeAliases": [
+    {
+      "name": "CameraPermissionState",
+      "slug": "camerapermissionstate",
+      "docs": "",
+      "types": [
+        {
+          "text": "PermissionState",
+          "complexTypes": [
+            "PermissionState"
+          ]
+        },
+        {
+          "text": "'limited'",
+          "complexTypes": []
+        }
+      ]
+    },
+    {
+      "name": "PermissionState",
+      "slug": "permissionstate",
+      "docs": "",
+      "types": [
+        {
+          "text": "'prompt'",
+          "complexTypes": []
+        },
+        {
+          "text": "'prompt-with-rationale'",
+          "complexTypes": []
+        },
+        {
+          "text": "'granted'",
+          "complexTypes": []
+        },
+        {
+          "text": "'denied'",
+          "complexTypes": []
+        }
+      ]
+    },
+    {
+      "name": "CameraPermissionType",
+      "slug": "camerapermissiontype",
+      "docs": "",
+      "types": [
+        {
+          "text": "'camera'",
+          "complexTypes": []
+        },
+        {
+          "text": "'photos'",
+          "complexTypes": []
+        }
+      ]
+    }
+  ],
+  "pluginConfigs": []
+}

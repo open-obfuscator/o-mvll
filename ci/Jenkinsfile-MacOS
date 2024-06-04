@@ -1,6 +1,7 @@
 pipeline {
     agent { label 'xcode-14.2' }
     environment {
+        PATH = "${env.HOME}/flutter/bin:${env.PATH}"
         NEXUS_CREDENTIALS = credentials('e29f59a5-3fe6-4235-8d9a-ccbea6113412')
         NEXUS_USERNAME = "${NEXUS_CREDENTIALS_USR}"
         NEXUS_PASSWORD = "${NEXUS_CREDENTIALS_PSW}"
@@ -21,6 +22,9 @@ pipeline {
         OUTPUT_FOLDER = "${ROOT_FOLDER}/src/build_xcode"
 
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
+
+        // Pod install dependency requirement
+        LANG="en_US.UTF-8"
     }
     stages {
         stage('PreBuild') {
@@ -231,6 +235,17 @@ pipeline {
                             cd SnowPlow
                             execute xcodebuild -workspace Examples/demo/SnowplowObjcDemo/SnowplowDemo.xcworkspace -scheme SnowplowDemo -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
+                            # Flutter app
+                            cd flutterOmvll
+                            flutter pub get
+                            execute xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
+                            # ionic app
+                            cd ionicOmvll
+                            npm install
+                            npx cap sync
+                            execute xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
+                            cd -
                         '''
 
                         // Check omvll.log exists
@@ -253,6 +268,14 @@ pipeline {
                             }
                             if(!fileExists("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log")) {
                                 echo("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/flutterOmvll/ios/omvll.log")) {
+                                echo("samples/flutterOmvll/ios/omvll.log is not in place..")
+                                sh 'false'
+                            }
+                            if(!fileExists("samples/ionicOmvll/ios/App/omvll.log")) {
+                                echo("samples/ionicOmvll/ios/App/omvll.log is not in place..")
                                 sh 'false'
                             }
                         }
