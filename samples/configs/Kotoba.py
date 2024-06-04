@@ -15,6 +15,9 @@ class MyConfig(omvll.ObfuscationConfig):
     def obfuscate_string(self, _, __, string: bytes):
         return omvll.StringEncOptStack()
 
+    def inject_tak(self, _):
+        return ("../../../tmp/TAK-Client", 10, ["ShareExtension"])
+
 @lru_cache(maxsize=1)
 def omvll_get_config() -> omvll.ObfuscationConfig:
     """

@@ -1,6 +1,7 @@
 #include "PyObfuscationConfig.hpp"
-#include "omvll/utils.hpp"
 #include "omvll/log.hpp"
+#include "omvll/passes/tak-injection/TakInjectionOpt.hpp"
+#include "omvll/utils.hpp"
 
 #include <iostream>
 
@@ -262,6 +263,52 @@ OpaqueConstantsOpt PyObfuscationConfig::obfuscate_constants(llvm::Module* mod, l
   return OpaqueConstantsSkip();
 }
 
+TakInjectionOpt PyObfuscationConfig::inject_tak(llvm::Module *mod) {
+  py::gil_scoped_acquire gil;
+  py::function override = py::get_override(
+      static_cast<const ObfuscationConfig *>(this), "inject_tak");
+  if (override) {
+    try {
+      py::object out = override(mod);
+      if (out.is_none()) {
+        return TakInjectionSkip();
+      }
+
+      if (py::isinstance<py::tuple>(out)) {
+        auto tuple_out = out.cast<py::tuple>();
+        if (tuple_out.size() == 3 && py::isinstance<py::str>(tuple_out[0]) &&
+            py::isinstance<py::int_>(tuple_out[1]) &&
+            py::isinstance<py::list>(tuple_out[2])) {
+
+          auto configPath = tuple_out[0].cast<std::string>();
+          auto intervalTime = tuple_out[1].cast<unsigned>();
+          auto excludedTargetsPyList = tuple_out[2].cast<py::list>();
+
+          std::vector<std::string> excludedTargets;
+          excludedTargets.reserve(excludedTargetsPyList.size());
+          for (size_t i = 0; i < excludedTargetsPyList.size(); ++i)
+            if (py::isinstance<py::str>(excludedTargetsPyList[i]))
+              excludedTargets.push_back(
+                  excludedTargetsPyList[i].cast<std::string>());
+
+          return TakInjectionConfig(std::move(configPath), intervalTime,
+                                    std::move(excludedTargets));
+        }
+      }
+
+      if (py::detail::cast_is_temporary_value_reference<
+              TakInjectionOpt>::value) {
+        static pybind11::detail::override_caster_t<TakInjectionOpt> caster;
+        return pybind11::detail::cast_ref<TakInjectionOpt>(std::move(out),
+                                                           caster);
+      }
+      return pybind11::detail::cast_safe<TakInjectionOpt>(std::move(out));
+    } catch (const std::exception &e) {
+      fatalError("Error in 'inject_tak': '"s + e.what() + "'");
+    }
+  }
+  return TakInjectionSkip();
+}
 }
 
 
