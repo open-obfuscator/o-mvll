@@ -1,0 +1,14 @@
+diff --git a/wrapper/target.cpp b/wrapper/target.cpp
+index 06e6a78..465bbf0 100644
+--- a/wrapper/target.cpp
++++ b/wrapper/target.cpp
+@@ -747,6 +747,9 @@ bool Target::setup() {
+           (stdlib == StdLib::libstdcxx && usegcclibs)) {
+         fargs.push_back("-nostdinc++");
+         fargs.push_back("-Qunused-arguments");
++        if ((SDKOSNum >= OSVersion(11, 1)) && (stdlib == StdLib::libcxx)) {
++          fargs.push_back("-lc++");
++        }
+       }
+ 
+       if (stdlib == StdLib::libstdcxx && usegcclibs && targetarch.size() < 2 &&
