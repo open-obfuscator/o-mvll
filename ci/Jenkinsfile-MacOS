@@ -236,11 +236,15 @@ pipeline {
                             execute xcodebuild -workspace Examples/demo/SnowplowObjcDemo/SnowplowDemo.xcworkspace -scheme SnowplowDemo -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
                             # Flutter app
+                            # Config for FlutterOmvll
+                            export OMVLL_CONFIG=$(pwd)/configs/FlutterOmvll.py
                             cd flutterOmvll
                             flutter pub get
                             execute xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
                             cd -
                             # ionic app
+                            # Config for ionicOmvll
+                            export OMVLL_CONFIG=$(pwd)/configs/ionicOmvll.py
                             cd ionicOmvll
                             npm install
                             npx cap sync
