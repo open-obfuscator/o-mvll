@@ -118,23 +118,35 @@ bool StringEncoding::runOnBasicBlock(Module& M, Function& F, BasicBlock& BB,
     for (Use& Op : I.operands()) {
       GlobalVariable *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts());
 
-      if (!G) {
+      if (!G)
         if (auto *CE = dyn_cast<ConstantExpr>(Op))
           G = extractGlobalVariable(CE);
+
+      auto IsInitializerConstantExpr = [](const GlobalVariable &G) {
+        return (!G.isExternallyInitialized() && G.hasInitializer()) &&
+               isa<ConstantExpr>(G.getInitializer());
+      };
+
+      Use *ActualOp = &Op;
+      bool MaybeStringInCEInitializer = false;
+      if (G && IsInitializerConstantExpr(*G)) {
+        // Is the global initializer part of a constant expression?
+        G = extractGlobalVariable(cast<ConstantExpr>(G->getInitializer()));
+        if (G) {
+          ActualOp = G->getSingleUndroppableUse();
+          MaybeStringInCEInitializer = true;
+        }
       }
 
-      if (!G)
+      if (!G || !ActualOp)
         continue;
 
-      if (!isEligible(*G)) {
+      if (!isEligible(*G))
         continue;
-      }
-
 
       auto* data = dyn_cast<ConstantDataSequential>(G->getInitializer());
-      if (data == nullptr) {
+      if (data == nullptr)
         continue;
-      }
 
       // Create a default option which skips the encoding
       auto encInfo = std::make_unique<StringEncodingOpt>(StringEncOptSkip());
@@ -150,11 +162,12 @@ bool StringEncoding::runOnBasicBlock(Module& M, Function& F, BasicBlock& BB,
         encInfo = std::make_unique<StringEncodingOpt>(userConfig.obfuscate_string(&M, &F, data->getAsCString().str()));
       }
 
-      if (isSkip(*encInfo)) {
+      if (isSkip(*encInfo) ||
+          (MaybeStringInCEInitializer &&
+           std::get_if<StringEncOptGlobal>(encInfo.get()) == nullptr))
         continue;
-      }
 
-      Changed |= process(BB, I, Op, *G, *data, *encInfo);
+      Changed |= process(BB, I, *ActualOp, *G, *data, *encInfo);
     }
   }
   return Changed;
@@ -171,12 +184,16 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
   RNG_ = M.createRNG(name());
   SDEBUG("[{}] Module: {}", name(), M.getSourceFileName());
 
-  for (Function &F : M) {
-    demotePHINode(F);
-    StringRef name = F.getName();
+  std::vector<Function *> FuncsToVisit;
+  for (Function &F : M)
+    FuncsToVisit.emplace_back(&F);
+
+  for (auto *F : FuncsToVisit) {
+    demotePHINode(*F);
+    StringRef name = F->getName();
     std::string demangled = demangle(name.str());
-    for (BasicBlock &BB : F) {
-      Changed |= runOnBasicBlock(M, F, BB, *userConfig);
+    for (BasicBlock &BB : *F) {
+      Changed |= runOnBasicBlock(M, *F, BB, *userConfig);
     }
   }
 
