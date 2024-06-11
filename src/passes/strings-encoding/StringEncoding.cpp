@@ -118,10 +118,9 @@ bool StringEncoding::runOnBasicBlock(Module& M, Function& F, BasicBlock& BB,
     for (Use& Op : I.operands()) {
       GlobalVariable *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts());
 
-      if (!G) {
+      if (!G)
         if (auto *CE = dyn_cast<ConstantExpr>(Op))
           G = extractGlobalVariable(CE);
-      }
 
       auto IsInitializerConstantExpr = [](const GlobalVariable &G) {
         return (!G.isExternallyInitialized() && G.hasInitializer()) &&
@@ -133,8 +132,10 @@ bool StringEncoding::runOnBasicBlock(Module& M, Function& F, BasicBlock& BB,
       if (G && IsInitializerConstantExpr(*G)) {
         // Is the global initializer part of a constant expression?
         G = extractGlobalVariable(cast<ConstantExpr>(G->getInitializer()));
-        ActualOp = G->getSingleUndroppableUse();
-        MaybeStringInCEInitializer = true;
+        if (G) {
+          ActualOp = G->getSingleUndroppableUse();
+          MaybeStringInCEInitializer = true;
+        }
       }
 
       if (!G || !ActualOp)
