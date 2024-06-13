@@ -6,9 +6,11 @@
   </a>
   <br />
   <br />
-  <a href="https://build38.com/">
-    <img src=".github/img/build38.webp" alt="Build38" width="100%">
-  </a>
+  <div style="background-color:#022445;padding:20px;border-radius:15px;" align="center">
+    <a href="https://build38.com/">
+      <img src=".github/img/build38.png" alt="Build38" width="100%">
+    </a>
+  </div>
 </p>
 
 <p align="center">
