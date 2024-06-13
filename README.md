@@ -6,11 +6,11 @@
   </a>
   <br />
   <br />
-  <div style="background-color:#022445;padding:20px;border-radius:15px;" align="center">
-    <a href="https://build38.com/">
-      <img src=".github/img/build38.png" alt="Build38" width="100%">
-    </a>
-  </div>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/img/build38_white.png" width="100%">
+    <source media="(prefers-color-scheme: light)" srcset=".github/img/build38_blue.png" width="100%">
+    <img alt="Build38" src=".github/img/build38_blue.png">
+  </picture>
 </p>
 
 <p align="center">
