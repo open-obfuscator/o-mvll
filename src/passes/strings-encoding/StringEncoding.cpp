@@ -24,6 +24,7 @@
 #include <llvm/IR/NoFolder.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Transforms/Utils/Local.h>
 #include <llvm/Transforms/Utils/ModuleUtils.h>
 
 #include <string>
@@ -165,7 +166,8 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   Value *Output = Input;
 
   if (IsPartOfStackVariable)
-    Output = IRB.CreateBitCast(ClearBuffer, IRB.getInt8PtrTy());
+    Output = IRB.CreateInBoundsGEP(ClearBuffer->getAllocatedType(), ClearBuffer,
+                                   {IRB.getInt64(0), IRB.getInt64(0)});
 
   auto *NewF =
       Function::Create(FDecode->getFunctionType(), GlobalValue::PrivateLinkage,
@@ -206,8 +208,16 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
           ((First != Last) ||
            (isa<GetElementPtrInst>(First) || isa<PtrToIntInst>(First))) &&
           "Nested constantexpr in getelementptr/ptrtoint should not appear?");
-      Last->setOperand(0, Output);
-      NewPt->setOperand(EncPtr.getOperandNo(), First);
+      if (isa<GetElementPtrInst>(First)) {
+        // CE is already a GEP, directly replace the operand with the decode
+        // output.
+        NewPt->setOperand(EncPtr.getOperandNo(), Output);
+        if (isInstructionTriviallyDead(Last))
+          Last->eraseFromParent();
+      } else {
+        Last->setOperand(0, Output);
+        NewPt->setOperand(EncPtr.getOperandNo(), First);
+      }
     } else {
       NewPt->setOperand(EncPtr.getOperandNo(), Output);
     }
