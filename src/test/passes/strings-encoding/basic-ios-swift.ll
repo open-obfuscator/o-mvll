@@ -9,10 +9,16 @@
 %swift.bridge = type opaque
 
 declare swiftcc { i64, %swift.bridge*, i1, %swift.bridge* } @"foo"(i64 %0, %swift.bridge* %1)
+declare void @baz(i8* %ptr)
 
 @.str.4 = private constant [13 x i8] c"Hello, Swift\00"
 
 define { i64, %swift.bridge*, i1, %swift.bridge* } @test_function() {
   %1 = call swiftcc { i64, %swift.bridge*, i1, %swift.bridge* } @"foo"(i64 -3458764513820540911, %swift.bridge* inttoptr (i64 or (i64 sub (i64 ptrtoint ([13 x i8]* @.str.4 to i64), i64 32), i64 -9223372036854775808) to %swift.bridge*))
   ret { i64, %swift.bridge*, i1, %swift.bridge* } %1
+}
+
+define void @test_function2() {
+  call void @baz(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str.4, i64 0, i64 0))
+  ret void
 }
