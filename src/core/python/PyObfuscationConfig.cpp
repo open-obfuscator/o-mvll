@@ -197,6 +197,26 @@ AntiHookOpt PyObfuscationConfig::anti_hooking(llvm::Module* mod, llvm::Function*
   return false;
 }
 
+bool PyObfuscationConfig::has_report_diff_override() const {
+  const auto *base = static_cast<const ObfuscationConfig *>(this);
+  return py::get_override(base, "report_diff") ? true : false;
+}
+
+void PyObfuscationConfig::report_diff(const std::string &pass,
+                                      const std::string &original,
+                                      const std::string &obfuscated) {
+  py::gil_scoped_acquire gil;
+  py::function override = py::get_override(
+      static_cast<const ObfuscationConfig *>(this), "report_diff");
+  if (override) {
+    try {
+      override(pass, original, obfuscated);
+    } catch (const std::exception &e) {
+      fatalError("Error in 'report_diff': '"s + e.what() + "'");
+    }
+  }
+}
+
 ArithmeticOpt PyObfuscationConfig::obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func)
 {
   py::gil_scoped_acquire gil;

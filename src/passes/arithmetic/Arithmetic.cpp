@@ -12,6 +12,7 @@
 #include "llvm/IR/NoFolder.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/RandomNumberGenerator.h"
+#include <llvm/Support/raw_ostream.h>
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -252,6 +253,12 @@ PreservedAnalyses Arithmetic::run(Module &M,
   std::transform(Fs.begin(), Fs.end(), std::back_inserter(LFs),
                  [] (Function& F) { return &F; });
 
+  std::string OriginalIR;
+  std::string ObfuscatedIR;
+  bool ReportDiff = config.getUserConfig()->has_report_diff_override();
+
+  if (ReportDiff)
+    llvm::raw_string_ostream(OriginalIR) << M;
 
   for (Function* F : LFs) {
     ArithmeticOpt opt = config.getUserConfig()->obfuscate_arithmetic(&M, F);
@@ -264,6 +271,14 @@ PreservedAnalyses Arithmetic::run(Module &M,
       Changed |= runOnBasicBlock(BB);
     }
   }
+
+  if (ReportDiff) {
+    llvm::raw_string_ostream(ObfuscatedIR) << M;
+    if (OriginalIR != ObfuscatedIR)
+      config.getUserConfig()->report_diff(name().str(), OriginalIR,
+                                          ObfuscatedIR);
+  }
+
   SINFO("[{}] Done!", name());
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
