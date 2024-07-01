@@ -8,10 +8,10 @@
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/NoFolder.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/RandomNumberGenerator.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <llvm/Support/raw_ostream.h>
 
 using namespace llvm;

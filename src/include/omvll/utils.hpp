@@ -75,6 +75,5 @@ private:
   std::string OriginalIR;
   bool ChangeReported;
 };
-
 }
 #endif
