@@ -1,5 +1,7 @@
 #include "omvll/utils.hpp"
 #include "omvll/log.hpp"
+#include "omvll/ObfuscationConfig.hpp"
+#include "omvll/PyConfig.hpp"
 
 #include <llvm/ADT/Hashing.h>
 #include <llvm/ADT/Optional.h>
@@ -425,6 +427,28 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
 
     return MaybeModule;
   }
+}
+
+IRChangesMonitor::IRChangesMonitor(const llvm::Module &M, llvm::StringRef PassName) : Mod(M) {
+  ObfuscationConfig *UserConfig = PyConfig::instance().getUserConfig();
+  if (UserConfig->has_report_diff_override()) {
+    this->UserConfig = UserConfig;
+    this->PassName = PassName.str();
+    llvm::raw_string_ostream(OriginalIR) << Mod;
+  }
+}
+
+PreservedAnalyses IRChangesMonitor::report() {
+  if (UserConfig) {
+    std::string ObfuscatedIR;
+    llvm::raw_string_ostream(ObfuscatedIR) << Mod;
+    if (OriginalIR != ObfuscatedIR) {
+      assert(!ChangeReported && "Textual IR change detected that transformation didn't report");
+      UserConfig->report_diff(PassName, OriginalIR, ObfuscatedIR);
+    }
+  }
+
+  return ChangeReported ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
 } // namespace omvll

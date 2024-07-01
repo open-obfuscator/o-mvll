@@ -240,7 +240,7 @@ PreservedAnalyses Arithmetic::run(Module &M,
                                   ModuleAnalysisManager &FAM) {
   RNG_ = M.createRNG(name());
   SDEBUG("Running {} on {}", name(), M.getName().str());
-  bool Changed = false;
+  IRChangesMonitor ModuleChanges(M, name());
 
   PyConfig& config = PyConfig::instance();
 
@@ -253,13 +253,6 @@ PreservedAnalyses Arithmetic::run(Module &M,
   std::transform(Fs.begin(), Fs.end(), std::back_inserter(LFs),
                  [] (Function& F) { return &F; });
 
-  std::string OriginalIR;
-  std::string ObfuscatedIR;
-  bool ReportDiff = config.getUserConfig()->has_report_diff_override();
-
-  if (ReportDiff)
-    llvm::raw_string_ostream(OriginalIR) << M;
-
   for (Function* F : LFs) {
     ArithmeticOpt opt = config.getUserConfig()->obfuscate_arithmetic(&M, F);
     if (!opt)
@@ -268,21 +261,13 @@ PreservedAnalyses Arithmetic::run(Module &M,
     opts_.insert({F, std::move(opt)});
 
     for (BasicBlock& BB : *F) {
-      Changed |= runOnBasicBlock(BB);
+      bool Changed = runOnBasicBlock(BB);
+      ModuleChanges.notify(Changed);
     }
   }
 
-  if (ReportDiff) {
-    llvm::raw_string_ostream(ObfuscatedIR) << M;
-    if (OriginalIR != ObfuscatedIR)
-      config.getUserConfig()->report_diff(name().str(), OriginalIR,
-                                          ObfuscatedIR);
-  }
-
   SINFO("[{}] Done!", name());
-  return Changed ? PreservedAnalyses::none() :
-                   PreservedAnalyses::all();
-
+  return ModuleChanges.report();
 }
 }
 
