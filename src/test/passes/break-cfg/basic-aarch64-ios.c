@@ -1,8 +1,8 @@
 // REQUIRES: aarch64-registered-target
-// XFAIL: host-platform-linux
+// UNSUPPORTED: system-{{.*}}
 
-// RUN:                                   clang -target arm64-apple-ios -fno-legacy-pass-manager                         -O1 -fno-verbose-asm -S %s -o - | FileCheck %s
-// RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=BREAKCFG-IOS %s
+// RUN:                                   clang -target arm64-apple-ios                         -O1 -fno-verbose-asm -S %s -o - | FileCheck %s
+// RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=BREAKCFG-IOS %s
 
 // BREAKCFG-IOS-LABEL: _check_password.1:
 //                     ; adr x1, #0x10

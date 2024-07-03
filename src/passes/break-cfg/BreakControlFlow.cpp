@@ -18,8 +18,9 @@
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/MC/SubtargetFeature.h>
 
-#include <llvm/Support/RandomNumberGenerator.h>
 #include <llvm/Support/Alignment.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/RandomNumberGenerator.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 
@@ -141,8 +142,8 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   AllocaInst* VarDst   = IRB.CreateAlloca(IRB.getInt64Ty());
   AllocaInst* VarFAddr = IRB.CreateAlloca(IRB.getInt64Ty());
 
-  StoreInst* StoreFAddr = IRB.CreateStore(
-      IRB.CreatePtrToInt(FCopied, IRB.getInt64Ty()), VarFAddr, /* volatile */true);
+  IRB.CreateStore(IRB.CreatePtrToInt(FCopied, IRB.getInt64Ty()), VarFAddr,
+                  /* volatile */ true);
 
   LoadInst* LoadFAddr = IRB.CreateLoad(IRB.getInt64Ty(), VarFAddr);
 

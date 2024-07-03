@@ -1,1 +1,3 @@
 _llvmGetPassPluginInfo
+_llvm_orc_registerEHFrameSectionWrapper
+_llvm_orc_deregisterEHFrameSectionWrapper

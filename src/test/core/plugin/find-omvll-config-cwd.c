@@ -7,7 +7,7 @@
 
 // Run clang from the test output dir
 // RUN: cd %T_cwd
-// RUN: clang -target aarch64-linux-android -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -S %s -o /dev/null
+// RUN: clang -target aarch64-linux-android -fpass-plugin=%libOMVLL -S %s -o /dev/null
 // RUN: FileCheck %s -DCWD=%T_cwd < omvll.log
 
 // Check that we load the yml-config from the test output dir

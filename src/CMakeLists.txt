@@ -20,7 +20,13 @@ message(STATUS "${PROJECT_NAME}: ${PROJECT_VERSION}")
 option(OMVLL_FORCE_LOG_DEBUG "Force the log debug output" OFF)
 option(OMVLL_PY_STANDALONE   "Build OMVLL as a standalone Python module" OFF)
 
-find_package(LLVM 14 REQUIRED CONFIG NO_DEFAULT_PATH)
+if(APPLE)
+  set(LLVM_REQUIRED_VERSION 16)
+else()
+  set(LLVM_REQUIRED_VERSION 17)
+endif()
+
+find_package(LLVM ${LLVM_REQUIRED_VERSION} REQUIRED CONFIG NO_DEFAULT_PATH)
 
 set(PYTHON_VERSION "3" CACHE STRING "Python version")
 find_package(Python3 COMPONENTS Development Interpreter)
@@ -33,8 +39,8 @@ message(STATUS "Python lib:     ${Python3_LIBRARIES}")
 message(STATUS "Python include: ${Python3_INCLUDE_DIRS}")
 message(STATUS "Python interpreter: ${Python3_EXECUTABLE}")
 
-if(NOT "14" VERSION_EQUAL "${LLVM_VERSION_MAJOR}")
-  message(FATAL_ERROR "Found LLVM ${LLVM_VERSION_MAJOR}, but need LLVM 14")
+if(NOT "${LLVM_REQUIRED_VERSION}" VERSION_EQUAL "${LLVM_VERSION_MAJOR}")
+  message(FATAL_ERROR "Found LLVM ${LLVM_VERSION_MAJOR}, but need LLVM ${LLVM_REQUIRED_VERSION}")
 endif()
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -120,7 +126,7 @@ endif()
 
 if(APPLE)
   list(APPEND OMVLL_LINK_OPT
-    -Wl,-flat_namespace -Wl,-undefined -Wl,suppress
+    -Wl,-flat_namespace
     -Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/exports.txt
   )
 endif()
