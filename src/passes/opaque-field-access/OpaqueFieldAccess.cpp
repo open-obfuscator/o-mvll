@@ -26,7 +26,6 @@ bool OpaqueFieldAccess::runOnStructRead(BasicBlock& BB, LoadInst& Load,
   if (!conf.getUserConfig()->obfuscate_struct_access(BB.getModule(), BB.getParent(), &S)) {
     return false;
   }
-  StringRef StructName = S.getName();
 
   SmallVector<Value*, 2> indices(GEP.idx_begin(), GEP.idx_end());
 
@@ -52,8 +51,8 @@ bool OpaqueFieldAccess::runOnStructRead(BasicBlock& BB, LoadInst& Load,
   const DataLayout& DL = BB.getParent()->getParent()->getDataLayout();
   uint64_t ComputedOffset = DL.getStructLayout(&S)->getElementOffset(OffVal->getLimitedValue());
 
-  SDEBUG("Obfuscating field READ access on {}->#{} (offset: {})",
-         StructName, OffVal->getLimitedValue(), ComputedOffset);
+  SDEBUG("Obfuscating field READ access on {}->#{} (offset: {})", S.getName(),
+         OffVal->getLimitedValue(), ComputedOffset);
 
   IRBuilder<NoFolder> IRB(&Load);
 
@@ -127,7 +126,7 @@ bool OpaqueFieldAccess::runOnConstantExprRead(BasicBlock& BB, LoadInst& Load, Co
   if (GV == nullptr || OpOffset == nullptr) {
     return false;
   }
-  Type* GVTy = GV->getType()->getPointerElementType();
+  Type *GVTy = GV->getValueType();
 
   if (!GVTy->isArrayTy()) {
     SDEBUG("'{}' won't be processed: Non Array type", GV->getName());
@@ -170,7 +169,7 @@ bool OpaqueFieldAccess::runOnLoad(LoadInst& Load) {
     Type* TargetTy = Target->getType();
 
     if (TargetTy->isPointerTy() && !TargetTy->isOpaquePointerTy()) {
-      TargetTy = TargetTy->getPointerElementType();
+      TargetTy = TargetTy->getNonOpaquePointerElementType();
     }
 
     if (TargetTy->isStructTy()) {
@@ -220,7 +219,7 @@ bool OpaqueFieldAccess::runOnConstantExprWrite(llvm::BasicBlock& BB, llvm::Store
   if (GV == nullptr || OpOffset == nullptr) {
     return false;
   }
-  Type* GVTy = GV->getType()->getPointerElementType();
+  Type *GVTy = GV->getValueType();
   SDEBUG("{}: {}", ToString(Store), GV->getName());
   if (!GVTy->isArrayTy()) {
     SDEBUG("'{}' won't be processed: Non Array type", GV->getName());
@@ -261,8 +260,6 @@ bool OpaqueFieldAccess::runOnStructWrite(BasicBlock& BB, StoreInst& Store,
     return false;
   }
 
-  StringRef StructName = S.getName();
-
   SmallVector<Value*, 2> indices(GEP.idx_begin(), GEP.idx_end());
 
   if (indices.size() != 2) {
@@ -287,8 +284,8 @@ bool OpaqueFieldAccess::runOnStructWrite(BasicBlock& BB, StoreInst& Store,
   const DataLayout& DL = BB.getParent()->getParent()->getDataLayout();
   uint64_t ComputedOffset = DL.getStructLayout(&S)->getElementOffset(OffVal->getLimitedValue());
 
-  SDEBUG("Obfuscating field WRITE access on {}->#{} (offset: {})",
-         StructName, OffVal->getLimitedValue(), ComputedOffset);
+  SDEBUG("Obfuscating field WRITE access on {}->#{} (offset: {})", S.getName(),
+         OffVal->getLimitedValue(), ComputedOffset);
 
   IRBuilder<NoFolder> IRB(&Store);
 
@@ -358,7 +355,7 @@ bool OpaqueFieldAccess::runOnStore(StoreInst& Store) {
     Type* TargetTy = Target->getType();
 
     if (TargetTy->isPointerTy() && !TargetTy->isOpaquePointerTy()) {
-      TargetTy = TargetTy->getPointerElementType();
+      TargetTy = TargetTy->getNonOpaquePointerElementType();
     }
 
     if (TargetTy->isStructTy()) {

@@ -2,7 +2,6 @@
 #include "omvll/log.hpp"
 
 #include <llvm/ADT/Hashing.h>
-#include <llvm/ADT/Optional.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/InstIterator.h>
@@ -21,13 +20,20 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Local.h>
 
+#include <optional>
+
 using namespace llvm;
 
 namespace detail {
 
 static int runExecutable(SmallVectorImpl<StringRef> &Args,
+#if LLVM_VERSION_MAJOR > 16
+                         ArrayRef<std::optional<StringRef>> Redirects = {}) {
+  return sys::ExecuteAndWait(Args[0], Args, std::nullopt, Redirects);
+#else
                          ArrayRef<Optional<StringRef>> Redirects = {}) {
   return sys::ExecuteAndWait(Args[0], Args, None, Redirects);
+#endif
 }
 
 static Expected<std::string> getIPhoneOSSDKPath() {
@@ -45,7 +51,12 @@ static Expected<std::string> getIPhoneOSSDKPath() {
 
   SmallVector<StringRef, 8> Args = {XcrunPath, "--sdk", "iphoneos",
                                     "--show-sdk-path"};
+#if LLVM_VERSION_MAJOR > 16
+  std::optional<StringRef> Redirects[] = {std::nullopt, StringRef(TempPath),
+                                          std::nullopt};
+#else
   Optional<StringRef> Redirects[] = {None, StringRef(TempPath), None};
+#endif
 
   if (int EC = runExecutable(Args, Redirects))
     return createStringError(inconvertibleErrorCode(),
@@ -205,6 +216,10 @@ std::string TypeIDStr(const Type& Ty) {
     case Type::TypeID::ArrayTyID:          return "ArrayTyID";
     case Type::TypeID::FixedVectorTyID:    return "FixedVectorTyID";
     case Type::TypeID::ScalableVectorTyID: return "ScalableVectorTyID";
+    case Type::TypeID::TypedPointerTyID:
+      return "TypedPointerTyID";
+    default:
+      llvm_unreachable("Unhandled TypeID!");
   }
 }
 

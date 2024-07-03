@@ -225,6 +225,7 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
         BasicBlock* EntrySplited = EntryBlock->splitBasicBlockBefore(instCond, "EntrySplit");
         flattedBB.insert(flattedBB.begin(), EntryBlock);
 
+#ifdef OMVLL_DEBUG
         for (Instruction& I : *EntrySplited) {
           SDEBUG("[EntrySplited] {}", ToString(I));
         }
@@ -232,6 +233,8 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
         for (Instruction& I : *EntryBlock) {
           SDEBUG("[EntryBlock  ] {}", ToString(I));
         }
+#endif // OMVLL_DEBUG
+
         EntryBlock = EntrySplited;
       } else {
         SWARN("The condition is not an instruction");

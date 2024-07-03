@@ -96,10 +96,10 @@ llvm::SmallVector<MetaObf, 5> getObfMetadata(llvm::Instruction& I) {
   return result;
 }
 
-Optional<MetaObf> getObf(llvm::Instruction& I, MObfTy M) {
+std::optional<MetaObf> getObf(llvm::Instruction &I, MObfTy M) {
   auto* node = I.getMetadata(OBF_KEY);
   if (node == nullptr) {
-    return NoneType();
+    return std::nullopt;
   }
   for (const MDOperand& op : node->operands()) {
     MetaObf MO = deserialize(I.getContext(), *op);
@@ -107,13 +107,14 @@ Optional<MetaObf> getObf(llvm::Instruction& I, MObfTy M) {
       return MO;
     }
   }
-  return NoneType();
+  return std::nullopt;
 }
 
-
 bool hasObf(llvm::Instruction& I, MObfTy M) {
-  Optional<MetaObf> Obf = getObf(I, M);
-  return Obf.hasValue() && !(Obf->isNone());
+  std::optional<MetaObf> Obf = getObf(I, M);
+  if (Obf.has_value())
+    return Obf->hasValue() && !(Obf->isNone());
+  return false;
 }
 
 }

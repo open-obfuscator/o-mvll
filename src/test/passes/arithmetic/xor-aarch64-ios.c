@@ -1,10 +1,10 @@
 // REQUIRES: aarch64-registered-target
 
-// RUN:                                        clang -target arm64-apple-ios -fno-legacy-pass-manager                         -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s
-// RUN: env OMVLL_CONFIG=%S/config_rounds_0.py clang -target arm64-apple-ios -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s
-// RUN: env OMVLL_CONFIG=%S/config_rounds_1.py clang -target arm64-apple-ios -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R1 %s
-// RUN: env OMVLL_CONFIG=%S/config_rounds_2.py clang -target arm64-apple-ios -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R2 %s
-// RUN: env OMVLL_CONFIG=%S/config_rounds_3.py clang -target arm64-apple-ios -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R3 %s
+// RUN:                                        clang -target arm64-apple-ios                         -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s
+// RUN: env OMVLL_CONFIG=%S/config_rounds_0.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s
+// RUN: env OMVLL_CONFIG=%S/config_rounds_1.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R1 %s
+// RUN: env OMVLL_CONFIG=%S/config_rounds_2.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R2 %s
+// RUN: env OMVLL_CONFIG=%S/config_rounds_3.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R3 %s
 
 // R0-LABEL: _memcpy_xor:
 // R0:       LBB0_2:
@@ -39,8 +39,8 @@
 // R2:       	and	w11, w8, #0x1
 // R2:       	mvn	w12, w8
 // R2:       	orr	w12, w12, #0xfffffffe
-// R2:       	add	w8, w8, w12
-// R2:       	add	w8, w8, w11
+// R2-DAG:      add	w8, w8, w12
+// R2-DAG:      add	w8, w8, w11
 // R2:       	add	w8, w8, #2
 // R2:       	cmp	w8, w2
 // R2:       	b.lo	LBB0_2
@@ -52,8 +52,8 @@
 // R3:       	add	w14, w13, #35
 // R3:       	orr	w15, w13, w9
 // R3:       	orn	w16, w10, w13
-// R3:       	add	w13, w16, w13
 // R3:       	sub	w13, w10, w13
+// R3:       	sub	w13, w13, w16
 // R3:       	eor	w16, w13, w14
 // R3:       	and	w13, w13, w14
 // R3:       	add	w13, w16, w13, lsl #1
@@ -65,8 +65,8 @@
 // R3:       	add	w12, w8, #1
 // R3:       	mvn	w13, w8
 // R3:       	orr	w13, w13, #0xfffffffe
-// R3:       	add	w13, w8, w13
-// R3:       	sub	w13, w11, w13
+// R3:       	sub	w14, w11, w8
+// R3:       	sub	w13, w14, w13
 // R3:       	eor	w14, w13, w12
 // R3:       	and	w12, w13, w12
 // R3:       	orr	w8, w8, #0x1

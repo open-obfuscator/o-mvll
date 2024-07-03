@@ -513,7 +513,7 @@ bool StringEncoding::processGlobal(BasicBlock &BB, Instruction &I, Use &Op,
 
   auto JIT = StringEncoding::HOSTJIT->compile(*EI.HM);
   if (auto E = JIT->lookup("encode")) {
-    auto Enc = reinterpret_cast<enc_routine_t>(E->getAddress());
+    auto Enc = reinterpret_cast<enc_routine_t>(E->getValue());
     Enc(Encoded.data(), Str.data(), Key, StrSz);
   } else {
     fatalError("Can't find 'encode' in the routine");
@@ -563,15 +563,17 @@ void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
   std::string Routine = (Twine("extern \"C\" {\n") + R + "}\n").str();
 
   {
-    EI.HM = ExitOnErr(generateModule(Routine, HostTriple, "cpp",
-                                     HOSTJIT->getContext(), {"-std=c++17"}));
+    EI.HM = ExitOnErr(
+        generateModule(Routine, HostTriple, "cpp", HOSTJIT->getContext(),
+                       {"-std=c++17", "-mllvm", "--opaque-pointers"}));
   }
 
   {
     Ctx.setDiscardValueNames(false);
     EI.TM = ExitOnErr(
         generateModule(Routine, TargetTriple, "cpp", Ctx,
-                       {"-target", TargetTriple.getTriple(), "-std=c++17"}));
+                       {"-target", TargetTriple.getTriple(), "-std=c++17",
+                        "-mllvm", "--opaque-pointers"}));
     annotateRoutine(*EI.TM);
   }
 }
@@ -614,7 +616,7 @@ bool StringEncoding::processOnStackLoop(BasicBlock& BB, Instruction& I, Use& Op,
 
   auto JIT = StringEncoding::HOSTJIT->compile(*EI.HM);
   if (auto E = JIT->lookup("encode")) {
-    auto Enc = reinterpret_cast<enc_routine_t>(E->getAddress());
+    auto Enc = reinterpret_cast<enc_routine_t>(E->getValue());
     Enc(Encoded.data(), Str.data(), key, StrSz);
   } else {
     fatalError("Can't find 'encode' in the routine");

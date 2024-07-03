@@ -1,11 +1,11 @@
 // REQUIRES: aarch64-registered-target
 // TODO: Add CHECK lines
 
-// RUN:                                   clang -target aarch64-linux-android -fno-legacy-pass-manager                         -O1 -fno-verbose-asm -S %s -o -
-// RUN: env OMVLL_CONFIG=%S/config_all.py clang -target aarch64-linux-android -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o -
+// RUN:                                   clang -target aarch64-linux-android                         -O1 -fno-verbose-asm -S %s -o -
+// RUN: env OMVLL_CONFIG=%S/config_all.py clang -target aarch64-linux-android -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o -
 
-// RUN:                                   clang -target arm64-apple-ios  -fno-legacy-pass-manager                         -O1 -fno-verbose-asm -S %s -o -
-// RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios  -fno-legacy-pass-manager -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o -
+// RUN:                                   clang -target arm64-apple-ios                          -O1 -fno-verbose-asm -S %s -o -
+// RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios  -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o -
 
 int check_password(const char* passwd, unsigned len) {
   if (len != 5) {
