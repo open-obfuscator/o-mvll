@@ -222,7 +222,7 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
 
           Result->copyMetadata(I, {LLVMContext::MD_dbg, LLVMContext::MD_annotation});
           Result->takeName(&I);
-          InstParent->getInstList().insert(InsertPos, Result);
+          Result->insertInto(InstParent, InsertPos);
           I.replaceAllUsesWith(Result);
           //ToErase.emplace_back(&I);
         }
