@@ -18,16 +18,16 @@ cd /o-mvll/src
 mkdir -p build_xcode && cd build_xcode
 
 export OSXCROSS_TARGET_DIR=/osxcross
-export OSXCROSS_SDK=${OSXCROSS_TARGET_DIR}/SDK/MacOSX13.0.sdk
+export OSXCROSS_SDK=${OSXCROSS_TARGET_DIR}/SDK/MacOSX14.5.sdk
 export OMVLL_PYTHONPATH=/omvll/ci/distribution/Python-3.10.7/Lib
 mkdir -p arm64 && cd arm64
 
-export OSXCROSS_HOST="arm64-apple-darwin22"
-export OSXCROSS_TARGET="arm64-apple-darwin22"
+export OSXCROSS_HOST="arm64-apple-darwin23.6"
+export OSXCROSS_TARGET="arm64-apple-darwin23.6"
 
 cmake -GNinja ../.. \
       -DCMAKE_TOOLCHAIN_FILE=${OSXCROSS_TARGET_DIR}/toolchain.cmake \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="13.0" \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="14.5" \
       -DOSXCROSS_HOST=${OSXCROSS_HOST} \
       -DOSXCROSS_TARGET_DIR=${OSXCROSS_TARGET_DIR} \
       -DOSXCROSS_SDK=${OSXCROSS_SDK} \
@@ -46,12 +46,12 @@ ninja
 cd ..
 mkdir -p x86_64 && cd x86_64
 
-export OSXCROSS_HOST="x86_64-apple-darwin22"
-export OSXCROSS_TARGET="x86_64-apple-darwin22"
+export OSXCROSS_HOST="x86_64-apple-darwin23.6"
+export OSXCROSS_TARGET="x86_64-apple-darwin23.6"
 
 cmake -GNinja ../.. \
       -DCMAKE_TOOLCHAIN_FILE=${OSXCROSS_TARGET_DIR}/toolchain.cmake \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="13.0" \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="14.5" \
       -DOSXCROSS_HOST=${OSXCROSS_HOST} \
       -DOSXCROSS_TARGET_DIR=${OSXCROSS_TARGET_DIR} \
       -DOSXCROSS_SDK=${OSXCROSS_SDK} \
