@@ -18,7 +18,7 @@ jobs:
           docker run --rm \
             -v /tmp/third-party-xcode14:/third-party \
             -v $GITHUB_WORKSPACE:/o-mvll \
-            openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/xcode_14_compile.sh
+            openobfuscator/omvll-build:1.0 bash /o-mvll/scripts/docker/xcode_14_compile.sh
       - name: O-MVLL Signing
         uses: indygreg/apple-code-sign-action@v1.0
         with:
