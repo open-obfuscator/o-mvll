@@ -218,8 +218,6 @@ std::string TypeIDStr(const Type& Ty) {
     case Type::TypeID::ScalableVectorTyID: return "ScalableVectorTyID";
     case Type::TypeID::TypedPointerTyID:
       return "TypedPointerTyID";
-    case Type::TypeID::TargetExtTyID:
-      return "TargetExtTyID";
     default:
       llvm_unreachable("Unhandled TypeID!");
   }
