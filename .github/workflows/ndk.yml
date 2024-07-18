@@ -20,7 +20,7 @@ jobs:
             -v /tmp/third-party-ndk25:/third-party \
             -v ${{ github.workspace }}/dist/Python-3.10.7:/Python-3.10.7 \
             -v $GITHUB_WORKSPACE:/o-mvll \
-            openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/ndk_r25_compile.sh
+            openobfuscator/omvll-build:1.0 bash /o-mvll/scripts/docker/ndk_r25_compile.sh
       - name: Generate deployment tar
         uses: a7ul/tar-action@v1.1.3
         id: compress
