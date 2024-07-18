@@ -12,9 +12,10 @@ tar xzvf android-llvm-toolchain-r26d.tar.gz
 tar xzvf android-llvm-toolchain-r26d/out.tar.gz -C android-llvm-toolchain-r26d
 tar xzvf android-llvm-toolchain-r26d/out/stage1-install.tar.gz -C android-llvm-toolchain-r26d/out
 tar xzvf android-llvm-toolchain-r26d/out/stage2.tar.gz -C android-llvm-toolchain-r26d/out
-mkdir Python-slim && tar xzvf Python-slim.tar.gz -C Python-slim
-mkdir pybind11 && tar xzvf pybind11.tar.gz -C pybind11
-mkdir spdlog-1.10.0-Linux && tar xzvf spdlog-1.10.0-Linux.tar.gz -C spdlog-1.10.0-Linux
+tar xzvf Python-slim.tar.gz
+tar xzvf pybind11.tar.gz
+tar xzvf spdlog-1.10.0-Linux.tar.gz
+
 
 # Android NDK is bootstrapped in a so-called 2-stage process. To avoid ABI incompatibilities,
 # we build our plugin with the same toolchain used to build the NDK itself (stage-1). Then,
