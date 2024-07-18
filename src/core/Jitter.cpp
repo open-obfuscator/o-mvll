@@ -144,8 +144,7 @@ std::unique_ptr<MemoryBuffer> Jitter::jitAsm(const std::string& Asm, size_t Size
     ExitOnErr(JITB->addObjectFile(std::move(Buff)));
 
     if (auto L = JITB->lookup(FNAME)) {
-      uint64_t Addr = L->getAddress();
-      auto* ptr = reinterpret_cast<const char*>(Addr);
+      auto *ptr = reinterpret_cast<const char *>(L->getValue());
       return MemoryBuffer::getMemBufferCopy({ptr, FunSize});
     }
   }
