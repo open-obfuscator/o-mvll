@@ -72,7 +72,7 @@ pipeline {
 
         stage('Compile o-mvll using docker') {
             steps {
-                sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-ndk26:/third-party -v ${WORKSPACE}:/o-mvll -v ${DIST_FOLDER}/Python-3.10.7:/Python-3.10.7 openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/ndk_r26_compile.sh'
+                sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-ndk26:/third-party -v ${WORKSPACE}:/o-mvll -v ${DIST_FOLDER}/Python-3.10.7:/Python-3.10.7 openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/ndk_r26_compile.sh'
             }
         }
 

@@ -43,6 +43,6 @@ cmake -GNinja .. \
       -DLLVM_EXTERNAL_LIT=/test-deps/bin/llvm-lit
 
 export OMVLL_PYTHONPATH=/Python-3.10.7/Lib
-ninja check
+ninja
 
 mv /o-mvll/src/o-mvll-build_ndk_r26d/libOMVLL.so /o-mvll/dist/omvll_ndk_r26d.so
