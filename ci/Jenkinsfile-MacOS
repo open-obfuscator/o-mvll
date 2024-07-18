@@ -10,7 +10,7 @@ pipeline {
                 returnStdout: true,
                 script: '/bin/date +%Y%m%d.%H%M%S'
             )}""".trim()
-        DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
+        DEPLOYMENT_VERSION="1.0.0-beta-SNAPSHOT"
         DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
         DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll-macos/${DEPLOYMENT_VERSION}/omvll-macos-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.tar.gz"
         OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
