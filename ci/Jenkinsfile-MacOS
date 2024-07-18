@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'xcode-14.2' }
+    agent { label 'ubuntu_22.04' }
     environment {
         PATH = "${env.HOME}/flutter/bin:${env.PATH}"
         NEXUS_CREDENTIALS = credentials('e29f59a5-3fe6-4235-8d9a-ccbea6113412')
@@ -75,29 +75,19 @@ pipeline {
                     sh 'ci/devtools-bash-utils/nexus.sh -o ${TMP_FOLDER}/Python-3.10.7.tgz -g org.python -i python -v 3.10.7 -e tgz download-v2'
                     sh 'tar -C ${DIST_FOLDER} -xvf ${TMP_FOLDER}/Python-3.10.7.tgz'
 
-                    // Get Samples repo
-                    sh 'ci/getSampleRepositories.sh'
 
                 }
             }
         }
 
-        stage('Select XCode 14.1') {
-            steps {
-                script{
-                    sh 'sudo xcode-select -s /Applications/Xcode-14-1.app'
-                    sh 'xcode-select -p'
-                }
-            }
-        }
 
         stage('Compile o-mvll in the native machine') {
             steps {
                 script{
-                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-14_1.tar'
-                    sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode14'
-                    sh 'tar xvf ./omvll-deps-xcode-14_1.tar --directory=${TMP_FOLDER}/third-party-xcode14'
-                    sh './scripts/docker/xcode_14_compile_macos.sh'
+                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-15_2.tar'
+                    sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode15'
+                    sh 'tar xvf ./omvll-deps-xcode-15_2.tar --directory=${TMP_FOLDER}/third-party-xcode15'
+                    sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-xcode15:/third-party -v ${WORKSPACE}:/o-mvll -v ${DIST_FOLDER}/Python-3.10.7:/Python-3.10.7 openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/xcode_15_compile.sh'
                 }
             }
         }
@@ -111,188 +101,10 @@ pipeline {
             }
         }
 
-        stage('Clean potential resources used by TakInjection') {
-            steps {
-                script {
-                    // Ensure temporary file used by TakInjection is cleaned from previous builds.
-                    sh '''#!/usr/bin/env bash
-                    TEMP_DIR=$(getconf DARWIN_USER_TEMP_DIR)
-                    CACHE_DIR=$(getconf DARWIN_USER_CACHE_DIR)
-
-                    TEMP_FILE_PATH="${TEMP_DIR}omvll_tak_injection"
-                    CACHE_FILE_PATH="${CACHE_DIR}omvll_tak_injection"
-
-                    check_and_remove() {
-                        local file_path=$1
-                        if [ -f "$file_path" ]; then
-                            rm "$file_path"
-                            exit $?
-                        fi
-                        return 1
-                    }
-
-                    check_and_remove "$TEMP_FILE_PATH"
-                    check_and_remove "$CACHE_FILE_PATH"
-                    exit 0
-                    '''
-                }
-            }
-        }
-
-        stage('Build xcode ObjectiveC project') {
-            steps {
-                dir("${WORKSPACE}") {
-                    // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
-                    sh '''#!/usr/bin/env bash
-                        cd samples
-                        # Generic configuration
-                        . ./omvll.env
-                        # Config for ObjCHelloOmvll
-                        export OMVLL_CONFIG=$(pwd)/configs/ObjCHelloOmvll.py
-                        cd ObjCHelloOmvll
-                        xcodebuild -scheme ObjCHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
-                        ret=$?
-                        cd -
-                        exit $ret
-                    '''
-
-                    // Check omvll.log exists
-                    script {
-                        if(!fileExists("samples/ObjCHelloOmvll/omvll.log")) {
-                            echo("samples/ObjCHelloOmvll/omvll.log is not in place..")
-                            return 1
-                        }
-                    }
-                }
-            }
-        }
-
-
-
-
-        stage('Build xcode Swift project') {
-            steps {
-                script {
-                    dir("${WORKSPACE}") {
-                        // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
-                        sh '''#!/usr/bin/env bash
-                            cd samples
-                            # Generic configuration
-                            . ./omvll.env
-                            # Config for SwiftHelloOmvll
-                            export OMVLL_CONFIG=$(pwd)/configs/SwiftHelloOmvll.py
-                            cd SwiftHelloOmvll
-                            xcodebuild -scheme SwiftHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
-                            ret=$?
-                            cd -
-                            exit $ret
-                        '''
-
-                        // Check omvll.log exists
-                        script {
-                            if(!fileExists("samples/SwiftHelloOmvll/omvll.log")) {
-                                echo("samples/SwiftHelloOmvll/omvll.log is not in place..")
-                                return 1
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Test apps') {
-            steps {
-                script {
-                    dir("${WORKSPACE}") {
-                        // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
-                        sh '''#!/usr/bin/env bash
-                            source ci/devtools-bash-utils/utils.sh
-                            cd samples
-                            # Generic configuration
-                            . ./omvll.env
-                            # Config for GoodNight
-                            export OMVLL_CONFIG=$(pwd)/configs/GoodNight.py
-                            cd GoodNight
-                            execute xcodebuild -project GoodNight.xcodeproj -scheme GoodNight -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
-                            # Config for HexaCalc
-                            export OMVLL_CONFIG=$(pwd)/configs/HexaCalc.py
-                            cd HexaCalc
-                            execute xcodebuild -project HexaCalc.xcodeproj -scheme HexaCalc -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
-                            # Config for Kotoba
-                            export OMVLL_CONFIG=$(pwd)/configs/Kotoba.py
-                            cd Kotoba
-                            execute xcodebuild -project code/Kotoba.xcodeproj -scheme Kotoba -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
-                            # Config for HackerNews
-                            export OMVLL_CONFIG=$(pwd)/configs/HackerNews.py
-                            cd HackerNews
-                            execute xcodebuild -workspace HackerNews.xcworkspace -scheme HackerNews -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
-                            # Config for SnowPlowExamples
-                            export OMVLL_CONFIG=$(pwd)/configs/SnowPlowExamples.py
-                            cd SnowPlow
-                            execute xcodebuild -workspace Examples/demo/SnowplowObjcDemo/SnowplowDemo.xcworkspace -scheme SnowplowDemo -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
-                            # Flutter app
-                            # Config for FlutterOmvll
-                            export OMVLL_CONFIG=$(pwd)/configs/FlutterOmvll.py
-                            cd flutterOmvll
-                            flutter pub get
-                            execute xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
-                            # ionic app
-                            # Config for ionicOmvll
-                            export OMVLL_CONFIG=$(pwd)/configs/ionicOmvll.py
-                            cd ionicOmvll
-                            npm install
-                            npx cap sync
-                            execute xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphoneos -configuration Release -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES clean build
-                            cd -
-                        '''
-
-                        // Check omvll.log exists
-                        script {
-                            if(!fileExists("samples/GoodNight/omvll.log")) {
-                                echo("samples/GoodNight/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                            if(!fileExists("samples/HexaCalc/omvll.log")) {
-                                echo("samples/HexaCalc/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                            if(!fileExists("samples/Kotoba/code/omvll.log")) {
-                                echo("samples/Kotoba/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                            if(!fileExists("samples/HackerNews/omvll.log")) {
-                                echo("samples/HackerNews/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                            if(!fileExists("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log")) {
-                                echo("samples/SnowPlow/Examples/demo/SnowplowObjcDemo/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                            if(!fileExists("samples/flutterOmvll/ios/omvll.log")) {
-                                echo("samples/flutterOmvll/ios/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                            if(!fileExists("samples/ionicOmvll/ios/App/omvll.log")) {
-                                echo("samples/ionicOmvll/ios/App/omvll.log is not in place..")
-                                sh 'false'
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Create artifact') {
             steps {
                 script {
                     sh 'cp ./src/build_xcode/omvll.dylib ${DIST_FOLDER}'
-                    sh 'cp ./scripts/build/verify-tak-injection.sh ${DIST_FOLDER}'
                     sh 'cd ${DIST_FOLDER} && tar czf ${WORKSPACE}/omvll.tar.gz ./*'
                 }
             }
