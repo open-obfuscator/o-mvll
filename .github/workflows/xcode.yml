@@ -14,7 +14,7 @@ jobs:
           curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-15_2.tar
           mkdir -p /tmp/third-party-xcode15
           mkdir -p $GITHUB_WORKSPACE/dist
-          tar xvf ./omvll-deps-xcode-15.tar --directory=/tmp/third-party-xcode15
+          tar xvf ./omvll-deps-xcode-15_2.tar --directory=/tmp/third-party-xcode15
           docker run --rm \
             -v /tmp/third-party-xcode15:/third-party \
             -v $GITHUB_WORKSPACE:/o-mvll \
