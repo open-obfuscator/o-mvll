@@ -87,7 +87,7 @@ pipeline {
                     sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-15_2.tar'
                     sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode15'
                     sh 'tar xvf ./omvll-deps-xcode-15_2.tar --directory=${TMP_FOLDER}/third-party-xcode15'
-                    sh 'docker pull openobfuscator/omvll-build:latest'
+                    sh 'sudo docker pull openobfuscator/omvll-build:latest'
                     sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-xcode15:/third-party -v ${WORKSPACE}:/o-mvll -v ${DIST_FOLDER}/Python-3.10.7:/Python-3.10.7 openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/xcode_15_compile.sh'
                 }
             }
