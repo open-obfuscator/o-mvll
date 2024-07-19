@@ -96,7 +96,8 @@ pipeline {
             steps {
                 script {
                     sh 'cp ${OUTPUT_FOLDER}/omvll_unsigned.dylib ${OUTPUT_FOLDER}/omvll.dylib'
-                    sh 'ci/apple-codesign-0.26.0-aarch64-apple-darwin/rcodesign sign --p12-file ci/certificates/SigningCertificate.p12 --p12-password $OMVLL_CERTIFICATE_PWD --code-signature-flags runtime ${OUTPUT_FOLDER}/omvll.dylib'
+                    # Signature cannot happen in ubuntu
+                    #sh 'ci/apple-codesign-0.26.0-aarch64-apple-darwin/rcodesign sign --p12-file ci/certificates/SigningCertificate.p12 --p12-password $OMVLL_CERTIFICATE_PWD --code-signature-flags runtime ${OUTPUT_FOLDER}/omvll.dylib'
                 }
             }
         }
@@ -162,9 +163,6 @@ pipeline {
             }
         }
         always {
-            script {
-                sh 'sudo xcode-select -s /Applications/Xcode.app'
-            }
             cleanWs()
         }
     }
