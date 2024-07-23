@@ -96,7 +96,7 @@ pipeline {
         stage('Sign o-mvll binary') {
             steps {
                 script {
-                    sh 'sudo docker run --rm --platform linux/x86_64 -v .:/o-mvll openobfuscator/omvll-build:2.0 bash o-mvll/sign.sh'
+                    sh 'sudo docker run --rm --platform linux/x86_64 -v ${WORKSPACE}:/o-mvll openobfuscator/omvll-build:latest bash o-mvll/sign.sh'
                 }
             }
         }
