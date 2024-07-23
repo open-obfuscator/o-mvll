@@ -64,7 +64,7 @@ You can reach out by email at this address: `ping@obfuscator.re`
 
 #### Maintainers
 
-- [Build38: Mobile Application Protection Solutions](https://build38.com/)
+- [Build38: The Next-Gen Mobile App Security Platform](https://build38.com/)
 
 #### Author
 
