@@ -68,7 +68,7 @@ pipeline {
                     sh(script: 'unzip ${TMP_FOLDER}/TAK-Client.zip -d ${TMP_FOLDER}/')
 
                     // Get signer from nexus
-                    sh 'ci/devtools-bash-utils/nexus.sh -o ci/apple-platform-rs.tar.gz -g com.indygreg -i apple-platform-rs -v 0.27.0 -e tar.gz -c x86_64 download-v2'
+                    sh 'ci/devtools-bash-utils/nexus.sh -o ci/apple-platform-rs.tar.gz -g com.indygreg -i apple-platform-rs -v 0.27.0 -e tar.gz -c aarch64-linux download-v2'
                     sh 'tar -C ci -xzf ci/apple-platform-rs.tar.gz'
 
                     // Get Python lib dependency
@@ -98,7 +98,7 @@ pipeline {
                 script {
                     sh 'cp ${OUTPUT_FOLDER}/omvll_unsigned.dylib ${OUTPUT_FOLDER}/omvll.dylib'
                     // Signature cannot happen in ubuntu
-                    sh 'ci/apple-codesign-0.27.0-x86_64-apple-darwin/rcodesign sign --p12-file ci/certificates/SigningCertificate.p12 --p12-password $OMVLL_CERTIFICATE_PWD --code-signature-flags runtime ${OUTPUT_FOLDER}/omvll.dylib'
+                    sh 'ci/apple-codesign-0.27.0-aarch64-unknown-linux-musl/rcodesign sign --p12-file ci/certificates/SigningCertificate.p12 --p12-password $OMVLL_CERTIFICATE_PWD --code-signature-flags runtime ${OUTPUT_FOLDER}/omvll.dylib'
                 }
             }
         }
