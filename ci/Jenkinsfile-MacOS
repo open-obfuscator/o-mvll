@@ -96,9 +96,7 @@ pipeline {
         stage('Sign o-mvll binary') {
             steps {
                 script {
-                    sh 'cp ${OUTPUT_FOLDER}/omvll_unsigned.dylib ${OUTPUT_FOLDER}/omvll.dylib'
-                    // Signature cannot happen in ubuntu
-                    sh 'ci/apple-codesign-0.27.0-aarch64-unknown-linux-musl/rcodesign sign --p12-file ci/certificates/SigningCertificate.p12 --p12-password $OMVLL_CERTIFICATE_PWD --code-signature-flags runtime ${OUTPUT_FOLDER}/omvll.dylib'
+                    sh 'sudo docker run --rm --platform linux/x86_64 -v .:/o-mvll openobfuscator/omvll-build:2.0 bash o-mvll/sign.sh'
                 }
             }
         }
