@@ -239,28 +239,37 @@ bool StringEncoding::runOnBasicBlock(Module &M, Function &F, BasicBlock &BB,
     for (Use& Op : I.operands()) {
       GlobalVariable *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts());
 
+      // Is the operand a constant expression?
       if (!G)
         if (auto *CE = dyn_cast<ConstantExpr>(Op))
           G = extractGlobalVariable(CE);
 
+      if (!G || !G->hasInitializer())
+        continue;
+
+      // Is the global initializer part of a constant expression?
       auto IsInitializerConstantExpr = [](const GlobalVariable &G) {
-        return (!G.isExternallyInitialized() && G.hasInitializer()) &&
+        return !G.isExternallyInitialized() &&
                isa<ConstantExpr>(G.getInitializer());
       };
 
       Use *ActualOp = &Op;
       bool MaybeStringInCEInitializer = false;
-      if (G && IsInitializerConstantExpr(*G)) {
-        // Is the global initializer part of a constant expression?
-        G = extractGlobalVariable(cast<ConstantExpr>(G->getInitializer()));
-        if (G) {
-          ActualOp = G->getSingleUndroppableUse();
+      if (IsInitializerConstantExpr(*G)) {
+        auto *MaybeNestedGV =
+            extractGlobalVariable(cast<ConstantExpr>(G->getInitializer()));
+        if (MaybeNestedGV && MaybeNestedGV->hasOneUse()) {
+          ActualOp = MaybeNestedGV->getSingleUndroppableUse();
+          G = MaybeNestedGV;
           MaybeStringInCEInitializer = true;
         }
       }
 
-      if (!G || !ActualOp)
-        continue;
+      // Get the underlying global variable, if pointer casts involved.
+      if (auto *StrippedGV = dyn_cast<GlobalVariable>(
+              G->getInitializer()->stripPointerCasts());
+          StrippedGV)
+        G = StrippedGV;
 
       if (!isEligible(*G))
         continue;
@@ -269,17 +278,18 @@ bool StringEncoding::runOnBasicBlock(Module &M, Function &F, BasicBlock &BB,
       if (Data == nullptr)
         continue;
 
-      // Create a default option which skips the encoding
+      // Create a default option which skips the encoding.
       auto EncInfoOpt = std::make_unique<StringEncodingOpt>(StringEncOptSkip());
 
       if (EncodingInfo* EI = getEncoding(*G)) {
-        // The global variable is already encoded. Let's check if we should insert a decoding stub
+        // The global variable is already encoded.
+        // Let's check if we should insert a decoding stub.
         Changed |= injectDecoding(BB, I, Op, *G, *Data, *EI);
         continue;
       }
 
       if (isEligible(*Data)) {
-        // Get the encoding type from the user
+        // Get the encoding type from the user.
         EncInfoOpt = std::make_unique<StringEncodingOpt>(
             userConfig.obfuscate_string(&M, &F, Data->getAsCString().str()));
       }
@@ -328,9 +338,8 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
   inline_wlist_.clear();
 
   // Create CTOR functions
-  for (Function* F : ctor_) {
+  for (Function *F : ctor_)
     appendToGlobalCtors(M, F, 0);
-  }
   ctor_.clear();
 
   SINFO("[{}] Done!", name());
@@ -629,9 +638,10 @@ bool StringEncoding::processOnStack(BasicBlock &BB, Instruction &I, Use &Op,
 
   SDEBUG("[{}] {}: {}", name(), BB.getParent()->getName(),
                         data.isCString() ? data.getAsCString() : "<encoded>");
-  if (StrSz >= stack.loopThreshold) {
+
+  if (StrSz >= stack.loopThreshold)
     return processOnStackLoop(BB, I, Op, G, data);
-  }
+
   std::vector<uint8_t> Encoded(StrSz);
   std::vector<uint8_t> Key(StrSz);
   std::generate(std::begin(Key), std::end(Key),
