@@ -33,8 +33,19 @@ elif host_arch == 'arm64':
 
 # The tools directory defaults to LLVM_BINARY_DIR. In order to run tests with a different compiler,
 # pass the installation base path via LLVM_TOOLS_DIR at configuration time explicitly.
-print("Running tests with:", os.path.join(config.llvm_tools_dir, 'clang'))
-llvm_config.add_tool_substitutions(["clang", "clang++"], config.llvm_tools_dir)
+# For iOS tests, always use Apple Clang as default compiler.
+if sys.platform == 'darwin':
+    try:
+        xcode_path = subprocess.check_output(['xcode-select', '-p'], stderr=subprocess.PIPE).strip().decode()
+        compiler_dir_path = os.path.join(xcode_path, 'Toolchains/XcodeDefault.xctoolchain/usr/bin')
+    except (subprocess.CalledProcessError, OSError):
+        print("xcode-select not found. Please install Xcode.")
+        exit(1)
+else:
+    compiler_dir_path = config.llvm_tools_dir
+
+print("Running tests with:", os.path.join(compiler_dir_path, 'clang'))
+llvm_config.add_tool_substitutions(["clang", "clang++"], compiler_dir_path)
 llvm_config.add_tool_substitutions(["FileCheck", "count", "not"], config.llvm_tools_dir)
 
 # The plugin is a shared library in our build-tree
