@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# This script is used to compile the Android NDK r26c LLVM toolchain
+# This script is used to compile the Android NDK r26d LLVM toolchain
 set -e
 
 host=$(uname)
 
-NDK_VERSION=25.1.8937393
+NDK_VERSION=26.3.11579264
 
 if [ "$host" == "Darwin" ]; then
     ndk_platform="darwin-x86_64"
@@ -63,3 +63,6 @@ cd .. && tar czf android-llvm-toolchain-r26d.tar.gz android-llvm-toolchain-r26d
 
 # Clean up
 rm -rf android-llvm-toolchain-r26d
+
+# Move to the final folder
+mv android-llvm-toolchain-r26d.tar.gz ./omvll-deps/

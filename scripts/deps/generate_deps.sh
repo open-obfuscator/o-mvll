@@ -28,10 +28,10 @@ generate_deps() {
     ${SCRIPT_PATH}/common/compile_pybind11.sh
     ${SCRIPT_PATH}/common/compile_spdlog.sh
     if [ "$platform" == "ndk" ]; then
-        ${SCRIPT_PATH}/ndk/compile_llvm_r25.sh
+        ${SCRIPT_PATH}/ndk/compile_llvm_r26d.sh
         # Generate tar
-        mv omvll-deps omvll-deps-ndk-r25c
-        tar -cvf ../omvll-deps-ndk-r25c.tar omvll-deps-ndk-r25c
+        mv omvll-deps omvll-deps-ndk-r26d
+        tar -cvf ../omvll-deps-ndk-r26d.tar omvll-deps-ndk-r26d
     fi
     cd ..
     rm -rf tmp
