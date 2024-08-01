@@ -1,7 +1,7 @@
 pipeline {
-    agent { label 'xcode-14.2' }
+    agent { label 'omvll' }
     environment {
-        PATH = "${env.HOME}/flutter/bin:${env.PATH}"
+        PATH = "${env.HOME}/flutter/bin:/opt/homebrew/bin:${env.PATH}"
         NEXUS_CREDENTIALS = credentials('e29f59a5-3fe6-4235-8d9a-ccbea6113412')
         NEXUS_USERNAME = "${NEXUS_CREDENTIALS_USR}"
         NEXUS_PASSWORD = "${NEXUS_CREDENTIALS_PSW}"
@@ -10,7 +10,7 @@ pipeline {
                 returnStdout: true,
                 script: '/bin/date +%Y%m%d.%H%M%S'
             )}""".trim()
-        DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
+        DEPLOYMENT_VERSION="1.1.0-SNAPSHOT"
         DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
         DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll-macos/${DEPLOYMENT_VERSION}/omvll-macos-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.tar.gz"
         OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
@@ -82,10 +82,10 @@ pipeline {
             }
         }
 
-        stage('Select XCode 14.1') {
+        stage('Select XCode 15.2') {
             steps {
                 script{
-                    sh 'sudo xcode-select -s /Applications/Xcode-14-1.app'
+                    sh 'sudo xcode-select -s /Applications/Xcode-15_2.app'
                     sh 'xcode-select -p'
                 }
             }
@@ -94,10 +94,10 @@ pipeline {
         stage('Compile o-mvll in the native machine') {
             steps {
                 script{
-                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-14_1.tar'
-                    sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode14'
-                    sh 'tar xvf ./omvll-deps-xcode-14_1.tar --directory=${TMP_FOLDER}/third-party-xcode14'
-                    sh './scripts/docker/xcode_14_compile_macos.sh'
+                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-15_2.tar'
+                    sh 'mkdir -p ${TMP_FOLDER}/third-party-xcode15'
+                    sh 'tar xvf ./omvll-deps-xcode-15_2.tar --directory=${TMP_FOLDER}/third-party-xcode15'
+                    sh './scripts/docker/xcode_15_compile_macos.sh'
                 }
             }
         }
@@ -142,8 +142,11 @@ pipeline {
         stage('Build xcode ObjectiveC project') {
             steps {
                 dir("${WORKSPACE}") {
+
                     // Cannot use xcodebuild plugin because . ./omvll.env is required to be called
                     sh '''#!/usr/bin/env bash
+                        /Users/ec2-user/unlock.sh
+
                         cd samples
                         # Generic configuration
                         . ./omvll.env
@@ -182,6 +185,9 @@ pipeline {
                             # Config for SwiftHelloOmvll
                             export OMVLL_CONFIG=$(pwd)/configs/SwiftHelloOmvll.py
                             cd SwiftHelloOmvll
+                            sudo xcode-select -s /Applications/Xcode-15_2.app
+                            xcode-select -p
+                            xcodebuild -version
                             xcodebuild -scheme SwiftHelloOmvll clean build -configuration Release -sdk iphoneos -derivedDataPath ./output ONLY_ACTIVE_ARCH=YES
                             ret=$?
                             cd -

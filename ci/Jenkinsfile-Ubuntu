@@ -14,7 +14,7 @@ pipeline {
                 returnStdout: true,
                 script: '/bin/date +%Y%m%d.%H%M%S'
             )}""".trim()
-        DEPLOYMENT_VERSION="0.0.1-SNAPSHOT"
+        DEPLOYMENT_VERSION="1.1.0-SNAPSHOT"
         DEPLOYMENT_VERSION_MODIFIED="${DEPLOYMENT_VERSION.substring(0, DEPLOYMENT_VERSION.indexOf('-SNAPSHOT'))}"
         DEPLOYMENT_PATH_SNAPSHOT="com/build38/omvll/omvll-ndk/${DEPLOYMENT_VERSION}/omvll-ndk-${DEPLOYMENT_VERSION_MODIFIED}-${DATE}-${BUILD_NUMBER}.tar.gz"
         OMVLL_CERTIFICATE_PWD = credentials('OMVLL_CERTIFICATE_PWD')
@@ -23,7 +23,7 @@ pipeline {
         ROOT_FOLDER = "${env.WORKSPACE}/"
         TMP_FOLDER = "${ROOT_FOLDER}/tmp"
         DIST_FOLDER = "${ROOT_FOLDER}/dist"
-        OUTPUT_FOLDER = "${ROOT_FOLDER}/src/o-mvll-build_ndk_r25c"
+        OUTPUT_FOLDER = "${ROOT_FOLDER}/src/o-mvll-build_ndk_r26d"
 
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
     }
@@ -59,10 +59,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'e29f59a5-3fe6-4235-8d9a-ccbea6113412', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
                     sh 'mkdir -p ${TMP_FOLDER}'
                     sh 'mkdir -p ${OUTPUT_FOLDER}'
-                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-ndk-r25c.tar'
-                    sh 'mkdir -p ${TMP_FOLDER}/third-party-ndk25'
-                    sh 'tar xvf omvll-deps-ndk-r25c.tar --directory=${TMP_FOLDER}/third-party-ndk25'
-                    sh 'ls -la ${TMP_FOLDER}/third-party-ndk25'
+                    sh 'curl -LO https://open-obfuscator.build38.io/static/omvll-deps-ndk-r26d.tar'
+                    sh 'mkdir -p ${TMP_FOLDER}/third-party-ndk26'
+                    sh 'tar xvf omvll-deps-ndk-r26d.tar --directory=${TMP_FOLDER}/third-party-ndk26'
+                    sh 'ls -la ${TMP_FOLDER}/third-party-ndk26'
                     sh 'mkdir -p ../dist'
                     sh 'curl -LO https://www.python.org/ftp/python/3.10.7/Python-3.10.7.tgz'
                     sh 'tar xzvf Python-3.10.7.tgz --directory=${DIST_FOLDER}'
@@ -72,7 +72,7 @@ pipeline {
 
         stage('Compile o-mvll using docker') {
             steps {
-                sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-ndk25:/third-party -v ${WORKSPACE}:/o-mvll -v ${DIST_FOLDER}/Python-3.10.7:/Python-3.10.7 openobfuscator/omvll-ndk:latest bash /o-mvll/scripts/docker/ndk_r25_compile.sh'
+                sh 'sudo docker run --rm --platform linux/x86_64 -v ${TMP_FOLDER}/third-party-ndk26:/third-party -v ${WORKSPACE}:/o-mvll -v ${DIST_FOLDER}/Python-3.10.7:/Python-3.10.7 openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/ndk_r26_compile.sh'
             }
         }
 
