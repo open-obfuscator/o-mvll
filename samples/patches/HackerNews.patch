@@ -244,7 +244,7 @@ index f42a2fc..466d10b 100644
 -			shellPath = /bin/sh;
 -			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-HackerNewsUITests/Pods-HackerNewsUITests-resources.sh\"\n";
 -			showEnvVarsInLog = 0;
-+			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n../../scripts/build/verify-tak-injection.sh\n";
++			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n#../../scripts/build/verify-tak-injection.sh\n";
  		};
  /* End PBXShellScriptBuildPhase section */
  

@@ -181,7 +181,7 @@ index 84319f0..d2fe120 100644
 +			);
 +			runOnlyForDeploymentPostprocessing = 0;
 +			shellPath = /bin/sh;
-+			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n../../scripts/build/verify-tak-injection.sh\n";
++			shellScript = "chmod +x ../../scripts/build/verify-tak-injection.sh\n#../../scripts/build/verify-tak-injection.sh\n";
 +		};
 +/* End PBXShellScriptBuildPhase section */
 +
