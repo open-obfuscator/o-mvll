@@ -13,7 +13,7 @@ class MyConfig(omvll.ObfuscationConfig):
         return True
 
     def obfuscate_string(self, _, __, string: bytes):
-        return omvll.StringEncOptStack()
+        return omvll.StringEncOptGlobal()
 
     def inject_tak(self, _):
         return ("../../../../tmp/TAK-Client", 10, [])

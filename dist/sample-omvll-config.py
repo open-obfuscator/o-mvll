@@ -13,7 +13,7 @@ class MyConfig(omvll.ObfuscationConfig):
         return True
 
     def obfuscate_string(self, _, __, string: bytes):
-        return omvll.StringEncOptStack()
+        return omvll.StringEncOptGlobal()
 
 @lru_cache(maxsize=1)
 def omvll_get_config() -> omvll.ObfuscationConfig:
