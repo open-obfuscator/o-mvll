@@ -8,10 +8,11 @@
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/NoFolder.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/RandomNumberGenerator.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <llvm/Support/raw_ostream.h>
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -243,7 +244,7 @@ PreservedAnalyses Arithmetic::run(Module &M,
                                   ModuleAnalysisManager &FAM) {
   RNG_ = M.createRNG(name());
   SDEBUG("Running {} on {}", name(), M.getName().str());
-  bool Changed = false;
+  IRChangesMonitor ModuleChanges(M, name());
 
   PyConfig& config = PyConfig::instance();
 
@@ -256,7 +257,6 @@ PreservedAnalyses Arithmetic::run(Module &M,
   std::transform(Fs.begin(), Fs.end(), std::back_inserter(LFs),
                  [] (Function& F) { return &F; });
 
-
   for (Function* F : LFs) {
     ArithmeticOpt opt = config.getUserConfig()->obfuscate_arithmetic(&M, F);
     if (!opt)
@@ -265,13 +265,13 @@ PreservedAnalyses Arithmetic::run(Module &M,
     opts_.insert({F, std::move(opt)});
 
     for (BasicBlock& BB : *F) {
-      Changed |= runOnBasicBlock(BB);
+      bool Changed = runOnBasicBlock(BB);
+      ModuleChanges.notify(Changed);
     }
   }
-  SINFO("[{}] Done!", name());
-  return Changed ? PreservedAnalyses::none() :
-                   PreservedAnalyses::all();
 
+  SINFO("[{}] Done!", name());
+  return ModuleChanges.report();
 }
 }
 

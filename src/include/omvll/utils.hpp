@@ -4,6 +4,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
 #include <string>
 
@@ -46,5 +47,33 @@ llvm::Expected<std::unique_ptr<llvm::Module>>
 generateModule(llvm::StringRef Routine, const llvm::Triple &Triple,
                llvm::StringRef Extension, llvm::LLVMContext &Ctx,
                llvm::ArrayRef<std::string> ExtraArgs);
+
+struct ObfuscationConfig;
+
+class IRChangesMonitor {
+public:
+  IRChangesMonitor(const llvm::Module &M, llvm::StringRef PassName);
+
+  // Call this function whenever a transformation in the pass reported changes
+  // explicitly. This determines the PreservedAnalyses flag returned from the
+  // report() function.
+  void notify(bool TransformationReportedChange) {
+    ChangeReported |= TransformationReportedChange;
+  }
+
+  llvm::PreservedAnalyses report();
+
+  IRChangesMonitor(IRChangesMonitor &&) = delete;
+  IRChangesMonitor(const IRChangesMonitor &) = delete;
+  IRChangesMonitor &operator=(IRChangesMonitor &&) = delete;
+  IRChangesMonitor &operator=(const IRChangesMonitor &) = delete;
+
+private:
+  const llvm::Module &Mod;
+  ObfuscationConfig *UserConfig;
+  std::string PassName;
+  std::string OriginalIR;
+  bool ChangeReported;
+};
 }
 #endif

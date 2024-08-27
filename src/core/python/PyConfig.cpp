@@ -298,7 +298,13 @@ void omvll_ctor(py::module_& m) {
          +--------------+-----------------------------------------+
 
          See the :omvll:`anti-hook` documentation.
-         )delim", "module"_a, "function"_a);
+         )delim", "module"_a, "function"_a)
+
+    .def("report_diff",
+         &ObfuscationConfig::report_diff,
+         R"delim(
+         User-callback to monitor IR-level changes from individual obfuscation passes.
+         )delim", "pass_name"_a, "original"_a, "obfuscated"_a);
 
 }
 
