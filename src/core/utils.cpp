@@ -445,7 +445,7 @@ PreservedAnalyses IRChangesMonitor::report() {
     std::string ObfuscatedIR;
     llvm::raw_string_ostream(ObfuscatedIR) << Mod;
     if (OriginalIR != ObfuscatedIR) {
-      assert(!ChangeReported &&
+      assert(ChangeReported &&
              "Textual IR change detected that transformation didn't report");
       UserConfig->report_diff(PassName, OriginalIR, ObfuscatedIR);
     }
