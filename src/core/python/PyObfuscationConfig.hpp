@@ -1,6 +1,7 @@
 #ifndef OMVLL_PY_OBFUSCATION_CONFIG_H
 #define OMVLL_PY_OBFUSCATION_CONFIG_H
 #include "omvll/ObfuscationConfig.hpp"
+#include <mutex>
 
 namespace omvll {
 
@@ -26,6 +27,7 @@ class PyObfuscationConfig : public ObfuscationConfig {
 
 private:
   bool overrides_report_diff_ = false;
+  std::once_flag overrides_report_diff_checked_;
 };
 }
 #endif
