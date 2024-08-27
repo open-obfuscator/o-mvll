@@ -432,11 +432,9 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
 IRChangesMonitor::IRChangesMonitor(const llvm::Module &M,
                                    llvm::StringRef PassName)
     : Mod(M), UserConfig(PyConfig::instance().getUserConfig()),
-      ChangeReported(false) {
-  if (UserConfig->has_report_diff_override()) {
-    this->PassName = PassName.str();
+      PassName(PassName), ChangeReported(false) {
+  if (UserConfig->has_report_diff_override())
     llvm::raw_string_ostream(OriginalIR) << Mod;
-  }
 }
 
 PreservedAnalyses IRChangesMonitor::report() {
