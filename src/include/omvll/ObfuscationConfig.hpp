@@ -37,7 +37,7 @@ struct ObfuscationConfig {
 
   virtual AntiHookOpt anti_hooking(llvm::Module* mod, llvm::Function* func) = 0;
 
-  virtual bool has_report_diff_override() const { return false; };
+  virtual bool has_report_diff_override() { return false; };
   virtual void report_diff(const std::string &pass, const std::string &original,
                            const std::string &obfuscated) = 0;
 };

@@ -70,7 +70,7 @@ public:
 
 private:
   const llvm::Module &Mod;
-  ObfuscationConfig *UserConfig = nullptr;
+  ObfuscationConfig *UserConfig;
   std::string PassName;
   std::string OriginalIR;
   bool ChangeReported;

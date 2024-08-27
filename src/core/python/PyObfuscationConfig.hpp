@@ -20,9 +20,12 @@ class PyObfuscationConfig : public ObfuscationConfig {
   ArithmeticOpt obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func) override;
   OpaqueConstantsOpt obfuscate_constants(llvm::Module* mod, llvm::Function* func) override;
 
-  bool has_report_diff_override() const override;
+  bool has_report_diff_override() override;
   void report_diff(const std::string &pass, const std::string &original,
                    const std::string &obfuscated) override;
+
+private:
+  bool overrides_report_diff_ = false;
 };
 }
 #endif

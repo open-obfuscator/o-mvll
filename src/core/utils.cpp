@@ -431,24 +431,20 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
 
 IRChangesMonitor::IRChangesMonitor(const llvm::Module &M,
                                    llvm::StringRef PassName)
-    : Mod(M) {
-  ObfuscationConfig *UserConfig = PyConfig::instance().getUserConfig();
+    : Mod(M), UserConfig(PyConfig::instance().getUserConfig()),
+      ChangeReported(false) {
   if (UserConfig->has_report_diff_override()) {
-    this->UserConfig = UserConfig;
     this->PassName = PassName.str();
     llvm::raw_string_ostream(OriginalIR) << Mod;
   }
 }
 
 PreservedAnalyses IRChangesMonitor::report() {
-  if (UserConfig) {
+  if (ChangeReported && UserConfig->has_report_diff_override()) {
     std::string ObfuscatedIR;
     llvm::raw_string_ostream(ObfuscatedIR) << Mod;
-    if (OriginalIR != ObfuscatedIR) {
-      assert(ChangeReported &&
-             "Textual IR change detected that transformation didn't report");
+    if (OriginalIR != ObfuscatedIR)
       UserConfig->report_diff(PassName, OriginalIR, ObfuscatedIR);
-    }
   }
 
   return ChangeReported ? PreservedAnalyses::none() : PreservedAnalyses::all();
