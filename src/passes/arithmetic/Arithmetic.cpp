@@ -218,6 +218,9 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
             continue;
           }
 
+          SINFO("[{}][{}] Replacing {} with {}", name(), F->getName(),
+                I.getName(), Result->getName());
+
           BasicBlock *InstParent = I.getParent();
           BasicBlock::iterator InsertPos = I.getIterator();
 
@@ -240,13 +243,12 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
   return Changed;
 }
 
-PreservedAnalyses Arithmetic::run(Module &M,
-                                  ModuleAnalysisManager &FAM) {
+PreservedAnalyses Arithmetic::run(Module &M, ModuleAnalysisManager &FAM) {
+  PyConfig &config = PyConfig::instance();
+  SINFO("[{}] Executing on module {}", name(), M.getName());
+  bool Changed = false;
   RNG_ = M.createRNG(name());
-  SDEBUG("Running {} on {}", name(), M.getName().str());
   IRChangesMonitor ModuleChanges(M, name());
-
-  PyConfig& config = PyConfig::instance();
 
   auto& Fs = M.getFunctionList();
 
@@ -262,15 +264,17 @@ PreservedAnalyses Arithmetic::run(Module &M,
     if (!opt)
       continue;
 
+    SINFO("[{}] Visiting function {}", name(), F->getName());
     opts_.insert({F, std::move(opt)});
 
-    for (BasicBlock& BB : *F) {
-      bool Changed = runOnBasicBlock(BB);
-      ModuleChanges.notify(Changed);
-    }
+    for (BasicBlock &BB : *F)
+      Changed |= runOnBasicBlock(BB);
   }
 
-  SINFO("[{}] Done!", name());
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
+  ModuleChanges.notify(Changed);
   return ModuleChanges.report();
 }
 }

@@ -10,12 +10,16 @@ using namespace llvm;
 namespace omvll {
 
 PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
+  if (!config.cleaning)
+    return PreservedAnalyses::all();
+
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   bool Changed = false;
   for (Function& F : M) {
     std::string Name  = demangle(F.getName().str());
     StringRef NRef = Name;
     if (NRef.startswith("_JNIEnv::") && config.inline_jni_wrappers) {
-      SINFO("Inlining {}", Name);
+      SDEBUG("[{}] Inlining {}", Name);
       F.addFnAttr(Attribute::AlwaysInline);
       Changed = true;
     }
@@ -26,7 +30,9 @@ PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
     Changed = true;
   }
 
-  SINFO("[{}] Done!", name());
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 

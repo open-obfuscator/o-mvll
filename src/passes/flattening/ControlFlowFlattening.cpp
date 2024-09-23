@@ -125,11 +125,7 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
     return false;
   }
 
-  PyConfig& config = PyConfig::instance();
-  if (!config.getUserConfig()->flatten_cfg(F.getParent(), &F)) {
-    return false;
-  }
-  SINFO("Running CFG Flat on {}", demangled);
+  SINFO("[{}] Visiting function {}", ControlFlowFlattening::name(), demangled);
 
   SmallVector<BasicBlock*, 20> flattedBB;
   demotePHINode(F);
@@ -214,7 +210,8 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
 
   const size_t nbBlock = count_if(flattedBB, [] (BasicBlock* BB) {return !BB->isLandingPad();});
   if (nbBlock <= 1) {
-    SWARN("[{}] Is too small (#{}) to be flattened", ControlFlowFlattening::name().str(), flattedBB.size());
+    SWARN("[{}] Is too small (#{}) to be flattened",
+          ControlFlowFlattening::name(), flattedBB.size());
     return false;
   }
 
@@ -222,38 +219,45 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
     if (br->isConditional()) {
       Value* cond = br->getCondition();
       if (auto* instCond = dyn_cast<Instruction>(cond)) {
-        BasicBlock* EntrySplited = EntryBlock->splitBasicBlockBefore(instCond, "EntrySplit");
+        BasicBlock *EntrySplit =
+            EntryBlock->splitBasicBlockBefore(instCond, "EntrySplit");
         flattedBB.insert(flattedBB.begin(), EntryBlock);
 
 #ifdef OMVLL_DEBUG
-        for (Instruction& I : *EntrySplited) {
-          SDEBUG("[EntrySplited] {}", ToString(I));
+        for (Instruction &I : *EntrySplit) {
+          SDEBUG("[{}][EntrySplit] {}", ControlFlowFlattening::name(),
+                 ToString(I));
         }
 
         for (Instruction& I : *EntryBlock) {
-          SDEBUG("[EntryBlock  ] {}", ToString(I));
+          SDEBUG("[{}][EntryBlock] {}", ControlFlowFlattening::name(),
+                 ToString(I));
         }
 #endif // OMVLL_DEBUG
 
-        EntryBlock = EntrySplited;
+        EntryBlock = EntrySplit;
       } else {
-        SWARN("The condition is not an instruction");
+        SWARN("[{}] Found condition is not an instruction",
+              ControlFlowFlattening::name());
       }
     }
   }
   else if (auto* swInst = dyn_cast<SwitchInst>(EntryBlock->getTerminator())) {
-    BasicBlock* EntrySplited = EntryBlock->splitBasicBlockBefore(swInst, "EntrySplit");
+    BasicBlock *EntrySplit =
+        EntryBlock->splitBasicBlockBefore(swInst, "EntrySplit");
     flattedBB.insert(flattedBB.begin(), EntryBlock);
-    EntryBlock = EntrySplited;
+    EntryBlock = EntrySplit;
   }
 
   else if (auto* Invoke = dyn_cast<InvokeInst>(EntryBlock->getTerminator())) {
-    BasicBlock* EntrySplited = EntryBlock->splitBasicBlockBefore(Invoke, "EntrySplit");
+    BasicBlock *EntrySplit =
+        EntryBlock->splitBasicBlockBefore(Invoke, "EntrySplit");
     flattedBB.insert(flattedBB.begin(), EntryBlock);
-    EntryBlock = EntrySplited;
+    EntryBlock = EntrySplit;
   }
 
-  SDEBUG("Erasing {}", ToString(*EntryBlock->getTerminator()));
+  SDEBUG("[{}] Erasing {}", ControlFlowFlattening::name(),
+         ToString(*EntryBlock->getTerminator()));
   EntryBlock->getTerminator()->eraseFromParent();
 
   /* Create a state encoding for the BB to flatten */
@@ -322,7 +326,8 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
   /* Update the basic block with the switch var */
   for (BasicBlock* toFlat : flattedBB) {
     Instruction* terminator = toFlat->getTerminator();
-    SDEBUG("Flattening {} ({})", ToString(*toFlat), ToString(*terminator));
+    SDEBUG("[{}] Flattening {} ({})", ControlFlowFlattening::name(),
+           ToString(*toFlat), ToString(*terminator));
 
     if (isa<ReturnInst>(terminator) || isa<UnreachableInst>(terminator)) {
       /* Typically a ret instruction
@@ -449,10 +454,15 @@ bool ControlFlowFlattening::runOnFunction(Function& F, RandomNumberGenerator& RN
 
 PreservedAnalyses ControlFlowFlattening::run(Module &M,
                                              ModuleAnalysisManager &MAM) {
+  PyConfig &config = PyConfig::instance();
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   std::unique_ptr<RandomNumberGenerator> RNG = M.createRNG(name());
 
   bool Changed = false;
   for (Function& F : M) {
+    if (!config.getUserConfig()->flatten_cfg(&M, &F))
+      continue;
+
     bool fChanged = runOnFunction(F, *RNG);
 
     if (fChanged) {
@@ -462,7 +472,9 @@ PreservedAnalyses ControlFlowFlattening::run(Module &M,
     Changed |= fChanged;
   }
 
-  SINFO("[{}] Done!", name());
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 

@@ -16,14 +16,14 @@
 
 using namespace llvm;
 
-#define REGISTER_PASS(X)     \
-  do {                       \
-    if (pass == X::name()) { \
-      SINFO("[+] {}", pass); \
-      MPM.addPass(X());      \
-      continue;              \
-    }                        \
-  } while(0)
+#define REGISTER_PASS(X)                                                       \
+  do {                                                                         \
+    if (pass == X::name()) {                                                   \
+      SDEBUG("Registering {}", pass);                                          \
+      MPM.addPass(X());                                                        \
+      continue;                                                                \
+    }                                                                          \
+  } while (0)
 
 template <>
 struct yaml::MappingTraits<omvll::yaml_config_t> {

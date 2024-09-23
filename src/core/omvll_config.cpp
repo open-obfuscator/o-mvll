@@ -19,6 +19,7 @@ void init_default_config() {
     Cleaning::name().str(),
   };
 
+  config.cleaning = true;
   config.inline_jni_wrappers = true;
   config.shuffle_functions   = true;
 }
