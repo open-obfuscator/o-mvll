@@ -40,7 +40,7 @@ bool OpaqueConstants::Process(Instruction& I, Use& Op, ConstantInt& CI, OpaqueCo
 
   OpaqueContext* ctx = getOrCreateContext(BB);
   if (ctx == nullptr) {
-    SWARN("Can't opaque {}", ToString(BB));
+    SWARN("[{}] Can't opaque {}", name(), ToString(BB));
     return false;
   }
   /*
@@ -63,7 +63,7 @@ bool OpaqueConstants::Process(Instruction& I, Use& Op, ConstantInt& CI, OpaqueCo
 
     Value* NewZero = GetOpaqueZero(I, *ctx, CI.getType());
     if (NewZero == nullptr) {
-      SWARN("Can't opaque {}", ToString(CI));
+      SWARN("[{}] Can't opaque {}", name(), ToString(CI));
       return false;
     }
     Op.set(NewZero);
@@ -90,7 +90,7 @@ bool OpaqueConstants::Process(Instruction& I, Use& Op, ConstantInt& CI, OpaqueCo
 
     Value* NewOne = GetOpaqueOne(I, *ctx, CI.getType());
     if (NewOne == nullptr) {
-      SWARN("Can't opaque {}", ToString(CI));
+      SWARN("[{}] Can't opaque {}", name(), ToString(CI));
       return false;
     }
     Op.set(NewOne);
@@ -118,7 +118,7 @@ bool OpaqueConstants::Process(Instruction& I, Use& Op, ConstantInt& CI, OpaqueCo
   Value* NewCst = GetOpaqueCst(I, *ctx, CI);
 
   if (NewCst == nullptr) {
-    SWARN("Can't opaque {}", ToString(CI));
+    SWARN("[{}] Can't opaque {}", name(), ToString(CI));
     return false;
   }
   Op.set(NewCst);
@@ -137,8 +137,9 @@ Value* OpaqueConstants::GetOpaqueZero(Instruction& I, OpaqueContext& C, Type* Ty
     case 3: return GetOpaqueZero_3(I, C, Ty, *RNG_);
     default:
       {
-        SWARN("The RNG number ({}) is out of range for generating opaque zero", Sel);
-        return nullptr;
+      SWARN("[{}] RNG number ({}) out of range for generating opaque zero",
+            name(), Sel);
+      return nullptr;
       }
   }
 }
@@ -155,8 +156,9 @@ Value* OpaqueConstants::GetOpaqueOne(Instruction& I, OpaqueContext& C, Type* Ty)
     case 3: return GetOpaqueOne_3(I, C, Ty, *RNG_);
     default:
       {
-        SWARN("The RNG number ({}) is out of range for generating opaque one", Sel);
-        return nullptr;
+      SWARN("[{}] RNG number ({}) out of range for generating opaque one",
+            name(), Sel);
+      return nullptr;
       }
   }
 }
@@ -174,8 +176,9 @@ Value* OpaqueConstants::GetOpaqueCst(Instruction& I, OpaqueContext& C, const Con
     case 3: return GetOpaqueConst_3(I, C, CI, *RNG_);
     default:
       {
-        SWARN("The RNG number ({}) is out of range for generating opaque value", Sel);
-        return nullptr;
+      SWARN("[{}] RNG number ({}) out of range for generating opaque value",
+            name(), Sel);
+      return nullptr;
       }
   }
 }
@@ -193,7 +196,7 @@ bool OpaqueConstants::Process(Instruction& I, OpaqueConstantsOpt* opt) {
 
   #ifdef OMVLL_DEBUG
   if (Changed) {
-    SDEBUG("--> OPAQUE CST: {}", InstStr);
+    SDEBUG("[{}] Opaquize constant in instruction {}", name(), InstStr);
   }
   #endif
   return Changed;
@@ -240,6 +243,8 @@ bool OpaqueConstants::runOnBasicBlock(llvm::BasicBlock &BB, OpaqueConstantsOpt* 
 
 PreservedAnalyses OpaqueConstants::run(Module &M,
                                        ModuleAnalysisManager &FAM) {
+  PyConfig &config = PyConfig::instance();
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   RNG_ = M.createRNG(name());
 
   bool Changed = false;
@@ -251,9 +256,6 @@ PreservedAnalyses OpaqueConstants::run(Module &M,
                                   ConstantInt::get(Int64Ty, 0),
                                   "__omvll_opaque_gv");
       });
-
-
-  PyConfig& config = PyConfig::instance();
 
   for (Function& F : M) {
     OpaqueConstantsOpt opt = config.getUserConfig()->obfuscate_constants(&M, &F);
@@ -273,7 +275,10 @@ PreservedAnalyses OpaqueConstants::run(Module &M,
       Changed |= runOnBasicBlock(BB, inserted);
     }
   }
-  SINFO("[{}] Done!", name());
+
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 

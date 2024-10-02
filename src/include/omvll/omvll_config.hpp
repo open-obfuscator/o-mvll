@@ -6,6 +6,7 @@
 namespace omvll {
 struct config_t {
   std::vector<std::string> passes;
+  bool cleaning;
   bool shuffle_functions;
   bool inline_jni_wrappers;
 };

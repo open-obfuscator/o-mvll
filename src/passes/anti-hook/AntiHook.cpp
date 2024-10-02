@@ -43,15 +43,12 @@ bool AntiHook::runOnFunction(llvm::Function &F) {
     return false;
   }
 
-  PyConfig& config = PyConfig::instance();
-  if (!config.getUserConfig()->anti_hooking(F.getParent(), &F)) {
-    return false;
-  }
-
   if (F.hasPrologueData()) {
     fatalError("Can't inject a hooking prologue in the function '" + demangle(F.getName().str()) + "' "
                "since there is one.");
   }
+
+  SDEBUG("[{}] Injecting Anti-Frida prologue in {}", name(), F.getName());
 
   std::uniform_int_distribution<size_t> Dist(0, ANTI_FRIDA_PROLOGUES.size() - 1);
   size_t idx = Dist(*RNG_);
@@ -72,16 +69,23 @@ bool AntiHook::runOnFunction(llvm::Function &F) {
 
 PreservedAnalyses AntiHook::run(Module &M,
                                 ModuleAnalysisManager &FAM) {
+  PyConfig &config = PyConfig::instance();
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   bool Changed = false;
   jitter_ = std::make_unique<Jitter>(M.getTargetTriple());
 
   RNG_ = M.createRNG(name());
 
   for (Function& F : M) {
+    if (!config.getUserConfig()->anti_hooking(F.getParent(), &F))
+      continue;
+
     Changed |= runOnFunction(F);
   }
 
-  SINFO("[{}] Done!", name());
+  if (Changed)
+    SINFO("[{}] Changes applied on module {}", name(), M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 

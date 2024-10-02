@@ -16,14 +16,14 @@
 
 using namespace llvm;
 
-#define REGISTER_PASS(X)     \
-  do {                       \
-    if (pass == X::name()) { \
-      SINFO("[+] {}", pass); \
-      MPM.addPass(X());      \
-      continue;              \
-    }                        \
-  } while(0)
+#define REGISTER_PASS(X)                                                       \
+  do {                                                                         \
+    if (pass == X::name()) {                                                   \
+      SDEBUG("Registering {}", pass);                                          \
+      MPM.addPass(X());                                                        \
+      continue;                                                                \
+    }                                                                          \
+  } while (0)
 
 template <>
 struct yaml::MappingTraits<omvll::yaml_config_t> {
@@ -138,10 +138,12 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
                     REGISTER_PASS(omvll::OpaqueConstants);
                     REGISTER_PASS(omvll::Arithmetic);
 
+#ifdef OMVLL_EXPERIMENTAL
                     /* ObjCleaner must be the last pass as function's name could be
                      * changed, which can be confusing of the user
                      */
                     REGISTER_PASS(omvll::ObjCleaner);
+#endif
                     REGISTER_PASS(omvll::Cleaning);
                   }
                   ONCE_FLAG = true;

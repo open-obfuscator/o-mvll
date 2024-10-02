@@ -10,6 +10,7 @@
 
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Support/Threading.h>
 
 namespace py = pybind11;
 using namespace std::string_literals;
@@ -195,6 +196,31 @@ AntiHookOpt PyObfuscationConfig::anti_hooking(llvm::Module* mod, llvm::Function*
     }
   }
   return false;
+}
+
+bool PyObfuscationConfig::has_report_diff_override() {
+  std::call_once(overrides_report_diff_checked_, [this]() {
+    const auto *base = static_cast<const ObfuscationConfig *>(this);
+    overrides_report_diff_ =
+        static_cast<bool>(py::get_override(base, "report_diff"));
+  });
+  return overrides_report_diff_;
+}
+
+void PyObfuscationConfig::report_diff(const std::string &pass,
+                                      const std::string &original,
+                                      const std::string &obfuscated) {
+  if (has_report_diff_override()) {
+    py::gil_scoped_acquire gil;
+    py::function override = py::get_override(
+        static_cast<const ObfuscationConfig *>(this), "report_diff");
+    assert(override && "Checked once in ctor");
+    try {
+      override(pass, original, obfuscated);
+    } catch (const std::exception &e) {
+      fatalError("Error in 'report_diff': '"s + e.what() + "'");
+    }
+  }
 }
 
 ArithmeticOpt PyObfuscationConfig::obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func)

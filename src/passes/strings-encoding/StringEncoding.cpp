@@ -299,6 +299,7 @@ bool StringEncoding::runOnBasicBlock(Module &M, Function &F, BasicBlock &BB,
            std::get_if<StringEncOptGlobal>(EncInfoOpt.get()) == nullptr))
         continue;
 
+      SINFO("[{}] Processing string {}", name(), Data->getAsCString());
       Changed |= process(BB, I, *ActualOp, *G, *Data, *EncInfoOpt);
     }
   }
@@ -307,12 +308,12 @@ bool StringEncoding::runOnBasicBlock(Module &M, Function &F, BasicBlock &BB,
 }
 
 PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   bool Changed = false;
   auto &Config = PyConfig::instance();
   ObfuscationConfig *UserConfig = Config.getUserConfig();
 
   RNG_ = M.createRNG(name());
-  SDEBUG("[{}] Module: {}", name(), M.getSourceFileName());
 
   std::vector<Function *> FuncsToVisit;
   for (Function &F : M)
@@ -321,7 +322,7 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
   for (auto *F : FuncsToVisit) {
     demotePHINode(*F);
     std::string DemangledFName = demangle(F->getName().str());
-    SDEBUG("[{}] Visiting: {}", name(), DemangledFName);
+    SDEBUG("[{}] Visiting function {}", name(), DemangledFName);
     for (BasicBlock &BB : *F) {
       Changed |= runOnBasicBlock(M, *F, BB, *UserConfig);
     }
@@ -342,7 +343,9 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
     appendToGlobalCtors(M, F, 0);
   ctor_.clear();
 
-  SINFO("[{}] Done!", name());
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 }

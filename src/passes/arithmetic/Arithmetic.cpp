@@ -8,10 +8,11 @@
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/NoFolder.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/RandomNumberGenerator.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <llvm/Support/raw_ostream.h>
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -217,6 +218,9 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
             continue;
           }
 
+          SINFO("[{}][{}] Replacing {} with {}", name(), F->getName(),
+                I.getName(), Result->getName());
+
           BasicBlock *InstParent = I.getParent();
           BasicBlock::iterator InsertPos = I.getIterator();
 
@@ -239,13 +243,12 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
   return Changed;
 }
 
-PreservedAnalyses Arithmetic::run(Module &M,
-                                  ModuleAnalysisManager &FAM) {
-  RNG_ = M.createRNG(name());
-  SDEBUG("Running {} on {}", name(), M.getName().str());
+PreservedAnalyses Arithmetic::run(Module &M, ModuleAnalysisManager &FAM) {
+  PyConfig &config = PyConfig::instance();
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   bool Changed = false;
-
-  PyConfig& config = PyConfig::instance();
+  RNG_ = M.createRNG(name());
+  IRChangesMonitor ModuleChanges(M, name());
 
   auto& Fs = M.getFunctionList();
 
@@ -256,22 +259,23 @@ PreservedAnalyses Arithmetic::run(Module &M,
   std::transform(Fs.begin(), Fs.end(), std::back_inserter(LFs),
                  [] (Function& F) { return &F; });
 
-
   for (Function* F : LFs) {
     ArithmeticOpt opt = config.getUserConfig()->obfuscate_arithmetic(&M, F);
     if (!opt)
       continue;
 
+    SINFO("[{}] Visiting function {}", name(), F->getName());
     opts_.insert({F, std::move(opt)});
 
-    for (BasicBlock& BB : *F) {
+    for (BasicBlock &BB : *F)
       Changed |= runOnBasicBlock(BB);
-    }
   }
-  SINFO("[{}] Done!", name());
-  return Changed ? PreservedAnalyses::none() :
-                   PreservedAnalyses::all();
 
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
+  ModuleChanges.notify(Changed);
+  return ModuleChanges.report();
 }
 }
 

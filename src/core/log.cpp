@@ -10,10 +10,10 @@ Logger& Logger::operator=(Logger&&) = default;
 Logger::~Logger() = default;
 
 Logger::Logger() {
-  bool truncate = true;
-  if (char* _ = getenv("OMVLL_DONT_TRUNCATE")) {
+  bool truncate = false;
+  if (getenv("OMVLL_TRUNCATE_LOG"))
     truncate = true;
-  }
+
   sink_ = spdlog::basic_logger_mt("omvll", "omvll.log", truncate);
   //sink_ = spdlog::stdout_color_mt("omvll");
   sink_->set_pattern("%v");

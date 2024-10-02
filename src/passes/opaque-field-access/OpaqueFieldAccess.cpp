@@ -27,10 +27,14 @@ bool OpaqueFieldAccess::runOnStructRead(BasicBlock& BB, LoadInst& Load,
     return false;
   }
 
+  SINFO("[{}] Executing on module {} over structure {}", name(),
+        BB.getModule()->getName(), S.getName());
+
   SmallVector<Value*, 2> indices(GEP.idx_begin(), GEP.idx_end());
 
   if (indices.size() != 2) {
-    SWARN("{} Expecting 2 indices for the structure: {}", ToString(Load), S.getName());
+    SWARN("[{}] Load {} expects 2 indices for the structure {}", name(),
+          ToString(Load), S.getName());
     return false;
   }
 
@@ -45,14 +49,15 @@ bool OpaqueFieldAccess::runOnStructRead(BasicBlock& BB, LoadInst& Load,
   }
 
   if (ZeroVal->getLimitedValue() != 0) {
-    SWARN("Expecting a zero value for the getelementptr: {}", ToString(GEP));
+    SWARN("[{}] Expecting a zero value for the getelementptr: {}", name(),
+          ToString(GEP));
   }
 
   const DataLayout& DL = BB.getParent()->getParent()->getDataLayout();
   uint64_t ComputedOffset = DL.getStructLayout(&S)->getElementOffset(OffVal->getLimitedValue());
 
-  SDEBUG("Obfuscating field READ access on {}->#{} (offset: {})", S.getName(),
-         OffVal->getLimitedValue(), ComputedOffset);
+  SDEBUG("[{}] Obfuscating field READ access on {}->#{} (offset: {})", name(),
+         S.getName(), OffVal->getLimitedValue(), ComputedOffset);
 
   IRBuilder<NoFolder> IRB(&Load);
 
@@ -83,7 +88,7 @@ bool OpaqueFieldAccess::runOnBufferRead(BasicBlock& BB, LoadInst& Load,
   if (!hasObf(Load, MObfTy::PROTECT_FIELD_ACCESS)) {
     return false;
   }
-  SDEBUG("Obfuscating buffer load access");
+  SDEBUG("[{}] Obfuscating buffer load access", name());
   IRBuilder<NoFolder> IRB(&Load);
   const uint64_t Val = CI.getLimitedValue();
   uint32_t lhs, rhs = 0;
@@ -129,7 +134,8 @@ bool OpaqueFieldAccess::runOnConstantExprRead(BasicBlock& BB, LoadInst& Load, Co
   Type *GVTy = GV->getValueType();
 
   if (!GVTy->isArrayTy()) {
-    SDEBUG("'{}' won't be processed: Non Array type", GV->getName());
+    SDEBUG("[{}] Global variable {} won't be processed: non array type", name(),
+           GV->getName());
     return false;
   }
 
@@ -140,7 +146,9 @@ bool OpaqueFieldAccess::runOnConstantExprRead(BasicBlock& BB, LoadInst& Load, Co
     return false;
   }
 
-  SDEBUG("Opaque access on {}", GV->getName().str());
+  SINFO("[{}] Executing on module {} over variable {}", name(),
+        BB.getModule()->getName(), GV->getName());
+
   IRBuilder<NoFolder> IRB(&Load);
   Value* opaqueOffset =
     IRB.CreateSub(
@@ -187,7 +195,8 @@ bool OpaqueFieldAccess::runOnLoad(LoadInst& Load) {
         } else {
           if (hasObf(Load, MObfTy::PROTECT_FIELD_ACCESS)) {
             // TODO(romain): To implement
-            SWARN("The Load Instruction {} won't be protected", ToString(Load));
+            SWARN("[{}] Load instruction {} won't be protected", name(),
+                  ToString(Load));
           }
         }
       }
@@ -195,7 +204,7 @@ bool OpaqueFieldAccess::runOnLoad(LoadInst& Load) {
 
     if (TargetTy->isArrayTy()) {
       // TODO(romain): To implement
-      SDEBUG("ArrayTy is not supported yet: {}", ToString(Load));
+      SDEBUG("[{}] ArrayTy is not supported yet: {}", name(), ToString(Load));
       return false;
     }
   }
@@ -220,9 +229,9 @@ bool OpaqueFieldAccess::runOnConstantExprWrite(llvm::BasicBlock& BB, llvm::Store
     return false;
   }
   Type *GVTy = GV->getValueType();
-  SDEBUG("{}: {}", ToString(Store), GV->getName());
   if (!GVTy->isArrayTy()) {
-    SDEBUG("'{}' won't be processed: Non Array type", GV->getName());
+    SDEBUG("[{}] Global variable {} won't be processed: non Array type", name(),
+           GV->getName());
     return false;
   }
 
@@ -233,7 +242,9 @@ bool OpaqueFieldAccess::runOnConstantExprWrite(llvm::BasicBlock& BB, llvm::Store
     return false;
   }
 
-  SDEBUG("Opaque access on {}", GV->getName().str());
+  SINFO("[{}] Executing on module {} over variable {}", name(),
+        BB.getModule()->getName(), GV->getName());
+
   IRBuilder<NoFolder> IRB(&Store);
   Value* opaqueOffset =
     IRB.CreateOr(
@@ -260,10 +271,14 @@ bool OpaqueFieldAccess::runOnStructWrite(BasicBlock& BB, StoreInst& Store,
     return false;
   }
 
+  SINFO("[{}] Executing on module {} over structure {}", name(),
+        BB.getModule()->getName(), S.getName());
+
   SmallVector<Value*, 2> indices(GEP.idx_begin(), GEP.idx_end());
 
   if (indices.size() != 2) {
-    SWARN("{} Expecting 2 indices for the structure: {}", ToString(Store), S.getName());
+    SWARN("[{}] Store {} expects 2 indices for the structure {}", name(),
+          ToString(Store), S.getName());
     return false;
   }
 
@@ -278,14 +293,15 @@ bool OpaqueFieldAccess::runOnStructWrite(BasicBlock& BB, StoreInst& Store,
   }
 
   if (ZeroVal->getLimitedValue() != 0) {
-    SWARN("Expecting a zero value for the getelementptr: {}", ToString(GEP));
+    SWARN("[{}] Expecting a zero value for the getelementptr {}", name(),
+          ToString(GEP));
   }
 
   const DataLayout& DL = BB.getParent()->getParent()->getDataLayout();
   uint64_t ComputedOffset = DL.getStructLayout(&S)->getElementOffset(OffVal->getLimitedValue());
 
-  SDEBUG("Obfuscating field WRITE access on {}->#{} (offset: {})", S.getName(),
-         OffVal->getLimitedValue(), ComputedOffset);
+  SDEBUG("[{}] Obfuscating field WRITE access on {}->#{} (offset: {})", name(),
+         S.getName(), OffVal->getLimitedValue(), ComputedOffset);
 
   IRBuilder<NoFolder> IRB(&Store);
 
@@ -315,7 +331,7 @@ bool OpaqueFieldAccess::runOnBufferWrite(BasicBlock& BB, StoreInst& Store,
   if (!hasObf(Store, MObfTy::PROTECT_FIELD_ACCESS)) {
     return false;
   }
-  SDEBUG("Obfuscating buffer write access");
+  SDEBUG("[{}] Obfuscating buffer write access", name());
   IRBuilder<NoFolder> IRB(&Store);
   uint64_t Val = CI.getLimitedValue();
   uint32_t lhs, rhs = 0;
@@ -374,7 +390,8 @@ bool OpaqueFieldAccess::runOnStore(StoreInst& Store) {
         } else {
           if (hasObf(Store, MObfTy::PROTECT_FIELD_ACCESS)) {
             // TODO(romain): To implement
-            SWARN("The Store Instruction {} won't be protected", ToString(Store));
+            SWARN("[{}] Store instruction {} won't be protected", name(),
+                  ToString(Store));
           }
         }
       }
@@ -383,7 +400,8 @@ bool OpaqueFieldAccess::runOnStore(StoreInst& Store) {
 
     if (TargetTy->isArrayTy()) {
       // TODO(romain): To implement
-      SDEBUG("ArrayTy is not supported yet: {}", ToString(Store));
+      SDEBUG("[{}] ArrayTy is not supported yet for store {}", name(),
+             ToString(Store));
       return false;
     }
 
@@ -419,7 +437,9 @@ PreservedAnalyses OpaqueFieldAccess::run(Module &M,
     }
   }
 
-  SINFO("[{}] Done!", name());
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 

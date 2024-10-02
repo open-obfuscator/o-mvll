@@ -23,19 +23,22 @@ inline bool isObjCVar(const GlobalVariable& G) {
 
 PreservedAnalyses ObjCleaner::run(Module &M,
                                   ModuleAnalysisManager &FAM) {
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   bool Changed = false;
 
   for (GlobalVariable& G : M.getGlobalList()) {
     if (!isObjCVar(G)) {
       continue;
     }
-    SINFO("ObjC -> {} {}", G.getName().str(), ToString(*G.getValueType()));
+
     if (!G.hasInitializer()) {
       continue;
     }
 
-    if (auto* CSTy = dyn_cast<ConstantStruct>(G.getInitializer())) {
-        SINFO("Found {}", CSTy->getType()->getName());
+    SDEBUG("[{}] ObjC -> {} {}", name(), G.getName().str(),
+           ToString(*G.getValueType()));
+
+    if (auto *CSTy = dyn_cast<ConstantStruct>(G.getInitializer())) {
       if (CSTy->getType()->getName().contains("_objc_method")) {
       }
     }
@@ -53,7 +56,8 @@ PreservedAnalyses ObjCleaner::run(Module &M,
     if (data == nullptr || !data->isCString()) {
       continue;
     }
-    SINFO("     ObjC Var: {}: {}", G.getName(), data->getAsCString().str());
+    SDEBUG("[{}] ObjC Var: {}: {}", name(), G.getName(),
+           data->getAsCString().str());
     //std::string value = data->getAsCString().str();
     //SINFO("String: {}", value);
     //Regex R("SampleClass");
@@ -65,8 +69,10 @@ PreservedAnalyses ObjCleaner::run(Module &M,
   //for (Function& F : M) {
   //  Changed |= runOnFunction(F);
   //}
-  SDEBUG("{}", ToString(M));
-  SINFO("[{}] Done!", name());
+
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 

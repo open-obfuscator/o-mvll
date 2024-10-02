@@ -48,13 +48,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
     return false;
   }
 
-  PyConfig& config = PyConfig::instance();
-  if (!config.getUserConfig()->break_control_flow(F.getParent(), &F)) {
-    return false;
-  }
-
-
-  SDEBUG("{}", F.getName().str());
+  SINFO("[{}] Visiting function {}", name(), F.getName());
 
   ValueToValueMapTy VMap;
   ClonedCodeInfo info;
@@ -118,6 +112,8 @@ bool BreakControlFlow::runOnFunction(Function &F) {
     fatalError("Can't inject BreakControlFlow prologue in the function "
                "'" + demangle(F.getName().str()) + "'");
   }
+
+  SDEBUG("[{}][{}] Injecting breaking stub", name(), F.getName());
 
   FCopied->setPrologueData(Prologue);
   FCopied->setLinkage(GlobalValue::InternalLinkage);
@@ -183,9 +179,10 @@ bool BreakControlFlow::runOnFunction(Function &F) {
 
 PreservedAnalyses BreakControlFlow::run(Module &M,
                                         ModuleAnalysisManager &FAM) {
+  PyConfig &config = PyConfig::instance();
+  SINFO("[{}] Executing on module {}", name(), M.getName());
   RNG_ = M.createRNG(name());
   Jitter_ = std::make_unique<Jitter>(M.getTargetTriple());
-  SINFO("[{}] Run on: {}", name(), M.getName().str());
   bool Changed = false;
   std::vector<Function*> Fs;
   for (Function& F : M) {
@@ -194,11 +191,13 @@ PreservedAnalyses BreakControlFlow::run(Module &M,
     Fs.push_back(&F);
   }
 
-  for (Function* F : Fs) {
-    Changed |= runOnFunction(*F);
-  }
+  for (Function *F : Fs)
+    if (config.getUserConfig()->break_control_flow(&M, F))
+      Changed |= runOnFunction(*F);
 
-  SINFO("[{}] Done!", name());
+  SINFO("[{}] Changes{}applied on module {}", name(), Changed ? " " : " not ",
+        M.getName());
+
   return Changed ? PreservedAnalyses::none() :
                    PreservedAnalyses::all();
 
