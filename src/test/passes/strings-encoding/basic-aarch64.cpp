@@ -2,15 +2,15 @@
 
 // The default object contains the file-name string:
 //     RUN: clang++ -target aarch64-linux-android-O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT  -DFILE_NAME=%s %s
-//     RUN: clang++ -target arm64-apple-ios -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT  -DFILE_NAME=%s %s
+//     RUN: clang++ -target arm64-apple-ios17.5.0 -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT  -DFILE_NAME=%s %s
 //     CHECK-DEFAULT: [[FILE_NAME]]
 
 // The 'remove' configuration overwrites it with the fixed REDACTED literal:
 //     RUN: env OMVLL_CONFIG=%S/config_remove.py clang++ -fpass-plugin=%libOMVLL \
-//     RUN:         -target aarch64-linux-android-O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REMOVED  -DFILE_NAME=%s %s
+//     RUN:         -target aarch64-linux-android -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REMOVED  -DFILE_NAME=%s %s
 //
-//     RUN: env OMVLL_CONFIG=%S/config_remove.py clang++ -fpass-plugin=%libOMVLL -O1 \
-//     RUN:         -target arm64-apple-ios -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REMOVED  -DFILE_NAME=%s %s
+//     RUN: env OMVLL_CONFIG=%S/config_remove.py clang++ -fpass-plugin=%libOMVLL \
+//     RUN:         -target arm64-apple-ios17.5.0 -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REMOVED  -DFILE_NAME=%s %s
 //
 //     CHECK-REMOVED-NOT: [[FILE_NAME]]
 //     CHECK-REMOVED:     REDACTED
@@ -20,10 +20,10 @@
 
 // The 'replace' configuration encodes the string and adds logic that decodes it at load-time:
 //     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \
-//     RUN:         -target aarch64-linux-android-O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REPLACED  -DFILE_NAME=%s %s
+//     RUN:         -target aarch64-linux-android -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REPLACED  -DFILE_NAME=%s %s
 //
 //     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \
-//     RUN:         -target arm64-apple-ios -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REPLACED  -DFILE_NAME=%s %s
+//     RUN:         -target arm64-apple-ios17.5.0 -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-REPLACED  -DFILE_NAME=%s %s
 
 //     CHECK-REPLACED-NOT: [[FILE_NAME]]
 

@@ -1,7 +1,7 @@
 ; REQUIRES: aarch64-registered-target
 
 ;     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \
-;     RUN:         -target arm64-apple-ios        -O1 -c %s -o - | strings | FileCheck %s
+;     RUN:         -target arm64-apple-ios17.5.0  -O1 -c %s -o - | strings | FileCheck %s
 ;
 ;     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \
 ;     RUN:         -target aarch64-linux-android  -O1 -c %s -o - | strings | FileCheck %s

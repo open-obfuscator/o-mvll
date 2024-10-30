@@ -2,7 +2,7 @@
 
 ; The 'replace' configuration encodes the string and adds logic that decodes it at load-time:
 ;     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \
-;     RUN:         -target arm64-apple-ios -O1 -c %s -o - | strings | FileCheck %s
+;     RUN:         -target arm64-apple-ios17.5.0 -O1 -c %s -o - | strings | FileCheck %s
 ;
 ;     CHECK-NOT:     {{.*Hello, Swift.*}}
 
