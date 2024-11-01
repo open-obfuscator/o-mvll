@@ -81,3 +81,8 @@ You can reach out by email at this address: `ping@obfuscator.re`
 ### License
 
 O-MVLL is released under the same License as LLVM: [Apache License, Version 2.0](./LICENSE)
+
+<div style="display: flex; gap: 0px; padding: 10px;">
+    <img src=".github/img/eu.jpg" alt="EU Co-funding Logo" style="height: 50px; width: auto;">
+    <img src=".github/img/eccc.png" alt="ECCC Logo" style="height: 50px; width: auto; background-color: white;">
+</div>
