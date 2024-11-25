@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+
+#
+# This file is distributed under the Apache License v2.0. See LICENSE for details.
+#
+
 set -e
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"

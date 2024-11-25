@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // Prepare test output dir with yml-config, py-config and fake python-libs dir
 // RUN: rm -rf %T_cwd
 // RUN: mkdir -p %T_cwd

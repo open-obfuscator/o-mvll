@@ -1,12 +1,14 @@
-#ifndef OMVLL_OBFUSCATION_OPT_H
-#define OMVLL_OBFUSCATION_OPT_H
+#pragma once
 
-#include "omvll/passes/flattening/ControlFlowFlatteningOpt.hpp"
-#include "omvll/passes/string-encoding/StringEncodingOpt.hpp"
-#include "omvll/passes/opaque-field-access/OpaqueFieldAccessOpt.hpp"
-#include "omvll/passes/break-cfg/BreakControlFlowOpt.hpp"
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include "omvll/passes/anti-hook/AntiHookOpt.hpp"
 #include "omvll/passes/arithmetic/ArithmeticOpt.hpp"
+#include "omvll/passes/break-cfg/BreakControlFlowOpt.hpp"
+#include "omvll/passes/cfg-flattening/ControlFlowFlatteningOpt.hpp"
 #include "omvll/passes/opaque-constants/OpaqueConstantsOpt.hpp"
-
-#endif
+#include "omvll/passes/opaque-field-access/OpaqueFieldAccessOpt.hpp"
+#include "omvll/passes/string-encoding/StringEncodingOpt.hpp"

@@ -1,7 +1,13 @@
-#ifndef OMVLL_VARIANT_VISIT_H
-#define OMVLL_VARIANT_VISIT_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include <variant>
 
-template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
-#endif
+template <class... Ts> struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;

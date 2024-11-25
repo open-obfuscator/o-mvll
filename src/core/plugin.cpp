@@ -1,157 +1,145 @@
-#include "omvll/passes.hpp"
-#include "omvll/PyConfig.hpp"
-#include "omvll/log.hpp"
-#include "omvll/utils.hpp"
-#include "omvll/Jitter.hpp"
-
-#include <llvm/Passes/PassBuilder.h>
-#include <llvm/Passes/PassPlugin.h>
-#include <llvm/Support/FileSystem.h>
-#include <llvm/Support/Path.h>
-#include <llvm/Support/YAMLParser.h>
-#include <llvm/Support/YAMLTraits.h>
-#include <llvm/Transforms/IPO/PassManagerBuilder.h>
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
 
 #include <dlfcn.h>
 
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/YAMLParser.h"
+#include "llvm/Support/YAMLTraits.h"
+
+#include "omvll/PyConfig.hpp"
+#include "omvll/jitter.hpp"
+#include "omvll/log.hpp"
+#include "omvll/passes.hpp"
+#include "omvll/utils.hpp"
+
 using namespace llvm;
 
-#define REGISTER_PASS(X)                                                       \
-  do {                                                                         \
-    if (pass == X::name()) {                                                   \
-      SDEBUG("Registering {}", pass);                                          \
-      MPM.addPass(X());                                                        \
-      continue;                                                                \
-    }                                                                          \
-  } while (0)
-
-template <>
-struct yaml::MappingTraits<omvll::yaml_config_t> {
-    static void mapping(IO& io, omvll::yaml_config_t& config) {
-      io.mapOptional("OMVLL_PYTHONPATH", config.PYTHONPATH, "");
-      io.mapOptional("OMVLL_CONFIG",     config.OMVLL_CONFIG, "");
-    }
+template <> struct yaml::MappingTraits<omvll::YamlConfig> {
+  static void mapping(IO &IO, omvll::YamlConfig &Config) {
+    IO.mapOptional("OMVLL_PYTHONPATH", Config.PythonPath, "");
+    IO.mapOptional("OMVLL_CONFIG", Config.OMVLLConfig, "");
+  }
 };
 
-std::string expand_abs_path(StringRef path, StringRef base) {
-  if (sys::path::is_absolute(path)) {
-    if (!sys::fs::exists(path))
-      SWARN("Absolute path from doesn't exist!");
-    return path.str();
+static std::string expandAbsPath(StringRef Path, StringRef Base) {
+  if (sys::path::is_absolute(Path)) {
+    if (!sys::fs::exists(Path))
+      SWARN("Absolute path from does not exist");
+    return Path.str();
   }
 
-  SmallString<256> YConfigAbs = base;
-  sys::path::append(YConfigAbs, path);
+  SmallString<256> YConfigAbs = Base;
+  sys::path::append(YConfigAbs, Path);
   if (!sys::fs::exists(YConfigAbs))
-    SWARN("Relative path doesn't exist!");
+    SWARN("Relative path does not exist");
+
   return YConfigAbs.str().str();
 }
 
-bool load_yamlconfig(StringRef dir, StringRef filename) {
-  SmallString<256> YConfig = dir;
-  sys::path::append(YConfig, filename);
+static bool loadYamlConfig(StringRef Dir, StringRef FileName) {
+  SmallString<256> YConfig = Dir;
+  sys::path::append(YConfig, FileName);
   if (!sys::fs::exists(YConfig))
     return false;
 
   SINFO("Loading omvll.yml from {}", YConfig.str());
   auto Buffer = MemoryBuffer::getFile(YConfig);
   if (!Buffer) {
-    SERR("Can't read '{}': {}", YConfig.str(), Buffer.getError().message());
+    SERR("Cannot read '{}': {}", YConfig.str(), Buffer.getError().message());
     return false;
   }
-  yaml::Input yin(**Buffer);
-  omvll::yaml_config_t yconfig;
-  yin >> yconfig;
 
-  SINFO("OMVLL_PYTHONPATH = {}", yconfig.PYTHONPATH);
-  yconfig.PYTHONPATH = expand_abs_path(yconfig.PYTHONPATH, dir);
+  yaml::Input Input(**Buffer);
+  omvll::YamlConfig Config;
+  Input >> Config;
 
-  SINFO("OMVLL_CONFIG = {}", yconfig.OMVLL_CONFIG);
-  yconfig.OMVLL_CONFIG = expand_abs_path(yconfig.OMVLL_CONFIG, dir);
+  SINFO("OMVLL_PYTHONPATH = {}", Config.PythonPath);
+  Config.PythonPath = expandAbsPath(Config.PythonPath, Dir);
 
-  omvll::PyConfig::yconfig = yconfig;
+  SINFO("OMVLL_CONFIG = {}", Config.OMVLLConfig);
+  Config.OMVLLConfig = expandAbsPath(Config.OMVLLConfig, Dir);
+
+  omvll::PyConfig::YConfig = Config;
   return true;
 }
 
-bool find_yamlconfig(std::string dir) {
+static bool findYamlConfig(std::string Dir) {
   while (true) {
-    SINFO("Looking for omvll.yml in {}", dir);
-    if (load_yamlconfig(dir, omvll::PyConfig::YAML_FILE))
+    SINFO("Looking for omvll.yml in {}", Dir);
+    if (loadYamlConfig(Dir, omvll::PyConfig::YamlFile))
       return true;
-    if (sys::path::has_parent_path(dir)) {
-      dir = sys::path::parent_path(dir);
+    if (sys::path::has_parent_path(Dir)) {
+      Dir = sys::path::parent_path(Dir);
     } else {
       return false;
     }
   }
 }
 
-void omvll::init_yamlconfig() {
-  SmallString<256> cwd;
-  if (auto err = sys::fs::current_path(cwd)) {
-    SERR("Can't determine the current path: '{}''", err.message());
+void omvll::initYamlConfig() {
+  SmallString<256> CurrentPath;
+  if (auto Err = sys::fs::current_path(CurrentPath)) {
+    SERR("Cannot determine the current path: '{}'", Err.message());
   } else {
-    if (find_yamlconfig(cwd.str().str()))
+    if (findYamlConfig(CurrentPath.str().str()))
       return;
   }
 
-  Dl_info info;
-  if (!dladdr((void*)find_yamlconfig, &info)) {
-    SERR("Can't determine plugin file path");
+  Dl_info Info;
+  if (!dladdr((void *)findYamlConfig, &Info)) {
+    SERR("Cannot determine plugin file path");
   } else {
-    SmallString<256> PluginDir = StringRef(info.dli_fname);
+    SmallString<256> PluginDir = StringRef(Info.dli_fname);
     sys::path::remove_filename(PluginDir);
-    if (find_yamlconfig(PluginDir.str().str()))
+    if (findYamlConfig(PluginDir.str().str()))
       return;
   }
 
-  SINFO("Didn't find omvll.yml");
+  SINFO("Could not find omvll.yml");
 }
 
-
 PassPluginLibraryInfo getOMVLLPluginInfo() {
-  static std::atomic<bool> ONCE_FLAG = false;
+  static std::atomic<bool> Once = false;
   Logger::set_level(spdlog::level::level_enum::debug);
 
-  omvll::init_yamlconfig();
-  omvll::init_pythonpath();
-  return {LLVM_PLUGIN_API_VERSION, "OMVLL", "0.0.1",
-          [](PassBuilder &PB) {
+  omvll::initYamlConfig();
+  omvll::initPythonpath();
 
+  return {LLVM_PLUGIN_API_VERSION, "OMVLL", "1.1.0", [](PassBuilder &PB) {
             try {
-              auto& instance = omvll::PyConfig::instance();
-              SDEBUG("OMVLL Path: {}", instance.config_path());
+              auto &Instance = omvll::PyConfig::instance();
+              SDEBUG("Found OMVLL at: {}", Instance.configPath());
 
               PB.registerPipelineEarlySimplificationEPCallback(
-                [&] (ModulePassManager &MPM, OptimizationLevel opt) {
-                  if (ONCE_FLAG) {
-                    return true;
-                  }
-                  for (const std::string& pass : instance.get_passes()) {
-                    REGISTER_PASS(omvll::AntiHook);
-                    REGISTER_PASS(omvll::StringEncoding);
+                  [&](ModulePassManager &MPM, OptimizationLevel Opt) {
+                    if (Once)
+                      return true;
 
-                    REGISTER_PASS(omvll::OpaqueFieldAccess);
-                    REGISTER_PASS(omvll::ControlFlowFlattening);
-                    REGISTER_PASS(omvll::BreakControlFlow);
-
-                    REGISTER_PASS(omvll::OpaqueConstants);
-                    REGISTER_PASS(omvll::Arithmetic);
-
+                    MPM.addPass(omvll::AntiHook());
+                    MPM.addPass(omvll::StringEncoding());
+                    MPM.addPass(omvll::OpaqueFieldAccess());
+                    MPM.addPass(omvll::ControlFlowFlattening());
+                    MPM.addPass(omvll::BreakControlFlow());
+                    MPM.addPass(omvll::OpaqueConstants());
+                    MPM.addPass(omvll::Arithmetic());
 #ifdef OMVLL_EXPERIMENTAL
-                    /* ObjCleaner must be the last pass as function's name could be
-                     * changed, which can be confusing of the user
-                     */
-                    REGISTER_PASS(omvll::ObjCleaner);
+                    // ObjCleaner must be the last pass as function's name could
+                    // be changed, which can be confusing for the user.
+                    MPM.addPass(omvll::ObjCleaner());
 #endif
-                    REGISTER_PASS(omvll::Cleaning);
-                  }
-                  ONCE_FLAG = true;
-                  return true;
-                }
-              );
-            } catch (const std::exception& e) {
-              omvll::fatalError(e.what());
+                    MPM.addPass(omvll::Cleaning());
+
+                    Once = true;
+                    return true;
+                  });
+            } catch (const std::exception &Exc) {
+              omvll::fatalError(Exc.what());
             }
           }};
 }
@@ -161,5 +149,3 @@ extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo() {
   return getOMVLLPluginInfo();
 }
-
-

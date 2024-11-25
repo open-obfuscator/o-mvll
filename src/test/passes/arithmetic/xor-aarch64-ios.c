@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // REQUIRES: aarch64-registered-target
 
 // RUN:                                        clang -target arm64-apple-ios                         -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s

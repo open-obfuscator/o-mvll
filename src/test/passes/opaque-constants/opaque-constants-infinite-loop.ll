@@ -1,3 +1,7 @@
+;
+; This file is distributed under the Apache License v2.0. See LICENSE for details.
+;
+
 ; RUN: env OMVLL_CONFIG=%S/config_all.py clang -target aarch64-linux-android  -fpass-plugin=%libOMVLL -O0 -S -emit-llvm %s -o - | FileCheck %s --check-prefix=O0
 ; RUN: env OMVLL_CONFIG=%S/config_all.py clang -target aarch64-linux-android  -fpass-plugin=%libOMVLL -O1 -S -emit-llvm %s -o - | FileCheck %s --check-prefix=O1
 ; RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios        -fpass-plugin=%libOMVLL -O0 -S -emit-llvm %s -o - | FileCheck %s --check-prefix=O0

@@ -9,9 +9,12 @@
 
 namespace omvll {
 
-struct Cleaning : llvm::PassInfoMixin<Cleaning> {
+// The classical control-flow flattening pass.
+// See https://obfuscator.re/omvll/passes/control-flow-flattening/ for details.
+struct ControlFlowFlattening : llvm::PassInfoMixin<ControlFlowFlattening> {
   llvm::PreservedAnalyses run(llvm::Module &M,
                               llvm::ModuleAnalysisManager &FAM);
+  bool runOnFunction(llvm::Function &F, llvm::RandomNumberGenerator &RNG);
 };
 
 } // end namespace omvll

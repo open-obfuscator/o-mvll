@@ -1,5 +1,11 @@
 #!/usr/bin/sh
+
+#
+# This file is distributed under the Apache License v2.0. See LICENSE for details.
+#
+
 set -ex
+
 mkdir -p /deps && cd /deps
 
 cp /third-party/omvll-deps-xcode-*/LLVM-16.0.0git-arm64-Darwin.tar.gz .

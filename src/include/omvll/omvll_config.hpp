@@ -1,20 +1,24 @@
-#ifndef OMVLL_CONFIG_ALT_H
-#define OMVLL_CONFIG_ALT_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include <string>
 #include <vector>
 
 namespace omvll {
-struct config_t {
-  std::vector<std::string> passes;
-  bool cleaning;
-  bool shuffle_functions;
-  bool inline_jni_wrappers;
+
+struct OMVLLConfig {
+  std::vector<std::string> Passes;
+  bool Cleaning;
+  bool ShuffleFunctions;
+  bool InlineJniWrappers;
 };
 
-// Defined in omvll_config.cpp
-extern config_t config;
-void init_default_config();
+// Defined in omvll_config.cpp.
+extern OMVLLConfig Config;
+void initDefaultConfig();
 
-}
-
-#endif
+} // end namespace omvll

@@ -1,120 +1,112 @@
-#include "omvll/passes/Metadata.hpp"
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 
+#include "omvll/passes/Metadata.hpp"
 #include "omvll/visitvariant.hpp"
 
 using namespace llvm;
 
+static constexpr auto ObfKey = "obf";
+
 namespace omvll {
 
-static constexpr const char OBF_KEY[] = "obf";
-
-void addMetadata(llvm::Instruction& I, MetaObf M) {
-  return addMetadata(I, llvm::ArrayRef<MetaObf>(M));
+void addMetadata(Instruction &I, MetaObf M) {
+  addMetadata(I, ArrayRef<MetaObf>(M));
 }
 
-Metadata* serialize(LLVMContext& C, const MetaObf& MObf) {
-  ConstantAsMetadata* Ty = ConstantAsMetadata::get(ConstantInt::get(Type::getInt32Ty(C), MObf.type,
-                                                                    /* signed ? */false));
-  Metadata* value = std::visit(overloaded {
-      []   (std::monostate) -> Metadata* { return nullptr; },
-      [&C] (uint64_t value) -> Metadata* {
-          return ConstantAsMetadata::get(
-                  ConstantInt::get(Type::getInt64Ty(C), value, /* signed ? */false));
-      },
-  }, MObf.value);
+Metadata *serialize(LLVMContext &C, const MetaObf &MObf) {
+  ConstantAsMetadata *Ty = ConstantAsMetadata::get(
+      ConstantInt::get(Type::getInt32Ty(C), MObf.Type, /* signed ? */ false));
 
-  if (value) {
-    return MDTuple::get(C, {Ty, value});
-  }
+  Metadata *Value =
+      std::visit(overloaded{
+                     [](std::monostate) -> Metadata * { return nullptr; },
+                     [&C](uint64_t value) -> Metadata * {
+                       return ConstantAsMetadata::get(ConstantInt::get(
+                           Type::getInt64Ty(C), value, /* signed ? */ false));
+                     },
+                 },
+                 MObf.Value);
 
+  if (Value)
+    return MDTuple::get(C, {Ty, Value});
   return MDTuple::get(C, {Ty});
 }
 
-MetaObf deserialize(LLVMContext& C, const Metadata& Meta) {
-  auto* Root = dyn_cast<MDTuple>(&Meta);
-  if (Root == nullptr) {
-    return MetaObf::None;
-  }
+MetaObf deserialize(LLVMContext &C, const Metadata &Meta) {
+  auto *Root = dyn_cast<MDTuple>(&Meta);
+  if (!Root)
+    return MetaObfTy::None;
 
-  if (Root->getNumOperands() < 1) {
-    return MetaObf::None;
-  }
+  if (Root->getNumOperands() < 1)
+    return MetaObfTy::None;
 
-  const MDOperand& opType = Root->getOperand(0);
-  auto* CM = dyn_cast<ConstantAsMetadata>(opType.get());
+  const MDOperand &OpType = Root->getOperand(0);
+  auto *CM = dyn_cast<ConstantAsMetadata>(OpType.get());
+  if (!CM)
+    return MetaObfTy::None;
 
-  if (CM == nullptr) {
-    return MetaObf::None;
-  }
+  auto *CI = dyn_cast<ConstantInt>(CM->getValue());
+  if (!CI)
+    return MetaObfTy::None;
 
-  auto* CI = dyn_cast<ConstantInt>(CM->getValue());
-
-  if (CI == nullptr) {
-    return MetaObf::None;
-  }
-
-  auto T = MObfTy(CI->getLimitedValue());
+  auto T = MetaObfTy(CI->getLimitedValue());
   MetaObf MO(T);
 
   if (Root->getNumOperands() > 1) {
-    const MDOperand& Val = Root->getOperand(1);
-    if (auto* CM = dyn_cast<ConstantAsMetadata>(Val.get())) {
-      if (auto* CI = dyn_cast<ConstantInt>(CM->getValue())) {
-        MO.value = CI->getLimitedValue();
-      }
-    }
+    const MDOperand &Val = Root->getOperand(1);
+    if (auto *CM = dyn_cast<ConstantAsMetadata>(Val.get()))
+      if (auto *CI = dyn_cast<ConstantInt>(CM->getValue()))
+        MO.Value = CI->getLimitedValue();
   }
   return MO;
 }
 
-void addMetadata(llvm::Instruction& I, llvm::ArrayRef<MetaObf> M) {
-  auto& C = I.getContext();
-  llvm::SmallVector<Metadata*, 5> metadata;
-  for (auto MObf : M) {
-    metadata.push_back(serialize(C, MObf));
-  }
-  MDTuple* node = MDTuple::get(C, metadata);
-  I.setMetadata(OBF_KEY, node);
+void addMetadata(Instruction &I, ArrayRef<MetaObf> M) {
+  LLVMContext &Ctx = I.getContext();
+  SmallVector<Metadata *, 5> Metadata;
+  for (auto MObf : M)
+    Metadata.push_back(serialize(Ctx, MObf));
+
+  MDTuple *Node = MDTuple::get(Ctx, Metadata);
+  I.setMetadata(ObfKey, Node);
 }
 
-
-
-llvm::SmallVector<MetaObf, 5> getObfMetadata(llvm::Instruction& I) {
-  LLVMContext& C = I.getContext();
-  llvm::SmallVector<MetaObf, 5> result;
-  if (auto* node = I.getMetadata(OBF_KEY)) {
-    for (const MDOperand& op : node->operands()) {
-      if (auto MO = deserialize(C, *op); !MO.isNone()) {
-        result.push_back(std::move(MO));
-      }
-    }
-  }
-  return result;
+SmallVector<MetaObf, 5> getObfMetadata(Instruction &I) {
+  LLVMContext &Ctx = I.getContext();
+  SmallVector<MetaObf, 5> Result;
+  if (auto *Node = I.getMetadata(ObfKey))
+    for (const MDOperand &Op : Node->operands())
+      if (auto MO = deserialize(Ctx, *Op); !MO.isNone())
+        Result.push_back(std::move(MO));
+  return Result;
 }
 
-std::optional<MetaObf> getObf(llvm::Instruction &I, MObfTy M) {
-  auto* node = I.getMetadata(OBF_KEY);
-  if (node == nullptr) {
+std::optional<MetaObf> getObf(Instruction &I, MetaObfTy M) {
+  auto *Node = I.getMetadata(ObfKey);
+  if (!Node)
     return std::nullopt;
-  }
-  for (const MDOperand& op : node->operands()) {
-    MetaObf MO = deserialize(I.getContext(), *op);
-    if (MO.type == M) {
+
+  for (const MDOperand &Op : Node->operands()) {
+    MetaObf MO = deserialize(I.getContext(), *Op);
+    if (MO.Type == M)
       return MO;
-    }
   }
   return std::nullopt;
 }
 
-bool hasObf(llvm::Instruction& I, MObfTy M) {
+bool hasObf(Instruction &I, MetaObfTy M) {
   std::optional<MetaObf> Obf = getObf(I, M);
   if (Obf.has_value())
     return Obf->hasValue() && !(Obf->isNone());
   return false;
 }
 
-}
+} // end namespace omvll

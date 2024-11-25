@@ -1,32 +1,34 @@
-#include "omvll/passes/anti-hook/AntiHook.hpp"
-#include "omvll/log.hpp"
-#include "omvll/utils.hpp"
-#include "omvll/PyConfig.hpp"
-#include "omvll/passes/Metadata.hpp"
-#include "omvll/ObfuscationConfig.hpp"
-#include "omvll/Jitter.hpp"
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
 
-#include <llvm/Demangle/Demangle.h>
-#include <llvm/IR/Constants.h>
-#include <llvm/Support/MemoryBuffer.h>
+#include "llvm/Demangle/Demangle.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/Support/MemoryBuffer.h"
+
+#include "omvll/ObfuscationConfig.hpp"
+#include "omvll/PyConfig.hpp"
+#include "omvll/jitter.hpp"
+#include "omvll/log.hpp"
+#include "omvll/passes/anti-hook/AntiHook.hpp"
+#include "omvll/utils.hpp"
 
 using namespace llvm;
 
 namespace omvll {
 
-/*
- * The current versions of Frida (as of 16.0.2) fail to hook functions
- * that begin with instructions using x16/x17 registers.
- *
- * These stubs are using these registers and are injected in the prologue of the
- * function to protect
- */
+// Versions of Frida (as of 16.0.2) fail to hook functions that begin with
+// instructions using x16/x17 registers. These stubs are using these registers
+// and are injected in the prologue of the function to protect.
+
 struct PrologueInfoTy {
   std::string Asm;
-  size_t size;
+  size_t Size;
 };
 
-static const std::vector<PrologueInfoTy> ANTI_FRIDA_PROLOGUES = {
+// clang-format off
+static const std::vector<PrologueInfoTy> AntiFridaPrologues = {
   {R"delim(
     mov x17, x17;
     mov x16, x16;
@@ -37,58 +39,52 @@ static const std::vector<PrologueInfoTy> ANTI_FRIDA_PROLOGUES = {
     mov x17, x17;
   )delim", 2}
 };
+// clang-format on
 
-bool AntiHook::runOnFunction(llvm::Function &F) {
-  if (F.getInstructionCount() == 0) {
+bool AntiHook::runOnFunction(Function &F) {
+  if (F.getInstructionCount() == 0)
     return false;
-  }
 
-  if (F.hasPrologueData()) {
-    fatalError("Can't inject a hooking prologue in the function '" + demangle(F.getName().str()) + "' "
-               "since there is one.");
-  }
+  if (F.hasPrologueData())
+    fatalError("Cannot inject a hooking prologue in the function " +
+               demangle(F.getName().str()) + " since there is one.");
 
   SDEBUG("[{}] Injecting Anti-Frida prologue in {}", name(), F.getName());
 
-  std::uniform_int_distribution<size_t> Dist(0, ANTI_FRIDA_PROLOGUES.size() - 1);
-  size_t idx = Dist(*RNG_);
-  const PrologueInfoTy& P = ANTI_FRIDA_PROLOGUES[idx];
+  std::uniform_int_distribution<size_t> Dist(0, AntiFridaPrologues.size() - 1);
+  size_t Idx = Dist(*RNG);
+  const PrologueInfoTy &P = AntiFridaPrologues[Idx];
 
-  std::unique_ptr<MemoryBuffer> insts = jitter_->jitAsm(P.Asm, P.size);
+  std::unique_ptr<MemoryBuffer> Insts = JIT->jitAsm(P.Asm, P.Size);
+  if (!Insts)
+    fatalError("Cannot JIT Anti-Frida prologue: \n" + P.Asm);
 
-  if (insts == nullptr) {
-    fatalError("Can't JIT Anti-Frida prologue: \n" + P.Asm);
-  }
-
-  auto* Int8Ty = Type::getInt8Ty(F.getContext());
-  auto* Prologue = ConstantDataVector::getRaw(insts->getBuffer(), insts->getBufferSize(), Int8Ty);
+  auto *Int8Ty = Type::getInt8Ty(F.getContext());
+  auto *Prologue = ConstantDataVector::getRaw(Insts->getBuffer(),
+                                              Insts->getBufferSize(), Int8Ty);
   F.setPrologueData(Prologue);
 
   return true;
 }
 
-PreservedAnalyses AntiHook::run(Module &M,
-                                ModuleAnalysisManager &FAM) {
-  PyConfig &config = PyConfig::instance();
-  SINFO("[{}] Executing on module {}", name(), M.getName());
+PreservedAnalyses AntiHook::run(Module &M, ModuleAnalysisManager &FAM) {
   bool Changed = false;
-  jitter_ = std::make_unique<Jitter>(M.getTargetTriple());
+  PyConfig &Config = PyConfig::instance();
+  SINFO("[{}] Executing on module {}", name(), M.getName());
+  JIT = std::make_unique<Jitter>(M.getTargetTriple());
+  RNG = M.createRNG(name());
 
-  RNG_ = M.createRNG(name());
-
-  for (Function& F : M) {
-    if (!config.getUserConfig()->anti_hooking(F.getParent(), &F))
+  for (Function &F : M) {
+    if (!Config.getUserConfig()->antiHooking(F.getParent(), &F))
       continue;
 
     Changed |= runOnFunction(F);
   }
 
-  if (Changed)
-    SINFO("[{}] Changes applied on module {}", name(), M.getName());
+  SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",
+        M.getName());
 
-  return Changed ? PreservedAnalyses::none() :
-                   PreservedAnalyses::all();
-
-}
+  return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
+} // end namespace omvll

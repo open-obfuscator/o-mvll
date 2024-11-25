@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // REQUIRES: aarch64-registered-target
 
 // The default object contains the file-name string:
@@ -28,9 +33,10 @@
 //     CHECK-REPLACED-NOT: [[FILE_NAME]]
 
 extern void *stderr;
-extern int fprintf(void * __stream, const char *__format, ...);
+extern int fprintf(void *__stream, const char *__format, ...);
 
-#define LOG_ERROR(MSG) fprintf(stderr, "Error: %s (%s:%d)\n", MSG, __FILE__, __LINE__)
+#define LOG_ERROR(MSG)                                                         \
+  fprintf(stderr, "Error: %s (%s:%d)\n", MSG, __FILE__, __LINE__)
 
 bool check_code(int code) {
   if (code != 2) {

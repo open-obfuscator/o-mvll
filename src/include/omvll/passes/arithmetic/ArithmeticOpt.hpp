@@ -1,20 +1,22 @@
-#ifndef OMVLL_ARITHMETIC_OPT_H
-#define OMVLL_ARITHMETIC_OPT_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include <cstdint>
 #include <cstddef>
 
 namespace omvll {
 
 struct ArithmeticOpt {
-  static constexpr size_t DEFAULT_NB_ROUND = 3;
+  static constexpr size_t DefaultNumRounds = 3;
   ArithmeticOpt() = default;
-  ArithmeticOpt(uint8_t it) : iterations(it) {}
-  ArithmeticOpt(bool val) : iterations(val ? DEFAULT_NB_ROUND : 0) {}
-  operator bool() const { return iterations > 0; }
-  uint8_t iterations = DEFAULT_NB_ROUND;
+  ArithmeticOpt(uint8_t Iterations) : Iterations(Iterations) {}
+  ArithmeticOpt(bool Value) : Iterations(Value ? DefaultNumRounds : 0) {}
+  operator bool() const { return Iterations > 0; }
+  uint8_t Iterations = DefaultNumRounds;
 };
 
-
-}
-
-#endif
+} // end namespace omvll

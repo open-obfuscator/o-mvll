@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // REQUIRES: x86-registered-target
 
 // RUN: env OMVLL_CONFIG=%S/report_diff.py clang -target x86_64-pc-linux-gnu -fpass-plugin=%libOMVLL -O1 -S %s -o /dev/null -DNEEDS_OBFUSCATION | FileCheck %s

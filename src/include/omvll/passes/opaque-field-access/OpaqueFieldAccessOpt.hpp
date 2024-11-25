@@ -1,21 +1,22 @@
-#ifndef OMVLL_OPAQUE_FIELD_OPT_H
-#define OMVLL_OPAQUE_FIELD_OPT_H
-#include <variant>
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
 
 namespace omvll {
 
 struct StructAccessOpt {
-  StructAccessOpt(bool val) : value(val) {}
-  operator bool() const { return value; }
-  bool value = false;
+  StructAccessOpt(bool Value) : Value(Value) {}
+  operator bool() const { return Value; }
+  bool Value = false;
 };
 
 struct VarAccessOpt {
-  VarAccessOpt(bool val) : value(val) {}
-  operator bool() const { return value; }
-  bool value = false;
+  VarAccessOpt(bool Value) : Value(Value) {}
+  operator bool() const { return Value; }
+  bool Value = false;
 };
 
-}
-
-#endif
+} // end namespace omvll

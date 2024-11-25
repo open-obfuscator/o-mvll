@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // REQUIRES: aarch64-registered-target
 // XFAIL: host-platform-macOS
 

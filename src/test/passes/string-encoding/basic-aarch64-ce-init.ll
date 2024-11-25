@@ -1,3 +1,7 @@
+;
+; This file is distributed under the Apache License v2.0. See LICENSE for details.
+;
+
 ; REQUIRES: aarch64-registered-target
 
 ;     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \

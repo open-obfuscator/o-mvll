@@ -1,10 +1,15 @@
 #pragma once
 
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
+#include <spdlog/fmt/chrono.h>
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/stopwatch.h>
-#include <spdlog/fmt/ostr.h>
-#include <spdlog/fmt/fmt.h>
-#include <spdlog/fmt/chrono.h>
 
 #include "omvll/config.hpp"
 
@@ -19,20 +24,20 @@
 #define SWARN(...)  Logger::warn(__VA_ARGS__)
 #define SERR(...)   Logger::err(__VA_ARGS__)
 
-enum class LOG_LEVEL {
-  DEBUG,
-  TRACE,
-  INFO,
-  WARN,
-  ERR,
+enum class LogLevel {
+  Debug,
+  Trace,
+  Info,
+  Warn,
+  Err,
 };
 
 class Logger {
-  public:
-  Logger(const Logger&) = delete;
-  Logger& operator=(const Logger&) = delete;
+public:
+  Logger(const Logger &) = delete;
+  Logger &operator=(const Logger &) = delete;
 
-  static Logger& instance();
+  static Logger &instance();
 
   //! @brief Disable the logging module
   static void disable();
@@ -40,44 +45,44 @@ class Logger {
   //! @brief Enable the logging module
   static void enable();
 
-  static void set_level(spdlog::level::level_enum lvl);
-  static void set_level(LOG_LEVEL lvl);
+  static void set_level(spdlog::level::level_enum Level);
+  static void set_level(LogLevel Level);
 
-  template <typename... Args>
-  static void trace(const char *fmt, const Args &... args) {
-    Logger::instance().sink_->trace(fmt, args...);
+  template <typename... Ts>
+  static void trace(const char *Fmt, const Ts &...Args) {
+    Logger::instance().Sink->trace(Fmt, Args...);
   }
 
-  template <typename... Args>
-  static void debug(const char *fmt, const Args &... args) {
-    #ifdef OMVLL_DEBUG
-      Logger::instance().sink_->debug(fmt, args...);
-    #endif
+  template <typename... Ts>
+  static void debug(const char *Fmt, const Ts &...Args) {
+#ifdef OMVLL_DEBUG
+    Logger::instance().Sink->debug(Fmt, Args...);
+#endif
   }
 
-  template <typename... Args>
-  static void info(const char *fmt, const Args &... args) {
-    Logger::instance().sink_->info(fmt, args...);
+  template <typename... Ts>
+  static void info(const char *Fmt, const Ts &...Args) {
+    Logger::instance().Sink->info(Fmt, Args...);
   }
 
-  template <typename... Args>
-  static void err(const char *fmt, const Args &... args) {
-    Logger::instance().sink_->error(fmt, args...);
+  template <typename... Ts>
+  static void err(const char *Fmt, const Ts &...Args) {
+    Logger::instance().Sink->error(Fmt, Args...);
   }
 
-  template <typename... Args>
-  static void warn(const char *fmt, const Args &... args) {
-    Logger::instance().sink_->warn(fmt, args...);
+  template <typename... Ts>
+  static void warn(const char *Fmt, const Ts &...Args) {
+    Logger::instance().Sink->warn(Fmt, Args...);
   }
 
   ~Logger();
-  private:
+
+private:
   Logger(void);
-  Logger(Logger&&);
-  Logger& operator=(Logger&&);
+  Logger(Logger &&);
+  Logger &operator=(Logger &&);
 
   static void destroy();
-  inline static Logger* instance_ = nullptr;
-  std::shared_ptr<spdlog::logger> sink_;
+  static inline Logger *Instance = nullptr;
+  std::shared_ptr<spdlog::logger> Sink;
 };
-

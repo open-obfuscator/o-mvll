@@ -1,5 +1,9 @@
-#ifndef OMVLL_CONFIG_H
-#define OMVLL_CONFIG_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for details.
+//
+
 #cmakedefine OMVLL_DEBUG  @OMVLL_DEBUG@
 #cmakedefine01 OMVLL_PY_STANDALONE
 
@@ -14,6 +18,4 @@ static constexpr bool is_py_standalone = OMVLL_PY_STANDALONE;
 static constexpr bool is_debug = true;
 #else
 static constexpr bool is_debug = false;
-#endif
-
 #endif

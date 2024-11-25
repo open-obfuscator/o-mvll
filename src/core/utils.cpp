@@ -1,28 +1,33 @@
-#include "omvll/utils.hpp"
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
+#include <optional>
+
+#include "llvm/ADT/Hashing.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/Error.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
+#include "llvm/Support/RandomNumberGenerator.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
+
 #include "omvll/ObfuscationConfig.hpp"
 #include "omvll/PyConfig.hpp"
 #include "omvll/log.hpp"
-
-#include <llvm/ADT/Hashing.h>
-#include <llvm/IR/BasicBlock.h>
-#include <llvm/IR/Function.h>
-#include <llvm/IR/InstIterator.h>
-#include <llvm/IR/Instruction.h>
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IRReader/IRReader.h>
-#include <llvm/Support/Error.h>
-#include <llvm/Support/FileSystem.h>
-#include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Support/Path.h>
-#include <llvm/Support/Program.h>
-#include <llvm/Support/RandomNumberGenerator.h>
-#include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Transforms/Utils/BasicBlockUtils.h>
-#include <llvm/Transforms/Utils/Local.h>
-
-#include <optional>
+#include "omvll/utils.hpp"
 
 using namespace llvm;
 
@@ -97,7 +102,7 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
   for (const auto &Arg : ExtraArgs)
     Args.push_back(Arg);
 
-  // Create the input C file and choose macthing output file name
+  // Create the input C file and choose macthing output file name.
   int InFileFD;
   SmallString<128> InFileName;
   std::string Prefix = "omvll-" + Triple.getTriple();
@@ -110,16 +115,16 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
   Args.push_back(OutFileName);
   Args.push_back(InFileName);
 
-  // Write the given C code to the input file
+  // Write the given C code to the input file.
   {
     std::error_code EC;
-    raw_fd_ostream inFileOS(InFileName, EC);
+    raw_fd_ostream OS(InFileName, EC);
     if (EC)
       return errorCodeToError(EC);
-    inFileOS << Code;
+    OS << Code;
   }
 
-  // TODO: Write to omvll debug log instead of stderr
+  // TODO: Write to omvll debug log instead of stderr.
   for (StringRef Entry : Args)
     errs() << Entry << " ";
   errs() << "\n";
@@ -131,7 +136,7 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
   return OutFileName;
 }
 
-static Error createSMDiagnosticError(llvm::SMDiagnostic &Diag) {
+static Error createSMDiagnosticError(SMDiagnostic &Diag) {
   std::string Msg;
   {
     raw_string_ostream OS(Msg);
@@ -140,8 +145,8 @@ static Error createSMDiagnosticError(llvm::SMDiagnostic &Diag) {
   return make_error<StringError>(std::move(Msg), inconvertibleErrorCode());
 }
 
-static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path,
-                                                          LLVMContext &Ctx) {
+static Expected<std::unique_ptr<Module>> loadModule(StringRef Path,
+                                                    LLVMContext &Ctx) {
   SMDiagnostic Err;
   auto M = parseIRFile(Path, Err, Ctx);
   if (!M)
@@ -149,54 +154,53 @@ static Expected<std::unique_ptr<llvm::Module>> loadModule(StringRef Path,
   return M;
 }
 
-} // namespace detail
+} // end namespace detail
 
 namespace omvll {
 
-std::string ToString(const Module& M) {
-  std::error_code ec;
-  std::string out;
-  raw_string_ostream os(out);
-  M.print(os, nullptr);
-  return out;
+std::string ToString(const Module &M) {
+  std::error_code EC;
+  std::string Out;
+  raw_string_ostream OS(Out);
+  M.print(OS, nullptr);
+  return Out;
 }
 
-std::string ToString(const Instruction& I) {
-  std::string out;
-  raw_string_ostream(out) << I;
-  return out;
+std::string ToString(const Instruction &I) {
+  std::string Out;
+  raw_string_ostream(Out) << I;
+  return Out;
 }
 
-std::string ToString(const BasicBlock& BB) {
-  std::string out;
-  raw_string_ostream os(out);
-  BB.printAsOperand(os, true);
-  return out;
+std::string ToString(const BasicBlock &BB) {
+  std::string Out;
+  raw_string_ostream OS(Out);
+  BB.printAsOperand(OS, true);
+  return Out;
 }
 
-std::string ToString(const Type& Ty) {
-  std::string out;
-  raw_string_ostream os(out);
-  os << TypeIDStr(Ty) << ": " << Ty;
-  return out;
+std::string ToString(const Type &Ty) {
+  std::string Out;
+  raw_string_ostream OS(Out);
+  OS << TypeIDStr(Ty) << ": " << Ty;
+  return Out;
 }
 
-std::string ToString(const Value& V) {
-  std::string out;
-  raw_string_ostream os(out);
-  os << ValueIDStr(V) << ": " << V;
-  return out;
+std::string ToString(const Value &V) {
+  std::string Out;
+  raw_string_ostream OS(Out);
+  OS << ValueIDStr(V) << ": " << V;
+  return Out;
 }
 
-
-std::string ToString(const MDNode& N) {
-  std::string out;
-  raw_string_ostream os(out);
-  N.printTree(os);
-  return out;
+std::string ToString(const MDNode &N) {
+  std::string Out;
+  raw_string_ostream OS(Out);
+  N.printTree(OS);
+  return Out;
 }
 
-std::string TypeIDStr(const Type& Ty) {
+std::string TypeIDStr(const Type &Ty) {
   switch (Ty.getTypeID()) {
     case Type::TypeID::HalfTyID:           return "HalfTyID";
     case Type::TypeID::BFloatTyID:         return "BFloatTyID";
@@ -225,8 +229,7 @@ std::string TypeIDStr(const Type& Ty) {
   }
 }
 
-std::string ValueIDStr(const Value& V) {
-
+std::string ValueIDStr(const Value &V) {
 
 #define HANDLE_VALUE(ValueName) case Value::ValueTy::ValueName ## Val: return #ValueName;
 //#define HANDLE_INSTRUCTION(Name)  /* nothing */
@@ -241,40 +244,38 @@ std::string ValueIDStr(const Value& V) {
   return std::to_string(V.getValueID());
 }
 
-void dump(Module& M, const std::string& file) {
-  std::error_code ec;
-  raw_fd_ostream fd(file, ec);
-  M.print(fd, nullptr);
+void dump(Module &M, const std::string &File) {
+  std::error_code EC;
+  raw_fd_ostream FD(File, EC);
+  M.print(FD, nullptr);
 }
 
-void dump(Function& F, const std::string& file) {
-  std::error_code ec;
-  raw_fd_ostream fd(file, ec);
-  F.print(fd, nullptr);
+void dump(Function &F, const std::string &File) {
+  std::error_code EC;
+  raw_fd_ostream FD(File, EC);
+  F.print(FD, nullptr);
 }
 
-void dump(const MemoryBuffer& MB, const std::string& file) {
-  std::error_code ec;
-  raw_fd_ostream fd(file, ec);
-  fd << MB.getBuffer();
+void dump(const MemoryBuffer &MB, const std::string &File) {
+  std::error_code EC;
+  raw_fd_ostream FD(File, EC);
+  FD << MB.getBuffer();
 }
 
-size_t demotePHINode(Function& F) {
-  size_t count = 0;
-  std::vector<PHINode*> phiNodes;
+size_t demotePHINode(Function &F) {
+  size_t Count = 0;
+  std::vector<PHINode *> PhiNodes;
   do {
-    phiNodes.clear();
-    for (auto& BB : F) {
-      for (auto& I : BB.phis()) {
-        phiNodes.push_back(&I);
-      }
-    }
-    count += phiNodes.size();
-    for (PHINode* phi : phiNodes) {
-      DemotePHIToStack(phi, F.begin()->getTerminator());
-    }
-  } while (!phiNodes.empty());
-  return count;
+    PhiNodes.clear();
+    for (auto &BB : F)
+      for (auto &I : BB.phis())
+        PhiNodes.push_back(&I);
+
+    Count += PhiNodes.size();
+    for (PHINode *Phi : PhiNodes)
+      DemotePHIToStack(Phi, F.begin()->getTerminator());
+  } while (!PhiNodes.empty());
+  return Count;
 }
 
 static bool valueEscapes(const Instruction &Inst) {
@@ -287,28 +288,26 @@ static bool valueEscapes(const Instruction &Inst) {
   return false;
 }
 
-size_t demoteRegs(Function& F) {
-  size_t count = 0;
-  std::list<Instruction*> WorkList;
-  BasicBlock* BBEntry = &F.getEntryBlock();
+size_t demoteRegs(Function &F) {
+  size_t Count = 0;
+  std::list<Instruction *> WorkList;
+  BasicBlock *BBEntry = &F.getEntryBlock();
   do {
     WorkList.clear();
-    for (BasicBlock& BB : F) {
-      for (Instruction& I : BB) {
-        if (!(isa<AllocaInst>(I) && I.getParent() == BBEntry) && valueEscapes(I)) {
+    for (BasicBlock &BB : F)
+      for (Instruction &I : BB)
+        if (!(isa<AllocaInst>(I) && I.getParent() == BBEntry) &&
+            valueEscapes(I))
           WorkList.push_front(&I);
-        }
-      }
-    }
-    count += WorkList.size();
-    for (Instruction* I : WorkList) {
+
+    Count += WorkList.size();
+    for (Instruction *I : WorkList)
       DemoteRegToStack(*I, false, F.begin()->getTerminator());
-    }
   } while (!WorkList.empty());
-  return count;
+  return Count;
 }
 
-size_t reg2mem(Function& F) {
+size_t reg2mem(Function &F) {
   /* The code of this function comes from the pass Reg2Mem.cpp
    * Note(Romain): I tried to run this pass using the PassManager with the following code:
    *
@@ -324,7 +323,7 @@ size_t reg2mem(Function& F) {
    * It might be worth investigating why it crashes.
    */
   SplitAllCriticalEdges(F, CriticalEdgeSplittingOptions());
-  size_t count = 0;
+  size_t Count = 0;
   // Insert all new allocas into entry block.
   BasicBlock *BBEntry = &F.getEntryBlock();
   assert(pred_empty(BBEntry) &&
@@ -342,32 +341,32 @@ size_t reg2mem(Function& F) {
 
   // Find the escaped instructions. But don't create stack slots for
   // allocas in entry block.
-  std::list<Instruction*> WorkList;
+  std::list<Instruction *> WorkList;
   for (Instruction &I : instructions(F))
     if (!(isa<AllocaInst>(I) && I.getParent() == BBEntry) && valueEscapes(I))
       WorkList.push_front(&I);
 
-  // Demote escaped instructions
-  count += WorkList.size();
+  // Demote escaped instructions.
+  Count += WorkList.size();
   for (Instruction *I : WorkList)
     DemoteRegToStack(*I, false, AllocaInsertionPoint);
 
   WorkList.clear();
 
-  // Find all phi's
+  // Find all phi's.
   for (BasicBlock &BB : F)
-    for (auto &Phi : BB.phis())
+    for (PHINode &Phi : BB.phis())
       WorkList.push_front(&Phi);
 
-  // Demote phi nodes
-  count += WorkList.size();
+  // Demote phi nodes.
+  Count += WorkList.size();
   for (Instruction *I : WorkList)
     DemotePHIToStack(cast<PHINode>(I), AllocaInsertionPoint);
 
-  return count;
+  return Count;
 }
 
-void shuffleFunctions(Module& M) {
+void shuffleFunctions(Module &M) {
   /*
    * The iterator associated getFunctionList() is not "random"
    * so we can't std::shuffle() the list.
@@ -375,53 +374,52 @@ void shuffleFunctions(Module& M) {
    * On the other hand, getFunctionList() has a sort method that we can
    * use to (randomly?) shuffle in list in place.
    */
-  DenseMap<Function*, uint32_t> Values;
+  DenseMap<Function *, uint32_t> Values;
   DenseSet<uint64_t> Taken;
 
-  std::mt19937_64 gen64;
-  std::uniform_int_distribution<uint32_t> Dist(0, std::numeric_limits<uint32_t>::max() - 1);
+  std::mt19937_64 Gen64;
+  size_t Max = std::numeric_limits<uint32_t>::max();
+  std::uniform_int_distribution<uint32_t> Dist(0, Max - 1);
 
-  for (Function& F : M) {
-    uint64_t ID = Dist(gen64);
-    while (!Taken.insert(ID).second) {
-      ID = Dist(gen64);
-    }
+  for (Function &F : M) {
+    uint64_t ID = Dist(Gen64);
+    while (!Taken.insert(ID).second)
+      ID = Dist(Gen64);
+
     Values[&F] = ID;
   }
 
-  auto& List = M.getFunctionList();
-  List.sort([&Values] (Function& LHS, Function& RHS) {
-              return Values[&LHS] < Values[&RHS];
-            });
+  auto &List = M.getFunctionList();
+  List.sort([&Values](Function &LHS, Function &RHS) {
+    return Values[&LHS] < Values[&RHS];
+  });
 }
 
-void fatalError(const std::string& msg) {
-  fatalError(msg.c_str());
-}
+void fatalError(const std::string &Msg) { fatalError(Msg.c_str()); }
 
-void fatalError(const char* msg) {
+void fatalError(const char *Msg) {
   static LLVMContext Ctx;
-  Ctx.emitError(msg);
+  Ctx.emitError(Msg);
 
-  // emitError could return, so we make sure that we stop the execution
-  SERR("Error: {}", msg);
+  // emitError could return, so we make sure that we stop the execution.
+  SERR("Error: {}", Msg);
   std::abort();
 }
 
-Expected<std::unique_ptr<llvm::Module>>
+Expected<std::unique_ptr<Module>>
 generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
                LLVMContext &Ctx, ArrayRef<std::string> ExtraArgs) {
   using namespace ::detail;
 
-  llvm::hash_code HashValue = llvm::hash_combine(Routine, Triple.getTriple());
+  hash_code HashValue = hash_combine(Routine, Triple.getTriple());
 
   SmallString<128> TempPath;
-  llvm::sys::path::system_temp_directory(true, TempPath);
-  llvm::sys::path::append(TempPath, "omvll-cache-" + Triple.getTriple() + "-" +
-                                        std::to_string(HashValue) + ".ll");
+  sys::path::system_temp_directory(true, TempPath);
+  sys::path::append(TempPath, "omvll-cache-" + Triple.getTriple() + "-" +
+                                  std::to_string(HashValue) + ".ll");
   std::string IRModuleFilename = std::string(TempPath.str());
 
-  if (llvm::sys::fs::exists(IRModuleFilename)) {
+  if (sys::fs::exists(IRModuleFilename)) {
     return loadModule(IRModuleFilename, Ctx);
   } else {
     auto MaybePath = runClangExecutable(Routine, Extension, Triple, ExtraArgs);
@@ -433,8 +431,7 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
       return MaybeModule.takeError();
 
     std::error_code EC;
-    llvm::raw_fd_ostream IRModuleFile(IRModuleFilename, EC,
-                                      llvm::sys::fs::OF_None);
+    raw_fd_ostream IRModuleFile(IRModuleFilename, EC, sys::fs::OF_None);
     if (EC)
       return errorCodeToError(EC);
 
@@ -444,23 +441,22 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
   }
 }
 
-IRChangesMonitor::IRChangesMonitor(const llvm::Module &M,
-                                   llvm::StringRef PassName)
-    : Mod(M), UserConfig(PyConfig::instance().getUserConfig()),
+IRChangesMonitor::IRChangesMonitor(const Module &M, StringRef PassName)
+    : M(M), UserConfig(PyConfig::instance().getUserConfig()),
       PassName(PassName), ChangeReported(false) {
-  if (UserConfig->has_report_diff_override())
-    llvm::raw_string_ostream(OriginalIR) << Mod;
+  if (UserConfig->hasReportDiffOverride())
+    raw_string_ostream(OriginalIR) << M;
 }
 
 PreservedAnalyses IRChangesMonitor::report() {
-  if (ChangeReported && UserConfig->has_report_diff_override()) {
+  if (ChangeReported && UserConfig->hasReportDiffOverride()) {
     std::string ObfuscatedIR;
-    llvm::raw_string_ostream(ObfuscatedIR) << Mod;
+    raw_string_ostream(ObfuscatedIR) << M;
     if (OriginalIR != ObfuscatedIR)
-      UserConfig->report_diff(PassName, OriginalIR, ObfuscatedIR);
+      UserConfig->reportDiff(PassName, OriginalIR, ObfuscatedIR);
   }
 
   return ChangeReported ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
-} // namespace omvll
+} // end namespace omvll

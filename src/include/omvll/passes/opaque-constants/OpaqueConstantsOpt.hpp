@@ -1,36 +1,40 @@
-#ifndef OMVLL_OPAQUE_CST_OPT_H
-#define OMVLL_OPAQUE_CST_OPT_H
-#include <variant>
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include <cstddef>
-#include <string>
+#include <variant>
 #include <vector>
 
-#include <llvm/ADT/DenseSet.h>
+#include "llvm/ADT/DenseSet.h"
 
 namespace omvll {
 
-struct OpaqueConstantsSkip{};
+struct OpaqueConstantsSkip {};
 
 struct OpaqueConstantsBool  {
-  OpaqueConstantsBool(bool val) : value(val) {}
-  operator bool() const { return value; }
-  bool value = false;
+  OpaqueConstantsBool(bool Value) : Value(Value) {}
+  operator bool() const { return Value; }
+  bool Value = false;
 };
 
 struct OpaqueConstantsLowerLimit {
-  OpaqueConstantsLowerLimit(uint64_t val) : value(val) {}
-  operator bool() const { return value > 0; }
-  uint64_t value = 0;
+  OpaqueConstantsLowerLimit(uint64_t Value) : Value(Value) {}
+  operator bool() const { return Value > 0; }
+  uint64_t Value = 0;
 };
 
 struct OpaqueConstantsSet {
-  OpaqueConstantsSet(std::vector<uint64_t> val) :
-    values(val.begin(), val.end())
-  {}
-  inline bool contains(uint64_t value) const { return values.contains(value); }
-  inline bool empty() { return values.empty(); };
-  inline operator bool() const { return !values.empty(); }
-  llvm::DenseSet<uint64_t> values;
+  OpaqueConstantsSet(std::vector<uint64_t> Value)
+      : Values(Value.begin(), Value.end()) {}
+
+  inline bool contains(uint64_t Value) const { return Values.contains(Value); }
+  inline bool empty() { return Values.empty(); };
+  inline operator bool() const { return !Values.empty(); }
+  llvm::DenseSet<uint64_t> Values;
 };
 
 using OpaqueConstantsOpt = std::variant<
@@ -40,9 +44,4 @@ using OpaqueConstantsOpt = std::variant<
   OpaqueConstantsSet
 >;
 
-
-
-
-}
-
-#endif
+} // end namespace omvll

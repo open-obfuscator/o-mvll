@@ -1,3 +1,7 @@
+#
+# This file is distributed under the Apache License v2.0. See LICENSE for details.
+#
+
 import argparse
 import sys
 from pathlib import Path

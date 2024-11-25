@@ -1,55 +1,56 @@
-#ifndef OMVLL_METADATA_H
-#define OMVLL_METADATA_H
-#include <llvm/ADT/ArrayRef.h>
-#include <llvm/ADT/SmallVector.h>
-#include <variant>
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
 
 #include <optional>
+#include <variant>
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
+
+// Forward declarations
 namespace llvm {
 class Instruction;
-}
+} // end namespace llvm
 
 namespace omvll {
-enum MObfTy {
-  NONE = 0,
 
-  OPAQUE_CST,  // Force to apply opaque constants
-  OPAQUE_OP,   // Force to apply MBA-like
-  OPAQUE_COND, // Force to apply opaque conditions
-
-  PROTECT_FIELD_ACCESS, // Force to apply opaque field access
+enum MetaObfTy {
+  None = 0,
+  OpaqueCst,          // Force to apply opaque constants.
+  OpaqueOp,           // Force to apply MBA-like.
+  OpaqueCond,         // Force to apply opaque conditions.
+  ProtectFieldAccess, // Force to apply opaque field access.
 };
 
-using MObfVal = std::variant<
-  std::monostate,
-  uint64_t
->;
+using MetaObfVal = std::variant<std::monostate, uint64_t>;
 
 struct MetaObf {
-  inline static constexpr MObfTy None = NONE;
-
   MetaObf() = default;
-  MetaObf(MObfTy Ty) : type(Ty) {}
-  MetaObf(MObfTy Ty, MObfVal val) : type(Ty), value(std::move(val)) {}
-  MObfTy type = MObfTy::NONE;
-  MObfVal value;
-  inline bool isNone() { return type == MObfTy::NONE; }
-  inline bool hasValue() { return !std::holds_alternative<std::monostate>(value); }
-  template<class T>
-  const T* get() {
-    if (const T* v = std::get_if<T>(&value)) {
-      return v;
-    }
+  MetaObf(MetaObfTy Ty) : Type(Ty) {}
+  MetaObf(MetaObfTy Ty, MetaObfVal Value) : Type(Ty), Value(std::move(Value)) {}
+  MetaObfTy Type = MetaObfTy::None;
+  MetaObfVal Value;
+
+  inline bool isNone() { return Type == MetaObfTy::None; }
+  inline bool hasValue() {
+    return !std::holds_alternative<std::monostate>(Value);
+  }
+
+  template <class T> const T *get() {
+    if (const T *V = std::get_if<T>(&Value))
+      return V;
     return nullptr;
   }
 };
 
-void addMetadata(llvm::Instruction& I, MetaObf M);
-void addMetadata(llvm::Instruction& I, llvm::ArrayRef<MetaObf> M);
-llvm::SmallVector<MetaObf, 5> getObfMetadata(llvm::Instruction& I);
-std::optional<MetaObf> getObf(llvm::Instruction &I, MObfTy M);
-bool hasObf(llvm::Instruction& I, MObfTy M);
+void addMetadata(llvm::Instruction &I, MetaObf M);
+void addMetadata(llvm::Instruction &I, llvm::ArrayRef<MetaObf> M);
+llvm::SmallVector<MetaObf, 5> getObfMetadata(llvm::Instruction &I);
+std::optional<MetaObf> getObf(llvm::Instruction &I, MetaObfTy M);
+bool hasObf(llvm::Instruction &I, MetaObfTy M);
 
-}
-#endif
+} // end namespace omvll

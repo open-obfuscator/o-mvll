@@ -1,7 +1,13 @@
-#ifndef OMVLL_VERIONING_H
-#define OMVLL_VERIONING_H
-#include <llvm/Support/VCSRevision.h>
-#include <llvm/Config/llvm-config.h>
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
+#include "llvm/Config/llvm-config.h"
+#include "llvm/Support/VCSRevision.h"
+
 #include "omvll/config.hpp"
 
 #ifdef LLVM_REVISION
@@ -15,5 +21,3 @@
 #define OMVLL_LLVM_MINOR          LLVM_VERSION_MINOR
 #define OMVLL_LLVM_PATCH          LLVM_VERSION_PATCH
 #define OMVLL_LLVM_VERSION_STRING LLVM_VERSION_STRING
-
-#endif

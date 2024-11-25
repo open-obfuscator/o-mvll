@@ -1,9 +1,19 @@
-#include "init.hpp"
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include "omvll/passes/ObfuscationOpt.hpp"
+
+#include "init.hpp"
+
+namespace py = pybind11;
+
+using namespace pybind11::literals;
 
 namespace omvll {
 
-py::module_& py_init_obf_opt(py::module_& m) {
+py::module_ &py_init_obf_opt(py::module_ &m) {
   // Strings Encoding
   py::class_<StringEncOptSkip>(m, "StringEncOptSkip",
     R"delim(
@@ -153,4 +163,4 @@ py::module_& py_init_obf_opt(py::module_& m) {
   return m;
 }
 
-}
+} // end namespace omvll

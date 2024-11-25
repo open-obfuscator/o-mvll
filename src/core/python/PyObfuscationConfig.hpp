@@ -1,33 +1,49 @@
-#ifndef OMVLL_PY_OBFUSCATION_CONFIG_H
-#define OMVLL_PY_OBFUSCATION_CONFIG_H
-#include "omvll/ObfuscationConfig.hpp"
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include <mutex>
+
+#include "omvll/ObfuscationConfig.hpp"
 
 namespace omvll {
 
 class PyObfuscationConfig : public ObfuscationConfig {
   using ObfuscationConfig::ObfuscationConfig;
-  StringEncodingOpt obfuscate_string(llvm::Module* mod, llvm::Function* func,
-                                     const std::string& str) override;
 
-  BreakControlFlowOpt break_control_flow(llvm::Module* mod, llvm::Function* func) override;
-  ControlFlowFlatteningOpt flatten_cfg(llvm::Module* mod, llvm::Function* func) override;
+  StringEncodingOpt obfuscateString(llvm::Module *M, llvm::Function *F,
+                                    const std::string &Str) override;
 
-  StructAccessOpt obfuscate_struct_access(llvm::Module* mod, llvm::Function* func,
-                                          llvm::StructType* S) override;
-  VarAccessOpt obfuscate_variable_access(llvm::Module* mod, llvm::Function* func,
-                                         llvm::GlobalVariable* S) override;
-  AntiHookOpt anti_hooking(llvm::Module* mod, llvm::Function* func) override;
-  ArithmeticOpt obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func) override;
-  OpaqueConstantsOpt obfuscate_constants(llvm::Module* mod, llvm::Function* func) override;
+  BreakControlFlowOpt breakControlFlow(llvm::Module *M,
+                                       llvm::Function *F) override;
 
-  bool has_report_diff_override() override;
-  void report_diff(const std::string &pass, const std::string &original,
-                   const std::string &obfuscated) override;
+  ControlFlowFlatteningOpt
+  controlFlowGraphFlattening(llvm::Module *M, llvm::Function *F) override;
+
+  StructAccessOpt obfuscateStructAccess(llvm::Module *M, llvm::Function *F,
+                                        llvm::StructType *S) override;
+
+  VarAccessOpt obfuscateVariableAccess(llvm::Module *M, llvm::Function *F,
+                                       llvm::GlobalVariable *S) override;
+
+  AntiHookOpt antiHooking(llvm::Module *M, llvm::Function *F) override;
+
+  ArithmeticOpt obfuscateArithmetics(llvm::Module *M,
+                                     llvm::Function *F) override;
+
+  OpaqueConstantsOpt obfuscateConstants(llvm::Module *M,
+                                        llvm::Function *F) override;
+
+  bool hasReportDiffOverride() override;
+  void reportDiff(const std::string &Pass, const std::string &Original,
+                  const std::string &Obfuscated) override;
 
 private:
-  bool overrides_report_diff_ = false;
-  std::once_flag overrides_report_diff_checked_;
+  bool OverridesReportDiff = false;
+  std::once_flag OverridesReportDiffChecked;
 };
-}
-#endif
+
+} // end namespace omvll

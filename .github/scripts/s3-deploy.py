@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+#
+# This file is distributed under the Apache License v2.0. See LICENSE for details.
+#
+
 import sys
 import os
 import logging

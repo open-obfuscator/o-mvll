@@ -7,8 +7,8 @@
 
 namespace omvll {
 
-struct AntiHookOpt {
-  AntiHookOpt(bool Value) : Value(Value) {}
+struct ControlFlowFlatteningOpt {
+  ControlFlowFlatteningOpt(bool Value) : Value(Value) {}
   operator bool() const { return Value; }
   bool Value = false;
 };

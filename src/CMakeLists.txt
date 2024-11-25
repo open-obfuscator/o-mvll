@@ -75,7 +75,6 @@ else()
   set(OMVLL_DEBUG 1)
 endif()
 
-
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/omvll/config.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/omvll/config.hpp")
 
@@ -133,7 +132,6 @@ endif()
 
 target_link_options(OMVLL PUBLIC ${OMVLL_LINK_OPT})
 
-
 target_link_libraries(OMVLL
   PRIVATE
     spdlog::spdlog pybind11::headers
@@ -146,7 +144,6 @@ if(NOT APPLE)
     -static-libgcc
   )
 endif()
-
 
 set(LLVM_LIBS_DEP
   demangle

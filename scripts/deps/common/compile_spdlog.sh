@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
+
+#
+# This file is distributed under the Apache License v2.0. See LICENSE for details.
+#
+
 # This script is used to compile cpython
+
 set -e
 
 curl -LO https://github.com/gabime/spdlog/archive/refs/tags/v1.10.0.tar.gz

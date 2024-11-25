@@ -1,3 +1,7 @@
+;
+; This file is distributed under the Apache License v2.0. See LICENSE for details.
+;
+
 ; REQUIRES: aarch64-registered-target
 
 ; The 'replace' configuration encodes the string and adds logic that decodes it at load-time:

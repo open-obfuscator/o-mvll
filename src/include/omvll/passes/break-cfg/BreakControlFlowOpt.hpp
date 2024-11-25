@@ -1,17 +1,16 @@
-#ifndef OMVLL_BREAK_CONTROL_FLOW_OPT_H
-#define OMVLL_BREAK_CONTROL_FLOW_OPT_H
-#include <variant>
-#include <cstddef>
-#include <string>
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
 
 namespace omvll {
 
 struct BreakControlFlowOpt {
-  BreakControlFlowOpt(bool val) : value(val) {}
-  operator bool() const { return value; }
-  bool value = false;
+  BreakControlFlowOpt(bool Value) : Value(Value) {}
+  operator bool() const { return Value; }
+  bool Value = false;
 };
 
-}
-
-#endif
+} // end namespace omvll

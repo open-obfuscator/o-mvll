@@ -1,46 +1,56 @@
-#ifndef OMVLL_OBF_CONFIG_H
-#define OMVLL_OBF_CONFIG_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
 
 #include "omvll/passes/ObfuscationOpt.hpp"
 
+// Forward declarations
 namespace llvm {
 class Module;
 class Function;
 class StructType;
 class GlobalVariable;
-}
-
+} // end namespace llvm
 
 namespace omvll {
+
 struct ObfuscationConfig {
   ObfuscationConfig() = default;
   virtual ~ObfuscationConfig() = default;
-  ObfuscationConfig(const ObfuscationConfig&) = delete;
-  ObfuscationConfig& operator=(const ObfuscationConfig&) = delete;
+  ObfuscationConfig(const ObfuscationConfig &) = delete;
+  ObfuscationConfig &operator=(const ObfuscationConfig &) = delete;
 
-  virtual StringEncodingOpt obfuscate_string(llvm::Module* mod, llvm::Function* func,
-                                             const std::string& str) = 0;
+  virtual StringEncodingOpt obfuscateString(llvm::Module *M, llvm::Function *F,
+                                            const std::string &Str) = 0;
 
-  virtual StructAccessOpt obfuscate_struct_access(llvm::Module* mod, llvm::Function* func,
-                                                  llvm::StructType* S) = 0;
+  virtual StructAccessOpt obfuscateStructAccess(llvm::Module *M,
+                                                llvm::Function *F,
+                                                llvm::StructType *S) = 0;
 
-  virtual VarAccessOpt obfuscate_variable_access(llvm::Module* mod, llvm::Function* func,
-                                                 llvm::GlobalVariable* S) = 0;
+  virtual VarAccessOpt obfuscateVariableAccess(llvm::Module *M,
+                                               llvm::Function *F,
+                                               llvm::GlobalVariable *S) = 0;
 
-  virtual BreakControlFlowOpt break_control_flow(llvm::Module* mod, llvm::Function* func) = 0;
+  virtual BreakControlFlowOpt breakControlFlow(llvm::Module *M,
+                                               llvm::Function *F) = 0;
 
-  virtual ControlFlowFlatteningOpt flatten_cfg(llvm::Module* mod, llvm::Function* func) = 0;
+  virtual ControlFlowFlatteningOpt
+  controlFlowGraphFlattening(llvm::Module *M, llvm::Function *F) = 0;
 
-  virtual OpaqueConstantsOpt obfuscate_constants(llvm::Module* mod, llvm::Function* func) = 0;
+  virtual OpaqueConstantsOpt obfuscateConstants(llvm::Module *M,
+                                                llvm::Function *F) = 0;
 
-  virtual ArithmeticOpt obfuscate_arithmetic(llvm::Module* mod, llvm::Function* func) = 0;
+  virtual ArithmeticOpt obfuscateArithmetics(llvm::Module *M,
+                                             llvm::Function *F) = 0;
 
-  virtual AntiHookOpt anti_hooking(llvm::Module* mod, llvm::Function* func) = 0;
+  virtual AntiHookOpt antiHooking(llvm::Module *M, llvm::Function *F) = 0;
 
-  virtual bool has_report_diff_override() { return false; };
-  virtual void report_diff(const std::string &pass, const std::string &original,
-                           const std::string &obfuscated) = 0;
+  virtual bool hasReportDiffOverride() { return false; };
+  virtual void reportDiff(const std::string &Pass, const std::string &Original,
+                          const std::string &Obfuscated) = 0;
 };
 
-}
-#endif
+} // end namespace omvll

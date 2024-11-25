@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // TODO: Require that the native target is registered.
 // TODO: Make sure Clang finds a linker on our host machine.
 
@@ -13,7 +18,7 @@
 // RUN: %T/basic-native-obf right
 // RUN: not %T/basic-native-obf wrong
 
-int check_password(const char* passwd) {
+int check_password(const char *passwd) {
   if (passwd[0] == 'r') {
     if (passwd[1] == 'i') {
       if (passwd[2] == 'g') {

@@ -1,15 +1,17 @@
-#ifndef OMVLL_PASSES_H
-#define OMVLL_PASSES_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
 
 #include "omvll/passes/ObfuscationOpt.hpp"
-#include "omvll/passes/arithmetic/Arithmetic.hpp"
-#include "omvll/passes/string-encoding/StringEncoding.hpp"
-#include "omvll/passes/flattening/ControlFlowFlattening.hpp"
-#include "omvll/passes/opaque-field-access/OpaqueFieldAccess.hpp"
-#include "omvll/passes/opaque-constants/OpaqueConstants.hpp"
-#include "omvll/passes/break-cfg/BreakControlFlow.hpp"
 #include "omvll/passes/anti-hook/AntiHook.hpp"
-#include "omvll/passes/objcleaner/ObjCleaner.hpp"
+#include "omvll/passes/arithmetic/Arithmetic.hpp"
+#include "omvll/passes/break-cfg/BreakControlFlow.hpp"
+#include "omvll/passes/cfg-flattening/ControlFlowFlattening.hpp"
 #include "omvll/passes/cleaning/Cleaning.hpp"
-
-#endif
+#include "omvll/passes/objc-cleaner/ObjCleaner.hpp"
+#include "omvll/passes/opaque-constants/OpaqueConstants.hpp"
+#include "omvll/passes/opaque-field-access/OpaqueFieldAccess.hpp"
+#include "omvll/passes/string-encoding/StringEncoding.hpp"

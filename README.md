@@ -28,10 +28,10 @@
 # O-MVLL
 
 O-MVLL (in reference to [O-LLVM](https://github.com/obfuscator-llvm/obfuscator)) is a LLVM-based obfuscator
-driven by a Python API and by new LLVM pass manager:
+driven by Python and the LLVM pass manager. It can be run as follows:
 
 ```bash
-clang++ -fpass-plugin=omvll.so main.cpp -o main
+clang++ -fpass-plugin=libOMVLL.dylib main.cpp -o main
 ```
 
 ```python
@@ -51,7 +51,7 @@ class MyConfig(omvll.ObfuscationConfig):
 
 O-MVLL can be used with the Android NDK and an iOS toolchain but **it only supports the AArch64 architecture**.
 
-For the details, you can checkout the documentation: [obfuscator.re/omvll](https://obfuscator.re/omvll)
+For more details, please check out the documentation at [obfuscator.re/omvll](https://obfuscator.re/omvll).
 
 ### Download
 
@@ -60,7 +60,7 @@ For the details, you can checkout the documentation: [obfuscator.re/omvll](https
 
 ### Contact
 
-You can reach out by email at this address: `ping@obfuscator.re`
+Feel free to reach out at `ping@obfuscator.re` for any doubt, issue, bug you may encounter.
 
 #### Maintainers
 
@@ -68,7 +68,7 @@ You can reach out by email at this address: `ping@obfuscator.re`
 
 #### Author
 
-- [Romain Thomas](https://www.romainthomas.fr): [@rh0main](https://twitter.com/rh0main) - `me@romainthomas.fr`
+- [Romain Thomas](https://www.romainthomas.fr): [@rh0main](https://twitter.com/rh0main) (`me@romainthomas.fr`)
 
 #### Credits
 
@@ -80,7 +80,9 @@ You can reach out by email at this address: `ping@obfuscator.re`
 
 ### License
 
-O-MVLL is released under the same License as LLVM: [Apache License, Version 2.0](./LICENSE)
+O-MVLL is released under the same License as LLVM: [Apache License, Version 2.0](./LICENSE).
+
+This project is partly funded by the EU and the European Cybersecurity Competence Center.
 
 <div style="display: flex; gap: 0px; padding: 10px;">
     <img src=".github/img/eu.jpg" alt="EU Co-funding Logo" style="height: 50px; width: auto;">

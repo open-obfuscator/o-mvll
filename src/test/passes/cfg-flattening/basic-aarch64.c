@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // REQUIRES: aarch64-registered-target
 // TODO: Add CHECK lines
 
@@ -7,7 +12,7 @@
 // RUN:                                   clang -target arm64-apple-ios                          -O1 -fno-verbose-asm -S %s -o -
 // RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios  -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o -
 
-int check_password(const char* passwd, unsigned len) {
+int check_password(const char *passwd, unsigned len) {
   if (len != 5) {
     return 0;
   }

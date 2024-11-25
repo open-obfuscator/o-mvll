@@ -1,13 +1,19 @@
-#ifndef OMVLL_UTILS_H
-#define OMVLL_UTILS_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
+#include <string>
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
-#include <string>
 
+// Forward declarations
 namespace llvm {
 class Instruction;
 class BasicBlock;
@@ -17,31 +23,32 @@ class Type;
 class Value;
 class MDNode;
 class MemoryBuffer;
-}
+} // end namespace llvm
+
 namespace omvll {
-std::string ToString(const llvm::Module& M);
-std::string ToString(const llvm::BasicBlock& BB);
-std::string ToString(const llvm::Instruction& I);
-std::string ToString(const llvm::Type& Ty);
-std::string ToString(const llvm::Value& V);
 
-std::string ToString(const llvm::MDNode& N);
+std::string ToString(const llvm::Module &M);
+std::string ToString(const llvm::BasicBlock &BB);
+std::string ToString(const llvm::Instruction &I);
+std::string ToString(const llvm::Type &Ty);
+std::string ToString(const llvm::Value &V);
+std::string ToString(const llvm::MDNode &N);
 
-std::string TypeIDStr(const llvm::Type& Ty);
-std::string ValueIDStr(const llvm::Value& V);
+std::string TypeIDStr(const llvm::Type &Ty);
+std::string ValueIDStr(const llvm::Value &V);
 
-void dump(llvm::Module& M, const std::string& file);
-void dump(llvm::Function& F, const std::string& file);
-void dump(const llvm::MemoryBuffer& MB, const std::string& file);
+void dump(llvm::Module &M, const std::string &File);
+void dump(llvm::Function &F, const std::string &File);
+void dump(const llvm::MemoryBuffer &MB, const std::string &File);
 
-size_t demotePHINode(llvm::Function& F);
-size_t demoteRegs(llvm::Function& F);
-size_t reg2mem(llvm::Function& F);
+size_t demotePHINode(llvm::Function &F);
+size_t demoteRegs(llvm::Function &F);
+size_t reg2mem(llvm::Function &F);
 
-void shuffleFunctions(llvm::Module& M);
+void shuffleFunctions(llvm::Module &M);
 
-[[noreturn]] void fatalError(const char* msg);
-[[noreturn]] void fatalError(const std::string& msg);
+[[noreturn]] void fatalError(const char *Msg);
+[[noreturn]] void fatalError(const std::string &Msg);
 
 llvm::Expected<std::unique_ptr<llvm::Module>>
 generateModule(llvm::StringRef Routine, const llvm::Triple &Triple,
@@ -69,11 +76,11 @@ public:
   IRChangesMonitor &operator=(const IRChangesMonitor &) = delete;
 
 private:
-  const llvm::Module &Mod;
+  const llvm::Module &M;
   ObfuscationConfig *UserConfig;
   std::string PassName;
   std::string OriginalIR;
   bool ChangeReported;
 };
-}
-#endif
+
+} // end namespace omvll

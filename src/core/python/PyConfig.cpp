@@ -1,73 +1,76 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
+#include <dlfcn.h>
+
+#include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
+
 #include "omvll/PyConfig.hpp"
-#include "omvll/passes.hpp"
-#include "omvll/utils.hpp"
-#include "omvll/log.hpp"
-#include "omvll/versioning.hpp"
 #include "omvll/omvll_config.hpp"
+#include "omvll/utils.hpp"
+#include "omvll/versioning.hpp"
 
 #include "PyObfuscationConfig.hpp"
 #include "init.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/embed.h>
-
-#include <dlfcn.h>
-
-#include <llvm/Support/Compiler.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Function.h>
-
 namespace py = pybind11;
+
+using namespace pybind11::literals;
 
 namespace omvll {
 
-
-void init_pythonpath() {
-  if (char* config = getenv(PyConfig::PYENV_KEY)) {
-    Py_SetPath(Py_DecodeLocale(config, nullptr));
-    setenv("PYTHONHOME", config, true);
+void initPythonpath() {
+  if (char *Config = getenv(PyConfig::PyEnv_Key)) {
+    Py_SetPath(Py_DecodeLocale(Config, nullptr));
+    setenv("PYTHONHOME", Config, true);
     return;
   }
 
-  if (!PyConfig::yconfig.PYTHONPATH.empty()) {
-    Py_SetPath(Py_DecodeLocale(PyConfig::yconfig.PYTHONPATH.c_str(), nullptr));
-    setenv("PYTHONHOME", PyConfig::yconfig.PYTHONPATH.c_str(), true);
+  if (!PyConfig::YConfig.PythonPath.empty()) {
+    Py_SetPath(Py_DecodeLocale(PyConfig::YConfig.PythonPath.c_str(), nullptr));
+    setenv("PYTHONHOME", PyConfig::YConfig.PythonPath.c_str(), true);
     return;
   }
-  #if defined(__linux__)
-    if (auto* hdl = dlopen("libpython3.10.so", RTLD_LAZY)) {
-      char PATH[400];
-      int ret = dlinfo(hdl, RTLD_DI_ORIGIN, PATH);
-      if (ret != 0) {
-        return;
-      }
-      std::string PythonPath = PATH;
-      PythonPath.append("/python3.10");
-      Py_SetPath(Py_DecodeLocale(PythonPath.c_str(), nullptr));
-      setenv("PYTHONHOME", PythonPath.c_str(), true);
+
+#if defined(__linux__)
+  if (auto *Hdl = dlopen("libpython3.10.so", RTLD_LAZY)) {
+    char Path[400];
+    int Ret = dlinfo(Hdl, RTLD_DI_ORIGIN, Path);
+    if (Ret != 0)
       return;
-    }
-  #endif
+
+    std::string PythonPath = Path;
+    PythonPath.append("/python3.10");
+    Py_SetPath(Py_DecodeLocale(PythonPath.c_str(), nullptr));
+    setenv("PYTHONHOME", PythonPath.c_str(), true);
+    return;
+  }
+#endif
 }
 
-void omvll_ctor(py::module_& m) {
-  init_default_config();
+void OMVLLCtor(py::module_ &m) {
+  initDefaultConfig();
 
   m.attr("LLVM_VERSION")  = OMVLL_LLVM_VERSION_STRING;
   m.attr("OMVLL_VERSION") = OMVLL_VERSION;
   m.attr("OMVLL_VERSION_FULL") = "OMVLL Version: " OMVLL_VERSION " / " OMVLL_LLVM_VERSION_STRING
                                  " (" OMVLL_LLVM_VERSION ")";
 
-  py::class_<config_t>(m, "config_t",
-    R"delim(
+  py::class_<OMVLLConfig>(m, "OMVLLConfig",
+                          R"delim(
     This class is used to configure the global behavior of O-MVLL.
 
     It can be accessed through the global :attr:`omvll.config` attribute
     )delim")
-    .def_readwrite("passes",
-                   &config_t::passes,
-                   R"delim(
+      .def_readwrite("passes", &OMVLLConfig::Passes,
+                     R"delim(
                    This **ordered** list contains the sequence of the obfuscation passes
                    that must be used.
                    It should not be modified unless you know what you do.
@@ -78,9 +81,8 @@ void omvll_ctor(py::module_& m) {
 
                    )delim")
 
-    .def_readwrite("inline_jni_wrappers",
-                   &config_t::inline_jni_wrappers,
-                   R"delim(
+      .def_readwrite("inline_jni_wrappers", &OMVLLConfig::InlineJniWrappers,
+                     R"delim(
                    This boolean attribute is used to force inlining JNI C++ wrapper.
                    For instance ``GetStringChars``:
 
@@ -92,9 +94,8 @@ void omvll_ctor(py::module_& m) {
                    The default value is ``True``.
                    )delim")
 
-    .def_readwrite("shuffle_functions",
-                    &config_t::shuffle_functions,
-                    R"delim(
+      .def_readwrite("shuffle_functions", &OMVLLConfig::ShuffleFunctions,
+                     R"delim(
                     Whether the postition of Module's functions should be shuffled.
 
                     This randomization is used to avoid the same (relative) position of the functions
@@ -119,22 +120,21 @@ void omvll_ctor(py::module_& m) {
                     If this value is set to ``True`` (which is the default value), the sequence is randomized.
                     )delim");
 
-  m.attr("config") = &config;
+  m.attr("config") = &Config;
 
   py_init_obf_opt(m);
   py_init_llvm_bindings(m);
   py_init_log(m);
 
   py::class_<ObfuscationConfig, PyObfuscationConfig>(m, "ObfuscationConfig",
-    R"delim(
+                                                     R"delim(
     This class must be inherited by the user to define where and how the obfuscation
     passes must be enabled.
     )delim")
-    .def(py::init<>())
+      .def(py::init<>())
 
-    .def("obfuscate_string",
-         &ObfuscationConfig::obfuscate_string,
-         R"delim(
+      .def("obfuscate_string", &ObfuscationConfig::obfuscateString,
+           R"delim(
          The default user-callback used to configure strings obfuscation.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -154,11 +154,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+-------------------------------------+
 
          See the :omvll:`strings-encoding` documentation.
-         )delim", "module"_a, "function"_a, "string"_a)
+         )delim",
+           "module"_a, "function"_a, "string"_a)
 
-    .def("break_control_flow",
-         &ObfuscationConfig::break_control_flow,
-         R"delim(
+      .def("break_control_flow", &ObfuscationConfig::breakControlFlow,
+           R"delim(
          The default user-callback for the pass that breaks
          the control flow.
 
@@ -175,11 +175,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+-------------------------------------------------+
 
          See the :omvll:`control-flow-breaking` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("flatten_cfg",
-         &ObfuscationConfig::flatten_cfg,
-         R"delim(
+      .def("flatten_cfg", &ObfuscationConfig::controlFlowGraphFlattening,
+           R"delim(
          The default user-callback used to configure the
          control-flow flattening pass.
 
@@ -196,11 +196,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+------------------------------------------------------+
 
          See the :omvll:`control-flow-flattening` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("obfuscate_struct_access",
-         &ObfuscationConfig::obfuscate_struct_access,
-         R"delim(
+      .def("obfuscate_struct_access", &ObfuscationConfig::obfuscateStructAccess,
+           R"delim(
          The default user-callback when obfuscating structures accesses.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -216,11 +216,12 @@ void omvll_ctor(py::module_& m) {
          +--------------+---------------------------------------------+
 
          See the :omvll:`opaque-fields-access` documentation.
-         )delim", "module"_a, "function"_a, "struct"_a)
+         )delim",
+           "module"_a, "function"_a, "struct"_a)
 
-    .def("obfuscate_variable_access",
-         &ObfuscationConfig::obfuscate_variable_access,
-         R"delim(
+      .def("obfuscate_variable_access",
+           &ObfuscationConfig::obfuscateVariableAccess,
+           R"delim(
          The default user-callback when obfuscating global variables access.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -236,11 +237,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+------------------------------------------+
 
          See the :omvll:`opaque-fields-access` documentation.
-         )delim", "module"_a, "function"_a, "variable"_a)
+         )delim",
+           "module"_a, "function"_a, "variable"_a)
 
-    .def("obfuscate_constants",
-         &ObfuscationConfig::obfuscate_constants,
-         R"delim(
+      .def("obfuscate_constants", &ObfuscationConfig::obfuscateConstants,
+           R"delim(
          The default user-callback to obfuscate constants.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -258,11 +259,11 @@ void omvll_ctor(py::module_& m) {
          +-------------------+--------------------------------------------------------+
 
          See the :omvll:`opaque-constants` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("obfuscate_arithmetic",
-         &ObfuscationConfig::obfuscate_arithmetic,
-         R"delim(
+      .def("obfuscate_arithmetic", &ObfuscationConfig::obfuscateArithmetics,
+           R"delim(
          The default user-callback when obfuscating arithmetic operations.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -278,11 +279,11 @@ void omvll_ctor(py::module_& m) {
          +--------------+-------------------------------------------+
 
          See the :omvll:`arithmetic` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("anti_hooking",
-         &ObfuscationConfig::anti_hooking,
-         R"delim(
+      .def("anti_hooking", &ObfuscationConfig::antiHooking,
+           R"delim(
          The default user-callback to enable hooking protection.
 
          In addition to the associated class options, O-MVLL interprets these return values as follows:
@@ -298,101 +299,91 @@ void omvll_ctor(py::module_& m) {
          +--------------+-----------------------------------------+
 
          See the :omvll:`anti-hook` documentation.
-         )delim", "module"_a, "function"_a)
+         )delim",
+           "module"_a, "function"_a)
 
-    .def("report_diff",
-         &ObfuscationConfig::report_diff,
-         R"delim(
+      .def("report_diff", &ObfuscationConfig::reportDiff,
+           R"delim(
          User-callback to monitor IR-level changes from individual obfuscation passes.
-         )delim", "pass_name"_a, "original"_a, "obfuscated"_a);
-
+         )delim",
+           "pass_name"_a, "original"_a, "obfuscated"_a);
 }
 
-std::unique_ptr<py::module_> init_omvll_core(py::dict modules) {
-  auto m = std::make_unique<py::module_>(py::module_::create_extension_module("omvll", "", new PyModuleDef()));
-  omvll_ctor(*m);
-  modules["omvll"] = *m;
-  return m;
+std::unique_ptr<py::module_> initOMVLLCore(py::dict Modules) {
+  auto M = std::make_unique<py::module_>(
+      py::module_::create_extension_module("omvll", "", new PyModuleDef()));
+  OMVLLCtor(*M);
+  Modules["omvll"] = *M;
+  return M;
 }
-
 
 PyConfig::~PyConfig() = default;
 
-PyConfig& PyConfig::instance() {
-  if (instance_ == nullptr) {
-    instance_ = new PyConfig{};
+PyConfig &PyConfig::instance() {
+  if (!Instance) {
+    Instance = new PyConfig{};
     std::atexit(destroy);
   }
-  return *instance_;
+  return *Instance;
 }
 
-ObfuscationConfig* PyConfig::getUserConfig() {
+ObfuscationConfig *PyConfig::getUserConfig() {
   try {
     llvm::LLVMContext Ctx;
-    if (!py::hasattr(*mod_, "omvll_get_config")) {
+    if (!py::hasattr(*Mod, "omvll_get_config"))
       fatalError("Missing omvll_get_config");
-    }
-    auto py_user_config = mod_->attr("omvll_get_config");
-    if (py_user_config.is_none()) {
+
+    auto PyUserConfig = Mod->attr("omvll_get_config");
+    if (PyUserConfig.is_none())
       fatalError("Missing omvll_get_config");
-    }
-    py::object result = py_user_config();
-    auto* conf = result.cast<ObfuscationConfig*>();
-    return conf;
-  } catch (const std::exception& e) {
-    fatalError(e.what());
+
+    py::object Result = PyUserConfig();
+    return Result.cast<ObfuscationConfig *>();
+  } catch (const std::exception &Exc) {
+    fatalError(Exc.what());
   }
-}
-
-
-const std::vector<std::string>& PyConfig::get_passes() {
-  return config.passes;
 }
 
 PyConfig::PyConfig() {
   py::initialize_interpreter();
-  py::module_ sys_mod = py::module_::import("sys");
-  py::module_ pathlib = py::module_::import("pathlib");
+  py::module_ SysMod = py::module_::import("sys");
+  py::module_ PathLib = py::module_::import("pathlib");
+  py::dict Modules = SysMod.attr("modules");
 
-  py::dict modules = sys_mod.attr("modules");
-  core_mod_ = init_omvll_core(modules);
+  CoreMod = initOMVLLCore(Modules);
 
-  llvm::StringRef configpath;
+  llvm::StringRef ConfigPath;
+  if (char *Config = getenv(EnvKey))
+    ConfigPath = Config;
+  else if (!PyConfig::YConfig.OMVLLConfig.empty())
+    ConfigPath = PyConfig::YConfig.OMVLLConfig;
 
-  if (char* config = getenv(ENV_KEY)) {
-    configpath = config;
-  } else if (!PyConfig::yconfig.OMVLL_CONFIG.empty()) {
-    configpath = PyConfig::yconfig.OMVLL_CONFIG;
-  }
-  std::string modname = DEFAULT_FILE_NAME;
-  if (!configpath.empty()) {
-    std::string config = configpath.str();
-
-    auto pypath = pathlib.attr("Path")(config);
-    py::list path = sys_mod.attr("path");
-    path.insert(0, pypath.attr("parent").attr("as_posix")());
-    std::string name = pypath.attr("stem").cast<std::string>();
-    modname = name;
+  std::string ModName = DefaultFileName;
+  if (!ConfigPath.empty()) {
+    std::string Config = ConfigPath.str();
+    auto PyPath = PathLib.attr("Path")(Config);
+    py::list Path = SysMod.attr("path");
+    Path.insert(0, PyPath.attr("parent").attr("as_posix")());
+    std::string Name = PyPath.attr("stem").cast<std::string>();
+    ModName = Name;
   }
 
   try {
-    mod_ = std::make_unique<py::module_>(py::module_::import(modname.c_str()));
-  } catch (const std::exception& e) {
-    fatalError(e.what());
+    Mod = std::make_unique<py::module_>(py::module_::import(ModName.c_str()));
+  } catch (const std::exception &Exc) {
+    fatalError(Exc.what());
   }
 }
 
-std::string PyConfig::config_path() {
-  return mod_->attr("__file__").cast<std::string>();
+std::string PyConfig::configPath() {
+  return Mod->attr("__file__").cast<std::string>();
 }
 
 void PyConfig::destroy() {
-  delete instance_;
+  delete Instance;
   py::finalize_interpreter();
 }
 
-}
+} // end namespace omvll
 
-PYBIND11_MODULE(omvll, m) {
-  omvll::omvll_ctor(m);
-}
+PYBIND11_MODULE(omvll, m) { omvll::OMVLLCtor(m); }

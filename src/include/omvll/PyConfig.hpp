@@ -1,53 +1,61 @@
-#ifndef OMVLL_PYCONFIG_H
-#define OMVLL_PYCONFIG_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include <string>
 #include <memory>
 #include <vector>
+
 #include "omvll/passes/ObfuscationOpt.hpp"
 
+// Forward declarations
 namespace pybind11 {
 class module_;
-}
+} // end namespace pybind11
+
+// Forward declarations
 namespace llvm {
 class Module;
 class Function;
 class StructType;
-}
+} // end namespace llvm
 
 namespace omvll {
+
 struct ObfuscationConfig;
 
-struct yaml_config_t {
-  std::string PYTHONPATH;
-  std::string OMVLL_CONFIG;
+struct YamlConfig {
+  std::string PythonPath;
+  std::string OMVLLConfig;
 };
 
-void init_pythonpath();
-void init_yamlconfig();
-
+void initPythonpath();
+void initYamlConfig();
 
 class PyConfig {
-  public:
+public:
+  static PyConfig &instance();
+  ObfuscationConfig *getUserConfig();
+  std::string configPath();
 
-  static PyConfig& instance();
-  ObfuscationConfig* getUserConfig();
-  const std::vector<std::string>& get_passes();
-  std::string config_path();
+  static constexpr auto DefaultFileName = "omvll_config";
+  static constexpr auto EnvKey = "OMVLL_CONFIG";
+  static constexpr auto PyEnv_Key = "OMVLL_PYTHONPATH";
+  static constexpr auto YamlFile = "omvll.yml";
 
-  static inline const char DEFAULT_FILE_NAME[] = "omvll_config";
-  static inline const char ENV_KEY[]           = "OMVLL_CONFIG";
-  static inline const char PYENV_KEY[]         = "OMVLL_PYTHONPATH";
-  static inline const char YAML_FILE[]         = "omvll.yml";
+  static inline YamlConfig YConfig;
 
-  inline static yaml_config_t yconfig;
-  private:
+private:
   PyConfig();
   ~PyConfig();
   static void destroy();
 
-  std::unique_ptr<pybind11::module_> mod_;
-  std::unique_ptr<pybind11::module_> core_mod_;
-  inline static PyConfig* instance_ = nullptr;
+  std::unique_ptr<pybind11::module_> Mod;
+  std::unique_ptr<pybind11::module_> CoreMod;
+  static inline PyConfig *Instance = nullptr;
 };
-}
-#endif
+
+} // end namespace omvll

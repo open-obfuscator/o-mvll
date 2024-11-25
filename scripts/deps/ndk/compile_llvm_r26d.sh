@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
+
+#
+# This file is distributed under the Apache License v2.0. See LICENSE for details.
+#
+
 # This script is used to compile the Android NDK r26d LLVM toolchain
+
 set -e
 
 host=$(uname)

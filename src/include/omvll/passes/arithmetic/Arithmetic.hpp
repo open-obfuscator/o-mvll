@@ -1,5 +1,10 @@
-#ifndef OMVLL_ARITHMETIC_H
-#define OMVLL_ARITHMETIC_H
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/ADT/DenseMap.h"
@@ -7,29 +12,30 @@
 
 #include "omvll/passes/arithmetic/ArithmeticOpt.hpp"
 
+// Forward declarations
 namespace llvm {
 class Function;
 class Module;
 class Value;
 class BinaryOperator;
-}
+} // end namespace llvm
 
 namespace omvll {
 
-// See: https://obfuscator.re/omvll/passes/arithmetic/ for the details
+// See https://obfuscator.re/omvll/passes/arithmetic/ for details.
 struct Arithmetic : llvm::PassInfoMixin<Arithmetic> {
   llvm::PreservedAnalyses run(llvm::Module &M,
                               llvm::ModuleAnalysisManager &FAM);
   bool runOnBasicBlock(llvm::BasicBlock &BB);
 
-  llvm::Function* injectFunWrapper(llvm::Module& M, llvm::BinaryOperator& Op,
-                                   llvm::Value& Lhs, llvm::Value& Rhs);
+  llvm::Function *injectFunWrapper(llvm::Module &M, llvm::BinaryOperator &Op,
+                                   llvm::Value &Lhs, llvm::Value &Rhs);
 
-  static bool isSupported(const llvm::BinaryOperator& Op);
-  private:
-  llvm::DenseMap<llvm::Function*, ArithmeticOpt> opts_;
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG_;
+  static bool isSupported(const llvm::BinaryOperator &Op);
+
+private:
+  llvm::DenseMap<llvm::Function *, ArithmeticOpt> Opts;
+  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
 };
-}
 
-#endif
+} // end namespace omvll

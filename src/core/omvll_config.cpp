@@ -1,28 +1,34 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 #include "omvll/omvll_config.hpp"
 #include "omvll/passes.hpp"
 
 namespace omvll {
-config_t config;
-void init_default_config() {
-  config.passes = {
-    AntiHook::name().str(),
-    StringEncoding::name().str(),
 
-    OpaqueFieldAccess::name().str(),
-    ControlFlowFlattening::name().str(),
-    BreakControlFlow::name().str(),
+OMVLLConfig Config;
 
-    OpaqueConstants::name().str(),
-    Arithmetic::name().str(),
+void initDefaultConfig() {
+  Config.Passes = {
+      AntiHook::name().str(),
+      StringEncoding::name().str(),
 
-    // Last pass
-    Cleaning::name().str(),
+      OpaqueFieldAccess::name().str(),
+      ControlFlowFlattening::name().str(),
+      BreakControlFlow::name().str(),
+
+      OpaqueConstants::name().str(),
+      Arithmetic::name().str(),
+
+      // Last pass.
+      Cleaning::name().str(),
   };
 
-  config.cleaning = true;
-  config.inline_jni_wrappers = true;
-  config.shuffle_functions   = true;
-}
+  Config.Cleaning = true;
+  Config.InlineJniWrappers = true;
+  Config.ShuffleFunctions = true;
 }
 
-
+} // end namespace omvll
