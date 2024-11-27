@@ -49,7 +49,7 @@ class MyConfig(omvll.ObfuscationConfig):
 
 <img src=".github/img/omvll-pipeline.webp" alt="O-MVLL Pipeline" width="100%">
 
-O-MVLL can be used with the Android NDK and an iOS toolchain but **it only supports the AArch64 architecture**.
+O-MVLL can be used with the Android NDK and an iOS toolchain. It currently supports AArch64 and ARM architectures.
 
 For more details, please check out the documentation at [obfuscator.re/omvll](https://obfuscator.re/omvll).
 

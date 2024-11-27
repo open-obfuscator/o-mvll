@@ -45,6 +45,12 @@ bool AntiHook::runOnFunction(Function &F) {
   if (F.getInstructionCount() == 0)
     return false;
 
+  const auto &TT = Triple(F.getParent()->getTargetTriple());
+  if (!TT.isAArch64()) {
+    SWARN("[{}] Only AArch64 target is supported. Skipping...", name());
+    return false;
+  }
+
   if (F.hasPrologueData())
     fatalError("Cannot inject a hooking prologue in the function " +
                demangle(F.getName().str()) + " since there is one.");

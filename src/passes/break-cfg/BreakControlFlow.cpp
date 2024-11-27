@@ -27,19 +27,59 @@ using namespace llvm;
 
 namespace omvll {
 
-static constexpr size_t InstSize = 4;
-static constexpr size_t FunctionAlignment =
+static constexpr size_t AArch64InstSize = 4;
+static constexpr size_t AArch64FunctionAlignment =
     0x20; // Maximum value according to AArch64Subtarget.
 
-static constexpr std::array<std::array<uint8_t, InstSize>, 4> NopInsts = {{
-    {0x1F, 0x20, 0x03, 0xD5}, // nop
-    {0xE0, 0x03, 0x00, 0xAA}, // mov x0, x0
-    {0x42, 0x00, 0xC2, 0x93}, // ror x2, x2, #0
-    {0xF4, 0x03, 0x14, 0xAA}, // mov x20, x20
-}};
+static constexpr std::array<std::array<uint8_t, AArch64InstSize>, 4>
+    AArch64NopInsts = {{
+        {0x1F, 0x20, 0x03, 0xD5}, // nop
+        {0xE0, 0x03, 0x00, 0xAA}, // mov x0, x0
+        {0x42, 0x00, 0xC2, 0x93}, // ror x2, x2, #0
+        {0xF4, 0x03, 0x14, 0xAA}, // mov x20, x20
+    }};
+
+static constexpr auto AArch64AsmBreakingStub = R"delim(
+  // This block must be aligned on 32 bytes
+  adr x1, #0x10;
+  ldr x0, [x1, #61];
+  ldr x1, #16;
+  blr x1;
+  ldr x1, #48;
+  blr x3;
+  .byte 0xF1, 0xFF, 0xF2, 0xA2;
+  .byte 0xF8, 0xFF, 0xE2, 0xC2;
+)delim";
+
+static constexpr size_t ARMInstSize = 4;
+static constexpr size_t ARMFunctionAlignment = 0x10;
+
+static constexpr std::array<std::array<uint8_t, ARMInstSize>, 4> ARMNopInsts = {
+    {
+        {0x00, 0xF0, 0x20, 0xE3}, // nop
+        {0xA0, 0xF0, 0x21, 0xE3}, // mov r0, r0
+        {0x00, 0x20, 0x82, 0xE3}, // orr r2, r2, #0
+        {0x02, 0x20, 0xA0, 0xE1}, // mov r2, r2
+    }};
+
+static constexpr auto ARMAsmBreakingStub = R"delim(
+  // This block must be aligned on 16 bytes
+  adr r1, #0x10;
+  ldr r0, [r1, #61];
+  ldr r1, #16;
+  bl r1;
+  ldr r1, #48;
+  bl r3;
+  .byte 0xF0, 0xFF, 0xF0, 0xE7;
+  .byte 0xFE, 0xFF, 0xFF, 0xE7;
+)delim";
 
 bool BreakControlFlow::runOnFunction(Function &F) {
   if (F.getInstructionCount() == 0)
+    return false;
+
+  const auto &TT = Triple(F.getParent()->getTargetTriple());
+  if (!(TT.isAArch64() || TT.isARM()))
     return false;
 
   SINFO("[{}] Visiting function {}", name(), F.getName());
@@ -50,17 +90,12 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   F.deleteBody();
 
   Function &Trampoline = F;
-  const auto AsmBreakingStub = R"delim(
-  // This block must be aligned on 32 bytes
-  adr x1, #0x10;
-  ldr x0, [x1, #61];
-  ldr x1, #16;
-  blr x1;
-  ldr x1, #48;
-  blr x3;
-  .byte 0xF1, 0xFF, 0xF2, 0xA2;
-  .byte 0xF8, 0xFF, 0xE2, 0xC2;
-  )delim";
+  const size_t InstSize = TT.isAArch64() ? AArch64InstSize : ARMInstSize;
+  const size_t FunctionAlignment =
+      TT.isAArch64() ? AArch64FunctionAlignment : ARMFunctionAlignment;
+  const auto &NopInsts = TT.isAArch64() ? AArch64NopInsts : ARMNopInsts;
+  const auto &AsmBreakingStub =
+      TT.isAArch64() ? AArch64AsmBreakingStub : ARMAsmBreakingStub;
 
   std::unique_ptr<MemoryBuffer> Insts = JIT->jitAsm(AsmBreakingStub, 8);
   if (Insts->getBufferSize() % FunctionAlignment)
