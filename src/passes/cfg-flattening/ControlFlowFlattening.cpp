@@ -95,6 +95,20 @@ template <class IRBTy> void EmitDefaultCaseAssembly(IRBTy &IRB, Triple TT) {
       /* hasSideEffects */ true,
       /* isStackAligned */ true
     ));
+  } else if (TT.isARM()) {
+    IRB.CreateCall(FType, InlineAsm::get(
+      FType,
+      R"delim(
+        ldr r1, [pc, #-4];
+        bl r1;
+        mov r1, r2;
+        .byte 0xF1, 0xFF;
+        .byte 0xF2, 0xA2;
+      )delim",
+      "",
+      /* hasSideEffects */ true,
+      /* isStackAligned */ true
+    ));
   } else {
     fatalError("Unsupported target for Control-Flow Flattening obfuscation: " +
                TT.str());
