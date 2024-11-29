@@ -10,7 +10,7 @@ import subprocess
 from lit.llvm import llvm_config
 
 config.name = "O-MVLL Tests"
-config.suffixes = ['.c', '.cpp', '.ll']
+config.suffixes = ['.c', '.cpp', '.ll', '.m']
 config.test_format = lit.formats.ShTest(True)
 config.test_source_root = os.path.dirname(__file__)
 
@@ -60,17 +60,20 @@ config.substitutions.append(('%libOMVLL', plugin_file))
 print("Available features are:", config.available_features)
 
 extra_linker_flags = ''
+extra_cc_flags = ''
 if sys.platform == 'darwin':
     try:
-        cmd = ["xcrun", "--show-sdk-path", "--sdk", "macosx"]
+        cmd = ["xcrun", "--show-sdk-path", "--sdk", "iphoneos"]
         sdk_path = subprocess.check_output(cmd, stderr=subprocess.PIPE).strip().decode()
         print("Using SDKROOT:", sdk_path)
         extra_linker_flags = '-Wl,-L{}/usr/lib -Wl,-lSystem'.format(sdk_path)
+        extra_cc_flags = '-isysroot {}'.format(sdk_path)
     except (subprocess.CalledProcessError, OSError):
         print("xcrun not found. Please run command: xcode-select --install")
         exit(1)
 
 config.substitutions.append(('%EXTRA_LINKER_FLAGS', extra_linker_flags))
+config.substitutions.append(('%EXTRA_CC_FLAGS', extra_cc_flags))
 
 # We need this to find the Python standard library
 if 'OMVLL_PYTHONPATH' in os.environ:
