@@ -100,7 +100,7 @@ template <class IRBTy> void EmitDefaultCaseAssembly(IRBTy &IRB, Triple TT) {
       FType,
       R"delim(
         ldr r1, [pc, #-4];
-        bl r1;
+        bx r1;
         mov r1, r2;
         .byte 0xF1, 0xFF;
         .byte 0xF2, 0xA2;
