@@ -569,17 +569,16 @@ void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
       (Twine("extern \"C\" {\n") + Routines[Idx] + "}\n").str();
 
   {
-    EI.HM = ExitOnErr(
-        generateModule(Routine, HostTriple, "cpp", HostJIT->getContext(),
-                       {"-std=c++17", "-mllvm", "--opaque-pointers"}));
+    EI.HM = ExitOnErr(generateModule(Routine, HostTriple, "cpp",
+                                     HostJIT->getContext(), {"-std=c++17"}));
   }
 
   {
     Ctx.setDiscardValueNames(false);
+    Ctx.setOpaquePointers(true);
     EI.TM = ExitOnErr(
         generateModule(Routine, TargetTriple, "cpp", Ctx,
-                       {"-target", TargetTriple.getTriple(), "-std=c++17",
-                        "-mllvm", "--opaque-pointers"}));
+                       {"-target", TargetTriple.getTriple(), "-std=c++17"}));
     annotateRoutine(*EI.TM);
   }
 }
