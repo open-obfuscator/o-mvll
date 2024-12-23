@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // REQUIRES: arm-registered-target
 
 // RUN:                                        clang -target arm-linux-android                         -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s

@@ -15,6 +15,8 @@ class MyConfig(omvll.ObfuscationConfig):
             return omvll.StringEncOptGlobal()
         if string.endswith(b"Swift"):
             return omvll.StringEncOptStack()
+        if string.endswith(b"Stack"):
+            return omvll.StringEncOptStack()
 
 @lru_cache(maxsize=1)
 def omvll_get_config() -> omvll.ObfuscationConfig:

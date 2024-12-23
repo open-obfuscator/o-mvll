@@ -15,6 +15,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/NoFolder.h"
@@ -136,8 +137,20 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
     ++It;
 
   IRBuilder<NoFolder> IRB(&*It);
-  AllocaInst *ClearBuffer =
-      IRB.CreateAlloca(ArrayType::get(IRB.getInt8Ty(), Size));
+  GlobalVariable *ClearBuffer = nullptr;
+  GlobalVariable *NeedDecode = nullptr;
+  auto *BufferTy = ArrayType::get(IRB.getInt8Ty(), Size);
+  IntegerType *BoolType = IRB.getInt1Ty();
+  auto *M = NewPt->getModule();
+
+  if (IsPartOfStackVariable) {
+    ClearBuffer =
+        new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
+                           Constant::getNullValue(BufferTy));
+    NeedDecode =
+        new GlobalVariable(*M, BoolType, false, GlobalValue::InternalLinkage,
+                           ConstantInt::getFalse(BoolType));
+  }
 
   AllocaInst *Key = IRB.CreateAlloca(IRB.getInt64Ty());
   AllocaInst *StrSize = IRB.CreateAlloca(IRB.getInt32Ty());
@@ -171,7 +184,7 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   Value *Output = Input;
 
   if (IsPartOfStackVariable)
-    Output = IRB.CreateInBoundsGEP(ClearBuffer->getAllocatedType(), ClearBuffer,
+    Output = IRB.CreateInBoundsGEP(BufferTy, ClearBuffer,
                                    {IRB.getInt64(0), IRB.getInt64(0)});
 
   auto *NewF =
@@ -204,43 +217,71 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
                              ToString(*E), ToString(*V)));
   }
 
-  if (IsPartOfStackVariable) {
-    if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
-      auto [First, Last] = materializeConstantExpression(NewPt, CE);
-      assert(
-          ((First != Last) ||
-           (isa<GetElementPtrInst>(First) || isa<PtrToIntInst>(First))) &&
-          "Nested constantexpr in getelementptr/ptrtoint should not appear?");
-      if (isa<GetElementPtrInst>(First)) {
-        // CE is already a GEP, directly replace the operand with the decode
-        // output.
-        NewPt->setOperand(EncPtr.getOperandNo(), Output);
-        if (isInstructionTriviallyDead(Last))
-          Last->eraseFromParent();
-      } else {
-        Last->setOperand(0, Output);
-        NewPt->setOperand(EncPtr.getOperandNo(), First);
-      }
-    } else {
+  if (!IsPartOfStackVariable)
+    return IRB.CreateCall(NewF->getFunctionType(), NewF, Args);
+
+  It = IRB.GetInsertPoint();
+  auto *WrapperType = FunctionType::get(IRB.getVoidTy(),
+                                        {IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+                                         IRB.getInt8PtrTy(), IRB.getInt64Ty(),
+                                         IRB.getInt32Ty()},
+                                        false);
+  auto *Wrapper = Function::Create(WrapperType, GlobalValue::PrivateLinkage,
+                                   "__omvll_decode_wrap", NewPt->getModule());
+
+  // Decode wrapper to check whether the global variable has already been
+  // decoded.
+  BasicBlock *Entry = BasicBlock::Create(NewPt->getContext(), "entry", Wrapper);
+  IRB.SetInsertPoint(Entry);
+  auto *ICmp = IRB.CreateICmpEQ(IRB.CreateLoad(BoolType, Wrapper->getArg(0)),
+                                ConstantInt::getFalse(BoolType));
+  auto *NewBB = BasicBlock::Create(NewPt->getContext(), "", Wrapper);
+  auto *ContinuationBB = BasicBlock::Create(NewPt->getContext(), "", Wrapper);
+  IRB.CreateCondBr(ICmp, NewBB, ContinuationBB);
+  IRB.SetInsertPoint(NewBB);
+  auto *CI = IRB.CreateCall(NewF->getFunctionType(), NewF,
+                            {Wrapper->getArg(1), Wrapper->getArg(2),
+                             Wrapper->getArg(3), Wrapper->getArg(4)});
+  IRB.CreateStore(ConstantInt::getTrue(BoolType), Wrapper->getArg(0));
+  IRB.CreateBr(ContinuationBB);
+  IRB.SetInsertPoint(ContinuationBB);
+  IRB.CreateRetVoid();
+
+  // Insert decode wrapper call site in the caller.
+  IRB.SetInsertPoint(NewPt->getParent(), It);
+  CI = IRB.CreateCall(Wrapper->getFunctionType(), Wrapper,
+                      {NeedDecode, Output, Input, KeyVal, VStrSize});
+
+  if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
+    auto [First, Last] = materializeConstantExpression(NewPt, CE);
+    assert(((First != Last) ||
+            (isa<GetElementPtrInst>(First) || isa<PtrToIntInst>(First))) &&
+           "Nested constantexpr in getelementptr/ptrtoint should not appear?");
+    if (isa<GetElementPtrInst>(First)) {
+      // CE is already a GEP, directly replace the operand with the decode
+      // output.
       NewPt->setOperand(EncPtr.getOperandNo(), Output);
+      if (isInstructionTriviallyDead(Last))
+        Last->eraseFromParent();
+    } else {
+      Last->setOperand(0, Output);
+      NewPt->setOperand(EncPtr.getOperandNo(), First);
     }
+  } else {
+    NewPt->setOperand(EncPtr.getOperandNo(), Output);
   }
 
-  return IRB.CreateCall(NewF->getFunctionType(), NewF, Args);
+  return CI;
 }
 
-bool StringEncoding::runOnBasicBlock(Module &M, Function &F, BasicBlock &BB,
-                                     ObfuscationConfig &UserConfig) {
+bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
   bool Changed = false;
+  llvm::Module *M = F.getParent();
 
-  for (Instruction &I : BB) {
-    if (isa<PHINode>(I)) {
-      SWARN("{} contains Phi node which could raise issues!",
-            demangle(F.getName().str()));
-      continue;
-    }
+  for (Instruction &I : make_early_inc_range(instructions(F))) {
+    assert(!isa<PHINode>(I) && "Found phi previously demoted?");
 
-    for (Use &Op : I.operands()) {
+    for (Use &Op : make_early_inc_range(I.operands())) {
       auto *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts());
 
       // Is the operand a constant expression?
@@ -288,14 +329,14 @@ bool StringEncoding::runOnBasicBlock(Module &M, Function &F, BasicBlock &BB,
       if (EncodingInfo *EI = getEncoding(*G)) {
         // The global variable is already encoded.
         // Let's check if we should insert a decoding stub.
-        Changed |= injectDecoding(BB, I, Op, *G, *Data, *EI);
+        Changed |= injectDecoding(I, Op, *G, *Data, *EI);
         continue;
       }
 
       if (isEligible(*Data)) {
         // Get the encoding type from the user.
         EncInfoOpt = std::make_unique<StringEncodingOpt>(
-            UserConfig.obfuscateString(&M, &F, Data->getAsCString().str()));
+            UserConfig.obfuscateString(M, &F, Data->getAsCString().str()));
       }
 
       if (isSkip(*EncInfoOpt) ||
@@ -304,7 +345,7 @@ bool StringEncoding::runOnBasicBlock(Module &M, Function &F, BasicBlock &BB,
         continue;
 
       SINFO("[{}] Processing string {}", name(), Data->getAsCString());
-      Changed |= process(BB, I, *ActualOp, *G, *Data, *EncInfoOpt);
+      Changed |= process(I, *ActualOp, *G, *Data, *EncInfoOpt);
     }
   }
 
@@ -319,16 +360,18 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
   RNG = M.createRNG(name());
 
   std::vector<Function *> ToVisit;
-  for (Function &F : M)
+  for (Function &F : M) {
+    if (F.empty() || F.isDeclaration())
+      continue;
+
+    demotePHINode(F);
     ToVisit.emplace_back(&F);
+  }
 
   for (Function *F : ToVisit) {
-    demotePHINode(*F);
-    std::string DemangledFName = demangle(F->getName().str());
-    SDEBUG("[{}] Visiting function {}", name(), DemangledFName);
-    for (BasicBlock &BB : *F) {
-      Changed |= runOnBasicBlock(M, *F, BB, *UserConfig);
-    }
+    std::string Name = demangle(F->getName().str());
+    SDEBUG("[{}] Visiting function {}", name(), Name);
+    Changed |= encodeStrings(*F, *UserConfig);
   }
 
   // Inline functions.
@@ -349,8 +392,7 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
   return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
-bool StringEncoding::injectDecoding(BasicBlock &BB, Instruction &I, Use &Op,
-                                    GlobalVariable &G,
+bool StringEncoding::injectDecoding(Instruction &I, Use &Op, GlobalVariable &G,
                                     ConstantDataSequential &Data,
                                     const StringEncoding::EncodingInfo &Info) {
   switch (Info.Type) {
@@ -359,16 +401,15 @@ bool StringEncoding::injectDecoding(BasicBlock &BB, Instruction &I, Use &Op,
   case EncodingTy::Global:
     return false;
   case EncodingTy::Stack:
-    return injectOnStack(BB, I, Op, G, Data, Info);
+    return injectOnStack(I, Op, G, Data, Info);
   case EncodingTy::StackLoop:
-    return injectOnStackLoop(BB, I, Op, G, Data, Info);
+    return injectOnStackLoop(I, Op, G, Data, Info);
   }
 
   return false;
 }
 
-bool StringEncoding::injectOnStack(BasicBlock &BB, Instruction &I, Use &Op,
-                                   GlobalVariable &G,
+bool StringEncoding::injectOnStack(Instruction &I, Use &Op, GlobalVariable &G,
                                    ConstantDataSequential &Data,
                                    const StringEncoding::EncodingInfo &Info) {
   auto *Key = std::get_if<KeyBufferTy>(&Info.Key);
@@ -379,7 +420,7 @@ bool StringEncoding::injectOnStack(BasicBlock &BB, Instruction &I, Use &Op,
   uint64_t StrSz = Str.size();
 
   Use &EncPtr = Op;
-  IRBuilder<NoFolder> IRB(&BB);
+  IRBuilder<NoFolder> IRB(I.getParent());
   IRB.SetInsertPoint(&I);
 
   // Allocate a buffer on the stack that will contain the decoded string.
@@ -433,8 +474,8 @@ bool StringEncoding::injectOnStack(BasicBlock &BB, Instruction &I, Use &Op,
 }
 
 bool StringEncoding::injectOnStackLoop(
-    BasicBlock &BB, Instruction &I, Use &Op, GlobalVariable &G,
-    ConstantDataSequential &Data, const StringEncoding::EncodingInfo &Info) {
+    Instruction &I, Use &Op, GlobalVariable &G, ConstantDataSequential &Data,
+    const StringEncoding::EncodingInfo &Info) {
   auto *Key = std::get_if<KeyIntTy>(&Info.Key);
   if (!Key)
     fatalError("String stack decoding loop is expecting a buffer as a key! ");
@@ -447,36 +488,35 @@ bool StringEncoding::injectOnStackLoop(
   return true;
 }
 
-bool StringEncoding::process(BasicBlock &BB, Instruction &I, Use &Op,
-                             GlobalVariable &G, ConstantDataSequential &Data,
+bool StringEncoding::process(Instruction &I, Use &Op, GlobalVariable &G,
+                             ConstantDataSequential &Data,
                              StringEncodingOpt &Opt) {
   bool Changed =
       std::visit(overloaded{
                      [&](StringEncOptSkip &) { return false; },
                      [&](StringEncOptStack &Stack) {
-                       return processOnStack(BB, I, Op, G, Data, Stack);
+                       return processOnStack(I, Op, G, Data, Stack);
                      },
                      [&](StringEncOptGlobal &Global) {
-                       return processGlobal(BB, I, Op, G, Data, Global);
+                       return processGlobal(I, Op, G, Data, Global);
                      },
                      [&](StringEncOptReplace &Rep) {
-                       return processReplace(BB, I, Op, G, Data, Rep);
+                       return processReplace(I, Op, G, Data, Rep);
                      },
                      [&](StringEncOptDefault &) {
                        if (Data.getElementByteSize() < 20) {
                          StringEncOptStack Stack{6};
-                         return processOnStack(BB, I, Op, G, Data, Stack);
+                         return processOnStack(I, Op, G, Data, Stack);
                        }
                        StringEncOptGlobal Global;
-                       return processGlobal(BB, I, Op, G, Data, Global);
+                       return processGlobal(I, Op, G, Data, Global);
                      },
                  },
                  Opt);
   return Changed;
 }
 
-bool StringEncoding::processReplace(BasicBlock &BB, Instruction &I, Use &Op,
-                                    GlobalVariable &G,
+bool StringEncoding::processReplace(Instruction &I, Use &Op, GlobalVariable &G,
                                     ConstantDataSequential &Data,
                                     StringEncOptReplace &Rep) {
   auto &New = Rep.NewString;
@@ -494,18 +534,17 @@ bool StringEncoding::processReplace(BasicBlock &BB, Instruction &I, Use &Op,
     New = New.substr(0, Data.getNumElements() - 1);
   }
 
-  Constant *NewVal = ConstantDataArray::getString(BB.getContext(), New);
+  Constant *NewVal = ConstantDataArray::getString(I.getContext(), New);
   G.setInitializer(NewVal);
   GVarEncInfo.insert({&G, EncodingInfo(EncodingTy::Replace)});
   return true;
 }
 
-bool StringEncoding::processGlobal(BasicBlock &BB, Instruction &I, Use &Op,
-                                   GlobalVariable &G,
+bool StringEncoding::processGlobal(Instruction &I, Use &Op, GlobalVariable &G,
                                    ConstantDataSequential &Data,
                                    StringEncOptGlobal &Global) {
-  Module *M = BB.getModule();
-  LLVMContext &Ctx = BB.getContext();
+  Module *M = I.getModule();
+  LLVMContext &Ctx = I.getContext();
   StringRef Str = Data.getRawDataValues();
   uint64_t StrSz = Str.size();
   size_t Max = std::numeric_limits<KeyIntTy>::max();
@@ -599,10 +638,10 @@ void StringEncoding::annotateRoutine(Module &M) {
   }
 }
 
-bool StringEncoding::processOnStackLoop(BasicBlock &BB, Instruction &I, Use &Op,
+bool StringEncoding::processOnStackLoop(Instruction &I, Use &Op,
                                         GlobalVariable &G,
                                         ConstantDataSequential &Data) {
-  LLVMContext &Ctx = BB.getContext();
+  LLVMContext &Ctx = I.getContext();
   StringRef Str = Data.getRawDataValues();
   uint64_t StrSz = Str.size();
   size_t Max = std::numeric_limits<KeyIntTy>::max();
@@ -615,7 +654,7 @@ bool StringEncoding::processOnStackLoop(BasicBlock &BB, Instruction &I, Use &Op,
   EncodingInfo EI(EncodingTy::StackLoop);
   EI.Key = Key;
 
-  genRoutines(Triple(BB.getModule()->getTargetTriple()), EI, Ctx);
+  genRoutines(Triple(I.getModule()->getTargetTriple()), EI, Ctx);
 
   auto JIT = StringEncoding::HostJIT->compile(*EI.HM);
   if (auto EncodeSym = JIT->lookup("encode")) {
@@ -629,23 +668,22 @@ bool StringEncoding::processOnStackLoop(BasicBlock &BB, Instruction &I, Use &Op,
   G.setInitializer(StrEnc);
 
   auto It = GVarEncInfo.insert({&G, std::move(EI)}).first;
-  return injectOnStackLoop(BB, I, Op, G, *cast<ConstantDataSequential>(StrEnc),
+  return injectOnStackLoop(I, Op, G, *cast<ConstantDataSequential>(StrEnc),
                            It->getSecond());
 }
 
-bool StringEncoding::processOnStack(BasicBlock &BB, Instruction &I, Use &Op,
-                                    GlobalVariable &G,
+bool StringEncoding::processOnStack(Instruction &I, Use &Op, GlobalVariable &G,
                                     ConstantDataSequential &Data,
                                     const StringEncOptStack &Stack) {
   StringRef Str = Data.getRawDataValues();
   uint64_t StrSz = Str.size();
   std::uniform_int_distribution<uint8_t> Dist(1, 254);
 
-  SDEBUG("[{}] {}: {}", name(), BB.getParent()->getName(),
+  SDEBUG("[{}] {}: {}", name(), I.getFunction()->getName(),
          Data.isCString() ? Data.getAsCString() : "<encoded>");
 
   if (StrSz >= Stack.LoopThreshold)
-    return processOnStackLoop(BB, I, Op, G, Data);
+    return processOnStackLoop(I, Op, G, Data);
 
   std::vector<uint8_t> Encoded(StrSz);
   std::vector<uint8_t> Key(StrSz);
@@ -655,13 +693,13 @@ bool StringEncoding::processOnStack(BasicBlock &BB, Instruction &I, Use &Op,
   for (size_t I = 0; I < StrSz; ++I)
     Encoded[I] = static_cast<uint8_t>(Str[I]) ^ static_cast<uint8_t>(Key[I]);
 
-  Constant *StrEnc = ConstantDataArray::get(BB.getContext(), Encoded);
+  Constant *StrEnc = ConstantDataArray::get(I.getContext(), Encoded);
   G.setInitializer(StrEnc);
 
   EncodingInfo EI(EncodingTy::Stack);
   EI.Key = std::move(Key);
   auto It = GVarEncInfo.insert({&G, std::move(EI)}).first;
-  return injectOnStack(BB, I, Op, G, *cast<ConstantDataSequential>(StrEnc),
+  return injectOnStack(I, Op, G, *cast<ConstantDataSequential>(StrEnc),
                        It->getSecond());
 }
 
