@@ -139,16 +139,20 @@ build38_s3 = boto3.resource(
 )
 
 def push(file: str, dir_name: str, s3_bucket_name: str, s3_resource, s3_content_type: str, use_timestamp=True):
-    zipfile = pathlib.Path(file)
+    path = pathlib.Path(file)
     if use_timestamp:
+        ext = ''.join(path.suffixes)
+        base = path.name[:-len(ext)] if ext else path.name
         now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        dst = f"{dir_name}/{zipfile.stem}_{now}{zipfile.suffix}"
+        dest_filename = f"{base}_{now}{ext}"
     else:
-        dst = f"{dir_name}/{zipfile.name}"
-    logger.info("Uploading %s to %s", file, dst)
+        dest_filename = path.name
+
+    dest = f"{dir_name}/{dest_filename}"
+    logger.info("Uploading %s to %s", file, dest)
     try:
-        obj = s3_resource.Object(s3_bucket_name, dst)
-        obj.put(Body=zipfile.read_bytes(), ContentType=s3_content_type)
+        obj = s3_resource.Object(s3_bucket_name, dest)
+        obj.put(Body=path.read_bytes(), ContentType=s3_content_type)
         return 0
     except ClientError as e:
         logger.error("S3 push failed: %s", e)
