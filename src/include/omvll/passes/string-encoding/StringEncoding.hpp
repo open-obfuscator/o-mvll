@@ -57,38 +57,35 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
                               llvm::ModuleAnalysisManager &MAM);
   static bool isRequired() { return true; }
 
-  bool runOnBasicBlock(llvm::Module &M, llvm::Function &F, llvm::BasicBlock &BB,
-                       ObfuscationConfig &UserConfig);
-
-  bool injectDecoding(llvm::BasicBlock &BB, llvm::Instruction &I, llvm::Use &Op,
+  bool encodeStrings(llvm::Function &F, ObfuscationConfig &UserConfig);
+  bool injectDecoding(llvm::Instruction &I, llvm::Use &Op,
                       llvm::GlobalVariable &G,
                       llvm::ConstantDataSequential &Data,
                       const EncodingInfo &Info);
-  bool injectOnStack(llvm::BasicBlock &BB, llvm::Instruction &I, llvm::Use &Op,
+  bool injectOnStack(llvm::Instruction &I, llvm::Use &Op,
                      llvm::GlobalVariable &G,
                      llvm::ConstantDataSequential &Data,
                      const EncodingInfo &Info);
-  bool injectOnStackLoop(llvm::BasicBlock &BB, llvm::Instruction &I,
-                         llvm::Use &Op, llvm::GlobalVariable &G,
+  bool injectOnStackLoop(llvm::Instruction &I, llvm::Use &Op,
+                         llvm::GlobalVariable &G,
                          llvm::ConstantDataSequential &Data,
                          const EncodingInfo &Info);
-  bool process(llvm::BasicBlock &BB, llvm::Instruction &I, llvm::Use &Op,
-               llvm::GlobalVariable &G, llvm::ConstantDataSequential &Data,
-               StringEncodingOpt &Opt);
-  bool processReplace(llvm::BasicBlock &BB, llvm::Instruction &I, llvm::Use &Op,
+  bool process(llvm::Instruction &I, llvm::Use &Op, llvm::GlobalVariable &G,
+               llvm::ConstantDataSequential &Data, StringEncodingOpt &Opt);
+  bool processReplace(llvm::Instruction &I, llvm::Use &Op,
                       llvm::GlobalVariable &G,
                       llvm::ConstantDataSequential &Data,
                       StringEncOptReplace &Rep);
-  bool processGlobal(llvm::BasicBlock &BB, llvm::Instruction &I, llvm::Use &Op,
+  bool processGlobal(llvm::Instruction &I, llvm::Use &Op,
                      llvm::GlobalVariable &G,
                      llvm::ConstantDataSequential &Data,
                      StringEncOptGlobal &Global);
-  bool processOnStack(llvm::BasicBlock &BB, llvm::Instruction &I, llvm::Use &Op,
+  bool processOnStack(llvm::Instruction &I, llvm::Use &Op,
                       llvm::GlobalVariable &G,
                       llvm::ConstantDataSequential &Data,
                       const StringEncOptStack &Stack);
-  bool processOnStackLoop(llvm::BasicBlock &BB, llvm::Instruction &I,
-                          llvm::Use &Op, llvm::GlobalVariable &G,
+  bool processOnStackLoop(llvm::Instruction &I, llvm::Use &Op,
+                          llvm::GlobalVariable &G,
                           llvm::ConstantDataSequential &Data);
 
   inline EncodingInfo *getEncoding(const llvm::GlobalVariable &GV) {
