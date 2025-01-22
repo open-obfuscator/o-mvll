@@ -137,8 +137,11 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
     ++It;
 
   IRBuilder<NoFolder> IRB(&*It);
-  AllocaInst *ClearBuffer =
-      IRB.CreateAlloca(ArrayType::get(IRB.getInt8Ty(), Size));
+  auto *BufferTy = ArrayType::get(IRB.getInt8Ty(), Size);
+  auto *M = NewPt->getModule();
+  GlobalVariable *ClearBuffer =
+      new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
+                         Constant::getNullValue(BufferTy));
 
   AllocaInst *Key = IRB.CreateAlloca(IRB.getInt64Ty());
   AllocaInst *StrSize = IRB.CreateAlloca(IRB.getInt32Ty());
@@ -172,7 +175,7 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   Value *Output = Input;
 
   if (IsPartOfStackVariable)
-    Output = IRB.CreateInBoundsGEP(ClearBuffer->getAllocatedType(), ClearBuffer,
+    Output = IRB.CreateInBoundsGEP(BufferTy, ClearBuffer,
                                    {IRB.getInt64(0), IRB.getInt64(0)});
 
   auto *NewF =
@@ -205,43 +208,76 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
                              ToString(*E), ToString(*V)));
   }
 
-  if (IsPartOfStackVariable) {
-    if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
-      auto [First, Last] = materializeConstantExpression(NewPt, CE);
-      assert(
-          ((First != Last) ||
-           (isa<GetElementPtrInst>(First) || isa<PtrToIntInst>(First))) &&
-          "Nested constantexpr in getelementptr/ptrtoint should not appear?");
-      if (isa<GetElementPtrInst>(First)) {
-        // CE is already a GEP, directly replace the operand with the decode
-        // output.
-        NewPt->setOperand(EncPtr.getOperandNo(), Output);
-        if (isInstructionTriviallyDead(Last))
-          Last->eraseFromParent();
-      } else {
-        Last->setOperand(0, Output);
-        NewPt->setOperand(EncPtr.getOperandNo(), First);
-      }
-    } else {
+  if (!IsPartOfStackVariable)
+    return IRB.CreateCall(NewF->getFunctionType(), NewF, Args);
+
+  auto *BoolType = IRB.getInt1Ty();
+  GlobalVariable *NeedDecode =
+      new GlobalVariable(*M, BoolType, false, GlobalValue::InternalLinkage,
+                         ConstantInt::getFalse(BoolType));
+
+  It = IRB.GetInsertPoint();
+  auto *WrapperType = FunctionType::get(IRB.getVoidTy(),
+                                        {IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+                                         IRB.getInt8PtrTy(), IRB.getInt64Ty(),
+                                         IRB.getInt32Ty()},
+                                        false);
+  auto *Wrapper = Function::Create(WrapperType, GlobalValue::PrivateLinkage,
+                                   "__omvll_decode_wrap", NewPt->getModule());
+
+  // Decode wrapper to check whether the global variable has already been
+  // decoded.
+  BasicBlock *Entry = BasicBlock::Create(NewPt->getContext(), "entry", Wrapper);
+  IRB.SetInsertPoint(Entry);
+  auto *ICmp = IRB.CreateICmpEQ(IRB.CreateLoad(BoolType, Wrapper->getArg(0)),
+                                ConstantInt::getFalse(BoolType));
+  auto *NewBB = BasicBlock::Create(NewPt->getContext(), "", Wrapper);
+  auto *ContinuationBB = BasicBlock::Create(NewPt->getContext(), "", Wrapper);
+  IRB.CreateCondBr(ICmp, NewBB, ContinuationBB);
+  IRB.SetInsertPoint(NewBB);
+  auto *CI = IRB.CreateCall(NewF->getFunctionType(), NewF,
+                            {Wrapper->getArg(1), Wrapper->getArg(2),
+                             Wrapper->getArg(3), Wrapper->getArg(4)});
+  IRB.CreateStore(ConstantInt::getTrue(BoolType), Wrapper->getArg(0));
+  IRB.CreateBr(ContinuationBB);
+  IRB.SetInsertPoint(ContinuationBB);
+  IRB.CreateRetVoid();
+
+  // Insert decode wrapper call site in the caller.
+  IRB.SetInsertPoint(NewPt->getParent(), It);
+  CI = IRB.CreateCall(Wrapper->getFunctionType(), Wrapper,
+                      {NeedDecode, Output, Input, KeyVal, VStrSize});
+
+  if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
+    auto [First, Last] = materializeConstantExpression(NewPt, CE);
+    assert(((First != Last) ||
+            (isa<GetElementPtrInst>(First) || isa<PtrToIntInst>(First))) &&
+           "Nested constantexpr in getelementptr/ptrtoint should not appear?");
+    if (isa<GetElementPtrInst>(First)) {
+      // CE is already a GEP, directly replace the operand with the decode
+      // output.
       NewPt->setOperand(EncPtr.getOperandNo(), Output);
+      if (isInstructionTriviallyDead(Last))
+        Last->eraseFromParent();
+    } else {
+      Last->setOperand(0, Output);
+      NewPt->setOperand(EncPtr.getOperandNo(), First);
     }
+  } else {
+    NewPt->setOperand(EncPtr.getOperandNo(), Output);
   }
 
-  return IRB.CreateCall(NewF->getFunctionType(), NewF, Args);
+  return CI;
 }
 
 bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
   bool Changed = false;
   llvm::Module *M = F.getParent();
 
-  for (Instruction &I : instructions(F)) {
-    if (isa<PHINode>(I)) {
-      SWARN("{} contains Phi node which could raise issues!",
-            demangle(F.getName().str()));
-      continue;
-    }
+  for (Instruction &I : make_early_inc_range(instructions(F))) {
+    assert(!isa<PHINode>(I) && "Found phi previously demoted?");
 
-    for (Use &Op : I.operands()) {
+    for (Use &Op : make_early_inc_range(I.operands())) {
       auto *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts());
 
       // Is the operand a constant expression?
@@ -320,13 +356,17 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
   RNG = M.createRNG(name());
 
   std::vector<Function *> ToVisit;
-  for (Function &F : M)
+  for (Function &F : M) {
+    if (F.empty() || F.isDeclaration())
+      continue;
+
+    demotePHINode(F);
     ToVisit.emplace_back(&F);
+  }
 
   for (Function *F : ToVisit) {
-    demotePHINode(*F);
-    std::string DemangledFName = demangle(F->getName().str());
-    SDEBUG("[{}] Visiting function {}", name(), DemangledFName);
+    std::string Name = demangle(F->getName().str());
+    SDEBUG("[{}] Visiting function {}", name(), Name);
     Changed |= encodeStrings(*F, *UserConfig);
   }
 
