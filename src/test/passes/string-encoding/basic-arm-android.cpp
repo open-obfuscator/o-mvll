@@ -1,3 +1,8 @@
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
 // REQUIRES: arm-registered-target
 
 // The default object contains the file-name string:
