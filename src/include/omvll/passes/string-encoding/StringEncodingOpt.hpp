@@ -11,12 +11,9 @@
 
 namespace omvll {
 
-struct StringEncOptStack {
-  size_t LoopThreshold = 10;
-};
-
 struct StringEncOptSkip {};
 struct StringEncOptGlobal {};
+struct StringEncOptLocal {};
 struct StringEncOptDefault {};
 
 struct StringEncOptReplace {
@@ -25,12 +22,8 @@ struct StringEncOptReplace {
   std::string NewString;
 };
 
-using StringEncodingOpt = std::variant<
-    StringEncOptSkip,
-    StringEncOptStack,
-    StringEncOptGlobal,
-    StringEncOptReplace,
-    StringEncOptDefault
-  >;
+using StringEncodingOpt =
+    std::variant<StringEncOptSkip, StringEncOptLocal, StringEncOptGlobal,
+                 StringEncOptReplace, StringEncOptDefault>;
 
 } // end namespace omvll

@@ -37,8 +37,7 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
 
   enum EncodingTy {
     None = 0,
-    Stack,
-    StackLoop,
+    Local,
     Global,
     Replace,
   };
@@ -62,14 +61,10 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
                       llvm::GlobalVariable &G,
                       llvm::ConstantDataSequential &Data,
                       const EncodingInfo &Info);
-  bool injectOnStack(llvm::Instruction &I, llvm::Use &Op,
-                     llvm::GlobalVariable &G,
-                     llvm::ConstantDataSequential &Data,
-                     const EncodingInfo &Info);
-  bool injectOnStackLoop(llvm::Instruction &I, llvm::Use &Op,
-                         llvm::GlobalVariable &G,
-                         llvm::ConstantDataSequential &Data,
-                         const EncodingInfo &Info);
+  bool injectDecodingLocally(llvm::Instruction &I, llvm::Use &Op,
+                             llvm::GlobalVariable &G,
+                             llvm::ConstantDataSequential &Data,
+                             const EncodingInfo &Info);
   bool process(llvm::Instruction &I, llvm::Use &Op, llvm::GlobalVariable &G,
                llvm::ConstantDataSequential &Data, StringEncodingOpt &Opt);
   bool processReplace(llvm::Instruction &I, llvm::Use &Op,
@@ -78,15 +73,10 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
                       StringEncOptReplace &Rep);
   bool processGlobal(llvm::Instruction &I, llvm::Use &Op,
                      llvm::GlobalVariable &G,
-                     llvm::ConstantDataSequential &Data,
-                     StringEncOptGlobal &Global);
-  bool processOnStack(llvm::Instruction &I, llvm::Use &Op,
-                      llvm::GlobalVariable &G,
-                      llvm::ConstantDataSequential &Data,
-                      const StringEncOptStack &Stack);
-  bool processOnStackLoop(llvm::Instruction &I, llvm::Use &Op,
-                          llvm::GlobalVariable &G,
-                          llvm::ConstantDataSequential &Data);
+                     llvm::ConstantDataSequential &Data);
+  bool processLocal(llvm::Instruction &I, llvm::Use &Op,
+                    llvm::GlobalVariable &G,
+                    llvm::ConstantDataSequential &Data);
 
   inline EncodingInfo *getEncoding(const llvm::GlobalVariable &GV) {
     if (auto It = GVarEncInfo.find(&GV); It != GVarEncInfo.end())

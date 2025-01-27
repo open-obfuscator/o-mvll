@@ -43,23 +43,18 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     )delim")
     .def(py::init<>());
 
-  py::class_<StringEncOptStack>(m, "StringEncOptStack",
+  py::class_<StringEncOptLocal>(m, "StringEncOptLocal",
     R"delim(
     Option for the :meth:`omvll.ObfuscationConfig.obfuscate_string` protection.
 
-    This option protects the string with a stack decoding.
+    This option protects the string lazily when used within the function.
 
     .. danger::
 
         For large strings, this option can introduce a **huge** overhead if the `loopThreshold` is not used.
 
     )delim")
-    .def(py::init<>())
-    .def(py::init<size_t>(),
-        R"delim(
-        Contructor that defines the string length threshold from which the decoding routine must be looped.
-        )delim",
-        "loopThreshold"_a);
+    .def(py::init<>());
 
   py::class_<StringEncOptReplace>(m, "StringEncOptReplace",
     R"delim(

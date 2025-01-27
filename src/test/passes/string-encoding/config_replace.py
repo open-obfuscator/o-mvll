@@ -14,9 +14,9 @@ class MyConfig(omvll.ObfuscationConfig):
         if string.endswith(b".cpp"):
             return omvll.StringEncOptGlobal()
         if string.endswith(b"Swift"):
-            return omvll.StringEncOptStack()
+            return omvll.StringEncOptLocal()
         if string.endswith(b"Stack"):
-            return omvll.StringEncOptStack()
+            return omvll.StringEncOptLocal()
 
 @lru_cache(maxsize=1)
 def omvll_get_config() -> omvll.ObfuscationConfig:
