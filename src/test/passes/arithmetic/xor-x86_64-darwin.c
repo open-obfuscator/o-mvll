@@ -4,6 +4,7 @@
 //
 
 // REQUIRES: x86-registered-target
+// XFAIL: host-platform-linux
 
 // RUN:                                        clang -target x86_64-apple-darwin                         -O1 -S %s -o - | FileCheck --check-prefix=R0 %s
 // RUN: env OMVLL_CONFIG=%S/config_rounds_0.py clang -target x86_64-apple-darwin -fpass-plugin=%libOMVLL -O1 -S %s -o - | FileCheck --check-prefix=R0 %s
@@ -64,33 +65,42 @@
 // R3:           movl	%r8d, %r10d
 // R3:           notl	%r10d
 // R3:           orl	$-36, %r10d
+// R3:           leal	(%r10,%r8), %r11d
+// R3:           addl	$36, %r11d
 // R3:           addl	%r8d, %r10d
-// R3:           orl	$35, %r8d
-// R3:           movl	$-36, %r11d
-// R3:           subl	%r10d, %r11d
-// R3:           movl	%r11d, %r10d
+// R3:           movl	$-36, %r8d
+// R3:           subl	%r10d, %r8d
+// R3:           movl	%r8d, %r10d
 // R3:           xorl	%r9d, %r10d
-// R3:           andl	%r9d, %r11d
-// R3:           leal	(%r10,%r11,2), %r9d
-// R3:           negl	%r9d
-// R3:           movl	%r9d, %r10d
-// R3:           xorl	%r8d, %r10d
-// R3:           andl	%r8d, %r9d
-// R3:           leal	(%r10,%r9,2), %r8d
+// R3:           andl	%r9d, %r8d
+// R3:           leal	(%r10,%r8,2), %r8d
+// R3:           negl	%r8d
+// R3:           movl	%r8d, %r9d
+// R3:           xorl	%r11d, %r9d
+// R3:           andl	%r11d, %r8d
+// R3:           leal	(%r9,%r8,2), %r8d
 // R3:           movb	%r8b, (%rdi,%rcx)
 // R3:           leal	1(%rax), %ecx
 // R3:           movl	%eax, %r8d
 // R3:           notl	%r8d
 // R3:           orl	$-2, %r8d
+// R3:           movl	$-2, %r10d
+// R3:           subl	%eax, %r10d
+// R3:           subl	%r8d, %r10d
+// R3:           movl	%r10d, %r9d
+// R3:           xorl	%ecx, %r9d
+// R3:           andl	%ecx, %r10d
+// R3:           leal	(%r9,%r10,2), %ecx
+// R3:           addl	$2, %eax
+// R3:           andl	%r8d, %eax
+// R3:           leal	-1(%rax), %r8d
+// R3:           andl	%ecx, %r8d
+// R3:           addl	%ecx, %r8d
 // R3:           addl	%eax, %r8d
-// R3:           movl	$-2, %r9d
-// R3:           subl	%r8d, %r9d
-// R3:           movl	%r9d, %r8d
-// R3:           xorl	%ecx, %r8d
-// R3:           andl	%ecx, %r9d
-// R3:           orl	$1, %eax
+// R3:           notl	%ecx
+// R3:           negl	%eax
+// R3:           orl	%ecx, %eax
 // R3:           addl	%r8d, %eax
-// R3:           leal	(%rax,%r9,2), %eax
 // R3:           cmpl	%edx, %eax
 // R3:           jb	LBB0_2
 

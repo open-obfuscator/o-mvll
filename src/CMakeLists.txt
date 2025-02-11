@@ -20,11 +20,7 @@ message(STATUS "${PROJECT_NAME}: ${PROJECT_VERSION}")
 option(OMVLL_FORCE_LOG_DEBUG "Force the log debug output" OFF)
 option(OMVLL_PY_STANDALONE   "Build OMVLL as a standalone Python module" OFF)
 
-if(APPLE)
-  set(LLVM_REQUIRED_VERSION 16)
-else()
-  set(LLVM_REQUIRED_VERSION 17)
-endif()
+set(LLVM_REQUIRED_VERSION 17)
 
 find_package(LLVM ${LLVM_REQUIRED_VERSION} REQUIRED CONFIG NO_DEFAULT_PATH)
 

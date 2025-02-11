@@ -9,7 +9,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/TargetParser/Triple.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/RandomNumberGenerator.h"
 

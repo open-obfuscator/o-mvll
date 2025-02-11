@@ -154,11 +154,7 @@ bool OpaqueFieldAccess::runOnLoad(LoadInst &Load) {
 
   if (auto *GEP = dyn_cast<GetElementPtrInst>(LoadOp)) {
     Value *Target = GEP->getPointerOperand();
-    Type *TargetTy = Target->getType();
-
-    // TODO: Update this properly after opaque ptr migration.
-    if (TargetTy->isPointerTy() && !TargetTy->isOpaquePointerTy())
-      TargetTy = TargetTy->getNonOpaquePointerElementType();
+    Type *TargetTy = GEP->getSourceElementType();
 
     if (TargetTy->isStructTy()) {
       auto *Struct = dyn_cast<StructType>(TargetTy);
@@ -330,11 +326,7 @@ bool OpaqueFieldAccess::runOnStore(StoreInst &Store) {
 
   if (auto *GEP = dyn_cast<GetElementPtrInst>(StoreOp)) {
     Value *Target = GEP->getPointerOperand();
-    Type *TargetTy = Target->getType();
-
-    // TODO: Update this properly after opaque ptr migration.
-    if (TargetTy->isPointerTy() && !TargetTy->isOpaquePointerTy())
-      TargetTy = TargetTy->getNonOpaquePointerElementType();
+    Type *TargetTy = GEP->getSourceElementType();
 
     if (TargetTy->isStructTy()) {
       auto *Struct = dyn_cast<StructType>(TargetTy);

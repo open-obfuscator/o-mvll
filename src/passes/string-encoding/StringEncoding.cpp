@@ -534,7 +534,6 @@ void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
 
   {
     Ctx.setDiscardValueNames(false);
-    Ctx.setOpaquePointers(true);
     EI.TM = ExitOnErr(
         generateModule(Routine, TargetTriple, "cpp", Ctx,
                        {"-target", TargetTriple.getTriple(), "-std=c++17"}));

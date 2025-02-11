@@ -28,7 +28,7 @@ PreservedAnalyses ObjCleaner::run(Module &M, ModuleAnalysisManager &FAM) {
   bool Changed = false;
   SINFO("[{}] Executing on module {}", name(), M.getName());
 
-  for (GlobalVariable &G : M.getGlobalList()) {
+  for (GlobalVariable &G : M.globals()) {
     if (!isObjCVar(G))
       continue;
 

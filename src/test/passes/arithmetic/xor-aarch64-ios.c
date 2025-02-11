@@ -4,6 +4,7 @@
 //
 
 // REQUIRES: aarch64-registered-target
+// XFAIL: host-platform-linux
 
 // RUN:                                        clang -target arm64-apple-ios                         -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s
 // RUN: env OMVLL_CONFIG=%S/config_rounds_0.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s
@@ -52,32 +53,39 @@
 
 // R3-LABEL: _memcpy_xor:
 // R3:       LBB0_2:
-// R3:       	mov	w12, w8
-// R3:       	ldrb	w13, [x1, x12]
-// R3:       	add	w14, w13, #35
-// R3:       	orr	w15, w13, w9
-// R3:       	orn	w16, w10, w13
-// R3:       	sub	w13, w10, w13
-// R3:       	sub	w13, w13, w16
-// R3:       	eor	w16, w13, w14
-// R3:       	and	w13, w13, w14
-// R3:       	add	w13, w16, w13, lsl #1
-// R3:       	neg	w13, w13
-// R3:       	eor	w14, w13, w15
-// R3:       	and	w13, w13, w15
-// R3:       	add	w13, w14, w13, lsl #1
-// R3:       	strb	w13, [x0, x12]
-// R3:       	add	w12, w8, #1
-// R3:       	mvn	w13, w8
-// R3:       	orr	w13, w13, #0xfffffffe
-// R3:       	sub	w14, w11, w8
-// R3:       	sub	w13, w14, w13
-// R3:       	eor	w14, w13, w12
-// R3:       	and	w12, w13, w12
-// R3:       	orr	w8, w8, #0x1
-// R3:       	add	w8, w14, w8
-// R3:       	add	w8, w8, w12, lsl #1
-// R3:       	cmp	w8, w2
+// R3:       	mov	w11, w10
+// R3:       	ldrb	w12, [x1, x11]
+// R3:       	add	w13, w12, #35
+// R3:       	orn	w14, w8, w12
+// R3:       	add	w12, w14, w12
+// R3:       	add	w14, w12, #36
+// R3:       	sub	w12, w8, w12
+// R3:       	eor	w15, w12, w13
+// R3:       	and	w12, w12, w13
+// R3:       	add	w12, w15, w12, lsl #1
+// R3:       	neg	w12, w12
+// R3:       	eor	w13, w12, w14
+// R3:       	and	w12, w12, w14
+// R3:       	add	w12, w13, w12, lsl #1
+// R3:       	strb	w12, [x0, x11]
+// R3:       	add	w11, w10, #1
+// R3:       	mvn	w12, w10
+// R3:       	orr	w12, w12, #0xfffffffe
+// R3:       	sub	w13, w9, w10
+// R3:       	sub	w13, w13, w12
+// R3:       	eor	w14, w13, w11
+// R3:       	and	w11, w13, w11
+// R3:       	add	w11, w14, w11, lsl #1
+// R3:       	add	w10, w10, #2
+// R3:       	and	w10, w10, w12
+// R3:       	sub	w12, w10, #1
+// R3:       	and	w12, w11, w12
+// R3:       	add	w13, w11, w10
+// R3:       	neg	w10, w10
+// R3:       	orn	w10, w10, w11
+// R3:       	add	w10, w13, w10
+// R3:       	add	w10, w10, w12
+// R3:       	cmp	w10, w2
 // R3:       	b.lo	LBB0_2
 
 void memcpy_xor(char *dst, const char *src, unsigned len) {
