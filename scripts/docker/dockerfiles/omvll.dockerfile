@@ -2,7 +2,7 @@ FROM debian:stable-slim
 LABEL maintainer="Romain Thomas <me@romainthomas.fr>"
 
 # This can be obtained following the instructions here: https://github.com/tpoechtrager/osxcross?tab=readme-ov-file#packaging-the-sdk
-COPY MacOSX14.5.sdk.tar.xz /
+COPY MacOSX15.2.sdk.tar.xz /
 COPY osxcross.patch /
 
 RUN mkdir -p /usr/share/man/man1                                      && \
@@ -37,7 +37,7 @@ RUN cd /usr/lib/llvm-17/bin && cp llvm-config FileCheck count not /test-deps/bin
 RUN mkdir -p /osxcross && cd /osxcross && \
     git clone --depth 1 https://github.com/tpoechtrager/osxcross && \
     cd osxcross && git apply /osxcross.patch && \
-    ln -s /MacOSX14.5.sdk.tar.xz tarballs/ && \
+    ln -s /MacOSX15.2.sdk.tar.xz tarballs/ && \
     TARGET_DIR=/osxcross/install UNATTENDED=1 bash ./build.sh && \
     mv /osxcross/install/* /osxcross
 
