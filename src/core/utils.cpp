@@ -34,7 +34,7 @@ using namespace llvm;
 namespace detail {
 
 static int runExecutable(SmallVectorImpl<StringRef> &Args,
-#if LLVM_VERSION_MAJOR > 16
+#if LLVM_VERSION_MAJOR >= 16
                          ArrayRef<std::optional<StringRef>> Redirects = {}) {
   return sys::ExecuteAndWait(Args[0], Args, std::nullopt, Redirects);
 #else
@@ -58,7 +58,7 @@ static Expected<std::string> getIPhoneOSSDKPath() {
 
   SmallVector<StringRef, 8> Args = {XcrunPath, "--sdk", "iphoneos",
                                     "--show-sdk-path"};
-#if LLVM_VERSION_MAJOR > 16
+#if LLVM_VERSION_MAJOR >= 16
   std::optional<StringRef> Redirects[] = {std::nullopt, StringRef(TempPath),
                                           std::nullopt};
 #else
