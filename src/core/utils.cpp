@@ -34,13 +34,14 @@ using namespace llvm;
 namespace detail {
 
 static int runExecutable(SmallVectorImpl<StringRef> &Args,
-#if LLVM_VERSION_MAJOR > 16
+                         std::optional<ArrayRef<StringRef>> Envs = std::nullopt,
                          ArrayRef<std::optional<StringRef>> Redirects = {}) {
-  return sys::ExecuteAndWait(Args[0], Args, std::nullopt, Redirects);
-#else
-                         ArrayRef<Optional<StringRef>> Redirects = {}) {
-  return sys::ExecuteAndWait(Args[0], Args, None, Redirects);
-#endif
+  return sys::ExecuteAndWait(Args[0], Args, Envs, Redirects);
+}
+
+static std::string getAppleClangPath() {
+  static int Unused;
+  return sys::fs::getMainExecutable("clang", (void *)&Unused);
 }
 
 static Expected<std::string> getIPhoneOSSDKPath() {
@@ -58,14 +59,18 @@ static Expected<std::string> getIPhoneOSSDKPath() {
 
   SmallVector<StringRef, 8> Args = {XcrunPath, "--sdk", "iphoneos",
                                     "--show-sdk-path"};
-#if LLVM_VERSION_MAJOR > 16
+
+  const auto &ClangPath = getAppleClangPath();
+  size_t DirPos = ClangPath.find("/Contents/Developer");
+  std::string DeveloperDir =
+      ClangPath.substr(0, DirPos + strlen("/Contents/Developer"));
+  const auto &DeveloperDirEnvVar = "DEVELOPER_DIR=" + DeveloperDir;
+  SmallVector<StringRef, 1> Envs = {DeveloperDirEnvVar};
+
   std::optional<StringRef> Redirects[] = {std::nullopt, StringRef(TempPath),
                                           std::nullopt};
-#else
-  Optional<StringRef> Redirects[] = {None, StringRef(TempPath), None};
-#endif
 
-  if (int EC = runExecutable(Args, Redirects))
+  if (int EC = runExecutable(Args, Envs, Redirects))
     return createStringError(inconvertibleErrorCode(),
                              "Unable to execute program.");
 
@@ -83,9 +88,13 @@ static Expected<std::string> getIPhoneOSSDKPath() {
 static Expected<std::string>
 runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
                    const std::vector<std::string> &ExtraArgs) {
-  static int Dummy;
-  std::string ClangPath = sys::fs::getMainExecutable("clang", (void *)&Dummy);
+  const auto &ClangPath = getAppleClangPath();
   SmallVector<StringRef, 16> Args = {ClangPath, "-S", "-emit-llvm"};
+
+  // Always add the target triple.
+  const auto &TargetTriple = Triple.str();
+  Args.push_back("-target");
+  Args.push_back(TargetTriple);
 
   std::string SDKPath;
   if (Triple.isiOS()) {
