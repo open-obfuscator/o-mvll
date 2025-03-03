@@ -464,12 +464,18 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
 PreservedAnalyses ControlFlowFlattening::run(Module &M,
                                              ModuleAnalysisManager &MAM) {
   bool Changed = false;
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
   std::unique_ptr<RandomNumberGenerator> RNG = M.createRNG(name());
 
   for (Function &F : M) {
-    if (!Config.getUserConfig()->controlFlowGraphFlattening(&M, &F))
+    if (isFunctionExcluded(&F) ||
+        !Config.getUserConfig()->controlFlowGraphFlattening(&M, &F))
       continue;
 
     bool MadeChange = runOnFunction(F, *RNG);

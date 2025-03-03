@@ -27,6 +27,7 @@
 #include "omvll/ObfuscationConfig.hpp"
 #include "omvll/PyConfig.hpp"
 #include "omvll/log.hpp"
+#include "omvll/omvll_config.hpp"
 #include "omvll/utils.hpp"
 
 using namespace llvm;
@@ -466,6 +467,19 @@ PreservedAnalyses IRChangesMonitor::report() {
   }
 
   return ChangeReported ? PreservedAnalyses::none() : PreservedAnalyses::all();
+}
+
+bool isModuleExcluded(Module *M) {
+  auto Begin = Config.GlobalModuleExclude.begin();
+  auto End = Config.GlobalModuleExclude.end();
+  auto It = std::find_if(Begin, End, [&](const auto &ExcludedModule) {
+    return M->getName().contains(ExcludedModule);
+  });
+  return It != End;
+}
+
+bool isFunctionExcluded(Function *F) {
+  return is_contained(Config.GlobalFunctionExclude, F->getName());
 }
 
 } // end namespace omvll

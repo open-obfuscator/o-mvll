@@ -221,6 +221,11 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
 }
 
 PreservedAnalyses Arithmetic::run(Module &M, ModuleAnalysisManager &FAM) {
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   bool Changed = false;
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
@@ -236,6 +241,9 @@ PreservedAnalyses Arithmetic::run(Module &M, ModuleAnalysisManager &FAM) {
                  std::back_inserter(ToVisit), [](auto &F) { return &F; });
 
   for (Function *F : ToVisit) {
+    if (isFunctionExcluded(F))
+      continue;
+
     ArithmeticOpt Opt = Config.getUserConfig()->obfuscateArithmetics(&M, F);
     if (!Opt)
       continue;

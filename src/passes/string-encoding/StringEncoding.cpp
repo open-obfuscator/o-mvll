@@ -349,6 +349,11 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
 }
 
 PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   bool Changed = false;
   SINFO("[{}] Executing on module {}", name(), M.getName());
   auto &Config = PyConfig::instance();
@@ -357,7 +362,7 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
 
   std::vector<Function *> ToVisit;
   for (Function &F : M) {
-    if (F.empty() || F.isDeclaration())
+    if (isFunctionExcluded(&F) || F.empty() || F.isDeclaration())
       continue;
 
     demotePHINode(F);

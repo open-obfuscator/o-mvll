@@ -207,6 +207,11 @@ bool BreakControlFlow::runOnFunction(Function &F) {
 }
 
 PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   bool Changed = false;
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
@@ -214,7 +219,7 @@ PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
   JIT = std::make_unique<Jitter>(M.getTargetTriple());
 
   for (Function &F : M) {
-    if (F.isDeclaration() || F.isIntrinsic())
+    if (isFunctionExcluded(&F) || F.isDeclaration() || F.isIntrinsic())
       continue;
 
     if (Config.getUserConfig()->breakControlFlow(&M, &F))
