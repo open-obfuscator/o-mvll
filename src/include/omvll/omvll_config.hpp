@@ -12,11 +12,12 @@ namespace omvll {
 
 struct OMVLLConfig {
   std::vector<std::string> Passes;
+  std::vector<std::string> GlobalModuleExclude;
+  std::vector<std::string> GlobalFunctionExclude;
   bool Cleaning;
   bool ShuffleFunctions;
   bool InlineJniWrappers;
-  std::vector<std::string> GlobalModuleExclude;
-  std::vector<std::string> GlobalFunctionExclude;
+  int ProbabilitySeed;
 };
 
 // Defined in omvll_config.cpp.
