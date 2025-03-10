@@ -118,6 +118,24 @@ void OMVLLCtor(py::module_ &m) {
                         sub_AF34() // say_hi
 
                     If this value is set to ``True`` (which is the default value), the sequence is randomized.
+                    )delim")
+
+      .def_readwrite("global_mod_exclude", &OMVLLConfig::GlobalModuleExclude,
+                     R"delim(
+                    This attribute is a list of strings used to exclude entire modules from obfuscation.
+                    Each entry in the list can be a partial or full match of the module's name.
+                    For example, if a module's name is `a/b/c/d.cpp`, it can be excluded by including `"b/"` in the list.
+                    When a module is excluded, none of the obfuscation passes will be applied to it.
+                    
+                    By default, this list is empty.
+                    )delim")
+
+      .def_readwrite("global_func_exclude", &OMVLLConfig::GlobalFunctionExclude,
+                     R"delim(
+                    This attribute is a list of strings used to exclude specific functions from obfuscation.
+                    When a function is excluded, none of the obfuscation passes will be applied to it.
+                    
+                    By default, this list is empty.
                     )delim");
 
   m.attr("config") = &Config;

@@ -74,6 +74,11 @@ bool AntiHook::runOnFunction(Function &F) {
 }
 
 PreservedAnalyses AntiHook::run(Module &M, ModuleAnalysisManager &FAM) {
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   bool Changed = false;
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
@@ -81,7 +86,8 @@ PreservedAnalyses AntiHook::run(Module &M, ModuleAnalysisManager &FAM) {
   RNG = M.createRNG(name());
 
   for (Function &F : M) {
-    if (!Config.getUserConfig()->antiHooking(F.getParent(), &F))
+    if (isFunctionExcluded(&F) ||
+        !Config.getUserConfig()->antiHooking(F.getParent(), &F))
       continue;
 
     Changed |= runOnFunction(F);

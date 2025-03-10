@@ -18,10 +18,18 @@ PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
   if (!Config.Cleaning)
     return PreservedAnalyses::all();
 
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   bool Changed = false;
   SINFO("[{}] Executing on module {}", name(), M.getName());
 
   for (Function &F : M) {
+    if (isFunctionExcluded(&F))
+      continue;
+
     std::string Name  = demangle(F.getName().str());
     StringRef NRef = Name;
     if (NRef.startswith("_JNIEnv::") && Config.InlineJniWrappers) {

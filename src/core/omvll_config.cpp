@@ -29,6 +29,8 @@ void initDefaultConfig() {
   Config.Cleaning = true;
   Config.InlineJniWrappers = true;
   Config.ShuffleFunctions = true;
+  Config.GlobalModuleExclude.clear();
+  Config.GlobalFunctionExclude.clear();
 }
 
 } // end namespace omvll

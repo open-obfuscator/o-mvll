@@ -46,6 +46,8 @@ size_t demoteRegs(llvm::Function &F);
 size_t reg2mem(llvm::Function &F);
 
 void shuffleFunctions(llvm::Module &M);
+bool isModuleExcluded(llvm::Module *M);
+bool isFunctionExcluded(llvm::Function *F);
 
 [[noreturn]] void fatalError(const char *Msg);
 [[noreturn]] void fatalError(const std::string &Msg);

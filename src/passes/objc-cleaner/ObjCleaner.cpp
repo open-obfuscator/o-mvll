@@ -26,6 +26,11 @@ inline bool isObjCVar(const GlobalVariable &G) {
 
 PreservedAnalyses ObjCleaner::run(Module &M, ModuleAnalysisManager &FAM) {
   bool Changed = false;
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   SINFO("[{}] Executing on module {}", name(), M.getName());
 
   for (GlobalVariable &G : M.globals()) {

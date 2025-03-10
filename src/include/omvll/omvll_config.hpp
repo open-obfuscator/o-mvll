@@ -15,6 +15,8 @@ struct OMVLLConfig {
   bool Cleaning;
   bool ShuffleFunctions;
   bool InlineJniWrappers;
+  std::vector<std::string> GlobalModuleExclude;
+  std::vector<std::string> GlobalFunctionExclude;
 };
 
 // Defined in omvll_config.cpp.

@@ -247,6 +247,11 @@ bool OpaqueConstants::runOnBasicBlock(llvm::BasicBlock &BB,
 
 PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
   bool Changed = false;
+  if (isModuleExcluded(&M)) {
+    SINFO("Excluding module [{}]", M.getName());
+    return PreservedAnalyses::all();
+  }
+
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
   RNG = M.createRNG(name());
@@ -259,6 +264,9 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
   });
 
   for (Function &F : M) {
+    if (isFunctionExcluded(&F))
+      continue;
+
     OpaqueConstantsOpt Opt = Config.getUserConfig()->obfuscateConstants(&M, &F);
     OpaqueConstantsOpt *Inserted = nullptr;
     if (isSkip(Opt))
