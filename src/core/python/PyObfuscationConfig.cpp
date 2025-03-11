@@ -10,6 +10,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 
+#include "omvll/log.hpp"
 #include "omvll/utils.hpp"
 
 #include "PyObfuscationConfig.hpp"
@@ -315,6 +316,45 @@ OpaqueConstantsOpt PyObfuscationConfig::obfuscateConstants(llvm::Module *M,
     }
   }
   return OpaqueConstantsSkip();
+}
+
+bool PyObfuscationConfig::defaultConfig(
+    llvm::Module *M, llvm::Function *F,
+    const std::vector<std::string> &ModuleExcludes,
+    const std::vector<std::string> &FunctionExcludes,
+    const std::vector<std::string> &FunctionIncludes, int Probability) {
+  // Exclude modules.
+  if (!ModuleExcludes.empty() &&
+      llvm::count_if(ModuleExcludes, [&](const auto &ExcludedModule) {
+        return M->getName().contains(ExcludedModule);
+      }) != 0) {
+    SDEBUG("defaultConfig: Module {} is excluded", M->getName());
+    return false;
+  }
+
+  // Exclude functions.
+  if (!FunctionExcludes.empty() &&
+      llvm::count(FunctionExcludes, F->getName()) != 0) {
+    SDEBUG("defaultConfig: Function {} is excluded", F->getName());
+    return false;
+  }
+
+  // Include functions.
+  if (!FunctionIncludes.empty() &&
+      llvm::count(FunctionIncludes, F->getName()) != 0) {
+    SDEBUG("defaultConfig: Function {} is added", F->getName());
+    return true;
+  }
+
+  if (RandomGenerator::checkProbability(Probability)) {
+    SDEBUG("defaultConfig: Function {} is added because of probability",
+           F->getName());
+    return true;
+  } else {
+    SDEBUG("defaultConfig: Function {} is not added because of probability",
+           F->getName());
+    return false;
+  }
 }
 
 } // end namespace omvll

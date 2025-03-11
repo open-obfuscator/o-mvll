@@ -85,4 +85,13 @@ private:
   bool ChangeReported;
 };
 
+class RandomGenerator {
+private:
+  static bool Seeded;
+
+public:
+  static int generate();
+  static int checkProbability(int Target);
+};
+
 } // end namespace omvll

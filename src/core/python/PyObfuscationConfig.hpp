@@ -37,6 +37,12 @@ class PyObfuscationConfig : public ObfuscationConfig {
   OpaqueConstantsOpt obfuscateConstants(llvm::Module *M,
                                         llvm::Function *F) override;
 
+  bool defaultConfig(llvm::Module *M, llvm::Function *F,
+                     const std::vector<std::string> &ModuleExcludes = {},
+                     const std::vector<std::string> &FunctionExcludes = {},
+                     const std::vector<std::string> &FunctionIncludes = {},
+                     int Probability = 0) override;
+
   bool hasReportDiffOverride() override;
   void reportDiff(const std::string &Pass, const std::string &Original,
                   const std::string &Obfuscated) override;

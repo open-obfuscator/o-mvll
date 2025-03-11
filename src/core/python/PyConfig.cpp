@@ -136,6 +136,15 @@ void OMVLLCtor(py::module_ &m) {
                     When a function is excluded, none of the obfuscation passes will be applied to it.
                     
                     By default, this list is empty.
+                    )delim")
+
+      .def_readwrite("probability_seed", &OMVLLConfig::ProbabilitySeed,
+                     R"delim(
+                    probability_seed is a configurable value used to initialize the random number generator.
+                    Whenever a random value is required during the obfuscation process,
+                    the generator will use this predefined seed to ensure deterministic and reproducible randomness.
+
+                    The default value is 1.
                     )delim");
 
   m.attr("config") = &Config;
@@ -324,7 +333,11 @@ void OMVLLCtor(py::module_ &m) {
            R"delim(
          User-callback to monitor IR-level changes from individual obfuscation passes.
          )delim",
-           "pass_name"_a, "original"_a, "obfuscated"_a);
+           "pass_name"_a, "original"_a, "obfuscated"_a)
+
+      .def("default_config", &ObfuscationConfig::defaultConfig, "module"_a,
+           "function"_a, "ModuleExcludes"_a, "FunctionExcludes"_a,
+           "FunctionIncludes"_a, "Probability"_a);
 }
 
 std::unique_ptr<py::module_> initOMVLLCore(py::dict Modules) {

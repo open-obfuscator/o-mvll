@@ -31,6 +31,7 @@ void initDefaultConfig() {
   Config.ShuffleFunctions = true;
   Config.GlobalModuleExclude.clear();
   Config.GlobalFunctionExclude.clear();
+  Config.ProbabilitySeed = 1;
 }
 
 } // end namespace omvll

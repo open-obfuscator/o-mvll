@@ -482,4 +482,23 @@ bool isFunctionExcluded(Function *F) {
   return is_contained(Config.GlobalFunctionExclude, F->getName());
 }
 
+// Default value is false.
+bool RandomGenerator::Seeded = false;
+
+int RandomGenerator::generate() {
+  if (!RandomGenerator::Seeded) {
+    std::srand(Config.ProbabilitySeed);
+    RandomGenerator::Seeded = true;
+  }
+
+  // Generate number between 0 and 99.
+  return std::rand() % 100;
+}
+
+int RandomGenerator::checkProbability(int Target) {
+  if (RandomGenerator::generate() < Target)
+    return true;
+  return false;
+}
+
 } // end namespace omvll
