@@ -207,7 +207,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
 }
 
 PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
@@ -219,7 +219,7 @@ PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
   JIT = std::make_unique<Jitter>(M.getTargetTriple());
 
   for (Function &F : M) {
-    if (isFunctionExcluded(&F) || F.isDeclaration() || F.isIntrinsic())
+    if (isFunctionGloballyExcluded(&F) || F.isDeclaration() || F.isIntrinsic())
       continue;
 
     if (Config.getUserConfig()->breakControlFlow(&M, &F))

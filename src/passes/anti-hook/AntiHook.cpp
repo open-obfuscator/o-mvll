@@ -74,7 +74,7 @@ bool AntiHook::runOnFunction(Function &F) {
 }
 
 PreservedAnalyses AntiHook::run(Module &M, ModuleAnalysisManager &FAM) {
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
@@ -86,7 +86,7 @@ PreservedAnalyses AntiHook::run(Module &M, ModuleAnalysisManager &FAM) {
   RNG = M.createRNG(name());
 
   for (Function &F : M) {
-    if (isFunctionExcluded(&F) ||
+    if (isFunctionGloballyExcluded(&F) ||
         !Config.getUserConfig()->antiHooking(F.getParent(), &F))
       continue;
 

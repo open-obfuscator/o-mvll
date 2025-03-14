@@ -464,7 +464,7 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
 PreservedAnalyses ControlFlowFlattening::run(Module &M,
                                              ModuleAnalysisManager &MAM) {
   bool Changed = false;
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
@@ -474,7 +474,7 @@ PreservedAnalyses ControlFlowFlattening::run(Module &M,
   std::unique_ptr<RandomNumberGenerator> RNG = M.createRNG(name());
 
   for (Function &F : M) {
-    if (isFunctionExcluded(&F) ||
+    if (isFunctionGloballyExcluded(&F) ||
         !Config.getUserConfig()->controlFlowGraphFlattening(&M, &F))
       continue;
 

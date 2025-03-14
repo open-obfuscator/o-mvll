@@ -349,7 +349,7 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
 }
 
 PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
@@ -362,7 +362,7 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
 
   std::vector<Function *> ToVisit;
   for (Function &F : M) {
-    if (isFunctionExcluded(&F) || F.empty() || F.isDeclaration())
+    if (isFunctionGloballyExcluded(&F) || F.empty() || F.isDeclaration())
       continue;
 
     demotePHINode(F);

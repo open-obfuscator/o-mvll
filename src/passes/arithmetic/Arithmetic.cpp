@@ -221,7 +221,7 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
 }
 
 PreservedAnalyses Arithmetic::run(Module &M, ModuleAnalysisManager &FAM) {
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
@@ -241,7 +241,7 @@ PreservedAnalyses Arithmetic::run(Module &M, ModuleAnalysisManager &FAM) {
                  std::back_inserter(ToVisit), [](auto &F) { return &F; });
 
   for (Function *F : ToVisit) {
-    if (isFunctionExcluded(F))
+    if (isFunctionGloballyExcluded(F))
       continue;
 
     ArithmeticOpt Opt = Config.getUserConfig()->obfuscateArithmetics(&M, F);

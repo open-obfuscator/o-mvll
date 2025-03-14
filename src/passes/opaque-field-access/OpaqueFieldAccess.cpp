@@ -379,14 +379,14 @@ bool OpaqueFieldAccess::runOnBasicBlock(BasicBlock &BB) {
 
 PreservedAnalyses OpaqueFieldAccess::run(Module &M,
                                          ModuleAnalysisManager &FAM) {
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
 
   bool Changed = false;
   for (Function &F : M) {
-    if (isFunctionExcluded(&F))
+    if (isFunctionGloballyExcluded(&F))
       continue;
 
     for (BasicBlock &BB : F)

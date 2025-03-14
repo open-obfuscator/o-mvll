@@ -18,7 +18,7 @@ PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
   if (!Config.Cleaning)
     return PreservedAnalyses::all();
 
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
@@ -27,7 +27,7 @@ PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
   SINFO("[{}] Executing on module {}", name(), M.getName());
 
   for (Function &F : M) {
-    if (isFunctionExcluded(&F))
+    if (isFunctionGloballyExcluded(&F))
       continue;
 
     std::string Name  = demangle(F.getName().str());

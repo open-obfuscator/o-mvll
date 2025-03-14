@@ -247,7 +247,7 @@ bool OpaqueConstants::runOnBasicBlock(llvm::BasicBlock &BB,
 
 PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
   bool Changed = false;
-  if (isModuleExcluded(&M)) {
+  if (isModuleGloballyExcluded(&M)) {
     SINFO("Excluding module [{}]", M.getName());
     return PreservedAnalyses::all();
   }
@@ -264,7 +264,7 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
   });
 
   for (Function &F : M) {
-    if (isFunctionExcluded(&F))
+    if (isFunctionGloballyExcluded(&F))
       continue;
 
     OpaqueConstantsOpt Opt = Config.getUserConfig()->obfuscateConstants(&M, &F);
