@@ -4,7 +4,7 @@
 //
 
 // REQUIRES: aarch64-registered-target
-// UNSUPPORTED: system-{{.*}}
+// XFAIL: host-platform-linux
 
 // RUN:                                   clang -target arm64-apple-ios                         -O1 -fno-verbose-asm -S %s -o - | FileCheck %s
 // RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=BREAKCFG-IOS %s
@@ -36,11 +36,12 @@
 // BREAKCFG-IOS:       adrp	x8, _check_password.1@PAGE
 // BREAKCFG-IOS:       Lloh1:
 // BREAKCFG-IOS:       add	x8, x8, _check_password.1@PAGEOFF
-// BREAKCFG-IOS:       str	x8, [sp]
+// BREAKCFG-IOS:       str	x8, [sp, #-16]!
 // BREAKCFG-IOS:       add	x8, x8, #32
 // BREAKCFG-IOS:       str	x8, [sp, #8]
-// BREAKCFG-IOS:       ldr	x8, [sp, #8]
-// BREAKCFG-IOS:       blr	x8
+// BREAKCFG-IOS:       ldr	x2, [sp, #8]
+// BREAKCFG-IOS:       add	sp, sp, #16
+// BREAKCFG-IOS:       br	x2
 
 int check_password(const char* passwd, unsigned len) {
   if (len != 5) {

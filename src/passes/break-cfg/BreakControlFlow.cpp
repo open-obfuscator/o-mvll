@@ -212,19 +212,27 @@ PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
     return PreservedAnalyses::all();
   }
 
-  bool Changed = false;
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
-  RNG = M.createRNG(name());
-  JIT = std::make_unique<Jitter>(M.getTargetTriple());
 
+  std::vector<Function *> ToVisit;
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F) || F.isDeclaration() || F.isIntrinsic())
       continue;
 
     if (Config.getUserConfig()->breakControlFlow(&M, &F))
-      Changed |= runOnFunction(F);
+      ToVisit.emplace_back(&F);
   }
+
+  if (ToVisit.empty())
+    return PreservedAnalyses::all();
+
+  bool Changed = false;
+  RNG = M.createRNG(name());
+  JIT = std::make_unique<Jitter>(M.getTargetTriple());
+
+  for (Function *F : ToVisit)
+    Changed |= runOnFunction(*F);
 
   SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",
         M.getName());
