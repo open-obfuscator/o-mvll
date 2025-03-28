@@ -119,12 +119,13 @@ Function *Arithmetic::injectFunWrapper(Module &M, BinaryOperator &Op,
   auto *F = Function::Create(FTy, llvm::GlobalValue::PrivateLinkage,
                              MBAFunctionName, M);
 
-  if constexpr (ShouldInline)
+  if constexpr (ShouldInline) {
     F->addFnAttr(Attribute::AlwaysInline);
-  else
+  } else {
     F->addFnAttr(Attribute::NoInline);
+    F->addFnAttr(Attribute::OptimizeNone);
+  }
 
-  F->addFnAttr(Attribute::OptimizeNone);
   F->setCallingConv(CallingConv::C);
 
   BasicBlock *EntryBB = BasicBlock::Create(F->getContext(), "entry", F);
