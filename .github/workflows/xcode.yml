@@ -11,10 +11,10 @@ jobs:
       - name: O-MVLL Xcode 16.x
         shell: bash
         run: |
-          curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-16_2.tar
+          curl -LO https://open-obfuscator.build38.io/static/omvll-deps-xcode-16_3.tar
           mkdir -p /tmp/third-party-xcode16
           mkdir -p $GITHUB_WORKSPACE/dist
-          tar xvf ./omvll-deps-xcode-16_2.tar --directory=/tmp/third-party-xcode16
+          tar xvf ./omvll-deps-xcode-16_3.tar --directory=/tmp/third-party-xcode16
           docker run --rm \
             -v /tmp/third-party-xcode16:/third-party \
             -v $GITHUB_WORKSPACE:/o-mvll \
@@ -42,7 +42,7 @@ jobs:
             ./omvll_xcode_16.dylib
             ./Python-3.10.7
             ./sample-omvll-config.py
-          outPath: ${{ github.workspace }}/dist/omvll_xcode_16_2.tar.gz
+          outPath: ${{ github.workspace }}/dist/omvll_xcode_16_3.tar.gz
       - name: O-MVLL Deployment
         env:
           BUILD38_S3_KEY: ${{ secrets.BUILD38_S3_KEY }}

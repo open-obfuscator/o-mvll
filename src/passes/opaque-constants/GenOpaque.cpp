@@ -4,6 +4,7 @@
 //
 
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/NoFolder.h"
 #include "llvm/Support/RandomNumberGenerator.h"
 

@@ -20,7 +20,11 @@ message(STATUS "${PROJECT_NAME}: ${PROJECT_VERSION}")
 option(OMVLL_FORCE_LOG_DEBUG "Force the log debug output" OFF)
 option(OMVLL_PY_STANDALONE   "Build OMVLL as a standalone Python module" OFF)
 
-set(LLVM_REQUIRED_VERSION 17)
+if(APPLE)
+  set(LLVM_REQUIRED_VERSION 19.1.4)
+else()
+  set(LLVM_REQUIRED_VERSION 17.0.2)
+endif()
 
 find_package(LLVM ${LLVM_REQUIRED_VERSION} REQUIRED CONFIG NO_DEFAULT_PATH)
 
@@ -35,8 +39,8 @@ message(STATUS "Python lib:     ${Python3_LIBRARIES}")
 message(STATUS "Python include: ${Python3_INCLUDE_DIRS}")
 message(STATUS "Python interpreter: ${Python3_EXECUTABLE}")
 
-if(NOT "${LLVM_REQUIRED_VERSION}" VERSION_EQUAL "${LLVM_VERSION_MAJOR}")
-  message(FATAL_ERROR "Found LLVM ${LLVM_VERSION_MAJOR}, but need LLVM ${LLVM_REQUIRED_VERSION}")
+if(NOT "${LLVM_PACKAGE_VERSION}" VERSION_EQUAL "${LLVM_REQUIRED_VERSION}")
+  message(FATAL_ERROR "Found LLVM ${LLVM_PACKAGE_VERSION}, but need LLVM ${LLVM_REQUIRED_VERSION}")
 endif()
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")

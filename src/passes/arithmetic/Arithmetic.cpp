@@ -206,11 +206,7 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
 
           Result->copyMetadata(I, {LLVMContext::MD_dbg, LLVMContext::MD_annotation});
           Result->takeName(&I);
-#if LLVM_VERSION_MAJOR > 16
           Result->insertInto(InstParent, InsertPos);
-#else
-          InstParent->getInstList().insert(InsertPos, Result);
-#endif
           I.replaceAllUsesWith(Result);
         }
       }

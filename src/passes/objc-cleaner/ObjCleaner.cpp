@@ -21,7 +21,7 @@ inline bool isObjCVar(const GlobalVariable &G) {
     return false;
 
   StringRef Name = G.getName();
-  return Name.startswith("OBJC_") || Name.startswith("_OBJC_");
+  return Name.starts_with("OBJC_") || Name.starts_with("_OBJC_");
 }
 
 PreservedAnalyses ObjCleaner::run(Module &M, ModuleAnalysisManager &FAM) {

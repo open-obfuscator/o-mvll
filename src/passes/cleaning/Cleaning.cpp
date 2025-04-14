@@ -4,6 +4,7 @@
 //
 
 #include "llvm/Demangle/Demangle.h"
+#include "llvm/IR/Module.h"
 
 #include "omvll/log.hpp"
 #include "omvll/utils.hpp"
@@ -32,7 +33,7 @@ PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
 
     std::string Name  = demangle(F.getName().str());
     StringRef NRef = Name;
-    if (NRef.startswith("_JNIEnv::") && Config.InlineJniWrappers) {
+    if (NRef.starts_with("_JNIEnv::") && Config.InlineJniWrappers) {
       SDEBUG("[{}] Inlining {}", Name);
       F.addFnAttr(Attribute::AlwaysInline);
       Changed = true;

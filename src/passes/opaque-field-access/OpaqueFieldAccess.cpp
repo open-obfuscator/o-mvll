@@ -62,12 +62,8 @@ bool OpaqueFieldAccess::runOnStructRead(BasicBlock &BB, LoadInst &Load,
   if (auto *OpAdd = dyn_cast<Instruction>(OpaqueOffset))
     addMetadata(*OpAdd, {MetaObf(OpaqueCst), MetaObf(OpaqueOp, 2LLU)});
 
-  Value *NewGEP = IRB.CreateBitCast(
-      IRB.CreateInBoundsGEP(
-          IRB.getInt8Ty(),
-          IRB.CreateBitCast(GEP.getPointerOperand(), IRB.getInt8PtrTy()),
-          OpaqueOffset),
-      GEP.getResultElementType()->getPointerTo());
+  Value *NewGEP = IRB.CreateInBoundsGEP(IRB.getInt8Ty(),
+                                        GEP.getPointerOperand(), OpaqueOffset);
 
   GEP.replaceAllUsesWith(NewGEP);
   return true;
@@ -98,12 +94,8 @@ bool OpaqueFieldAccess::runOnBufferRead(BasicBlock &BB, LoadInst &Load,
   if (auto *Op = dyn_cast<Instruction>(OpaqueOffset))
     addMetadata(*Op, {MetaObf(OpaqueCst), MetaObf(OpaqueOp, 2LLU)});
 
-  Value *NewGEP = IRB.CreateBitCast(
-      IRB.CreateInBoundsGEP(
-          IRB.getInt8Ty(),
-          IRB.CreateBitCast(GEP.getPointerOperand(), IRB.getInt8PtrTy()),
-          OpaqueOffset),
-      GEP.getResultElementType()->getPointerTo());
+  Value *NewGEP = IRB.CreateInBoundsGEP(IRB.getInt8Ty(),
+                                        GEP.getPointerOperand(), OpaqueOffset);
 
   GEP.replaceAllUsesWith(NewGEP);
   return true;
@@ -273,12 +265,8 @@ bool OpaqueFieldAccess::runOnStructWrite(BasicBlock &BB, StoreInst &Store,
   if (auto *OpAdd = dyn_cast<Instruction>(OpaqueOffset))
     addMetadata(*OpAdd, {MetaObf(OpaqueCst), MetaObf(OpaqueOp, 2LLU)});
 
-  Value *NewGEP = IRB.CreateBitCast(
-      IRB.CreateInBoundsGEP(
-          IRB.getInt8Ty(),
-          IRB.CreateBitCast(GEP.getPointerOperand(), IRB.getInt8PtrTy()),
-          OpaqueOffset),
-      GEP.getResultElementType()->getPointerTo());
+  Value *NewGEP = IRB.CreateInBoundsGEP(IRB.getInt8Ty(),
+                                        GEP.getPointerOperand(), OpaqueOffset);
 
   GEP.replaceAllUsesWith(NewGEP);
   return true;
@@ -310,12 +298,8 @@ bool OpaqueFieldAccess::runOnBufferWrite(BasicBlock &BB, StoreInst &Store,
   if (auto *Op = dyn_cast<Instruction>(OpaqueOffset))
     addMetadata(*Op, {MetaObf(OpaqueCst), MetaObf(OpaqueOp, 2LLU)});
 
-  Value *NewGEP = IRB.CreateBitCast(
-      IRB.CreateInBoundsGEP(
-          IRB.getInt8Ty(),
-          IRB.CreateBitCast(GEP.getPointerOperand(), IRB.getInt8PtrTy()),
-          OpaqueOffset),
-      GEP.getResultElementType()->getPointerTo());
+  Value *NewGEP = IRB.CreateInBoundsGEP(IRB.getInt8Ty(),
+                                        GEP.getPointerOperand(), OpaqueOffset);
 
   GEP.replaceAllUsesWith(NewGEP);
   return true;

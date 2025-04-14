@@ -6,8 +6,12 @@
 #include <string>
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringExtras.h"
+#if LLVM_VERSION_MAJOR > 18
+#include "llvm/ADT/StableHashing.h"
+#else
 #include "llvm/CodeGen/StableHashing.h"
+#endif
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/IR/Constant.h"
@@ -19,7 +23,8 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/NoFolder.h"
-#include "llvm/Support/Host.h"
+#include "llvm/Support/xxhash.h"
+#include "llvm/TargetParser/Host.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
@@ -171,7 +176,7 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
     assert(extractGlobalVariable(cast<ConstantExpr>(EncPtr)) == &G &&
            "Previously extracted global variable need to match");
 
-  Value *Input = IRB.CreateBitCast(&G, IRB.getInt8PtrTy());
+  Value *Input = IRB.CreateBitCast(&G, IRB.getPtrTy());
   Value *Output = Input;
 
   if (IsLocalToFunction)
@@ -217,11 +222,11 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
                          ConstantInt::getFalse(BoolType));
 
   It = IRB.GetInsertPoint();
-  auto *WrapperType = FunctionType::get(IRB.getVoidTy(),
-                                        {IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
-                                         IRB.getInt8PtrTy(), IRB.getInt64Ty(),
-                                         IRB.getInt32Ty()},
-                                        false);
+  auto *WrapperType =
+      FunctionType::get(IRB.getVoidTy(),
+                        {IRB.getPtrTy(), IRB.getPtrTy(), IRB.getPtrTy(),
+                         IRB.getInt64Ty(), IRB.getInt32Ty()},
+                        false);
   auto *Wrapper = Function::Create(WrapperType, GlobalValue::PrivateLinkage,
                                    "__omvll_decode_wrap", NewPt->getModule());
 
@@ -499,8 +504,11 @@ bool StringEncoding::processGlobal(Instruction &I, Use &Op, GlobalVariable &G,
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx), /* no args */ {},
                                         /* no var args */ false);
 
-  unsigned GlobalIDHashVal =
-      stable_hash_combine_string(G.getGlobalIdentifier());
+#if LLVM_VERSION_MAJOR > 18
+  unsigned GlobalIDHashVal = xxh3_64bits(G.getGlobalIdentifier());
+#else
+  unsigned GlobalIDHashVal = stable_hash_combine_string(G.getGlobalIdentifier());
+#endif
   unsigned HashCombinedVal = stable_hash_combine(GlobalIDHashVal, StrSz, Key);
   std::string Name = CtorPrefixName + utostr(HashCombinedVal);
   FunctionCallee FCallee = M->getOrInsertFunction(Name, FTy);
@@ -534,7 +542,8 @@ void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
 
   {
     EI.HM = ExitOnErr(generateModule(Routine, HostTriple, "cpp",
-                                     HostJIT->getContext(), {"-std=c++17"}));
+                                     HostJIT->getContext(),
+                                     {"-std=c++17", "-fno-stack-check"}));
   }
 
   {

@@ -31,17 +31,16 @@
 
 // R2-LABEL: _memcpy_xor:
 // R2:       LBB0_2:
-// R2:       	mov	w11, w8
-// R2:       	ldrsb	w12, [x1, x11]
-// R2:       	orn	w13, w9, w12
-// R2:       	add	w13, w12, w13
-// R2:       	add	w13, w13, #36
-// R2:       	and	w12, w12, w10
-// R2:       	neg	w12, w12
-// R2:       	eor	w14, w13, w12
-// R2:       	and	w12, w13, w12
-// R2:       	add	w12, w14, w12, lsl #1
-// R2:       	strb	w12, [x0, x11]
+// R2:       	ldrsb	w11, [x1, w8, uxtw]
+// R2:       	orn	w12, w9, w11
+// R2:       	add	w12, w11, w12
+// R2:       	add	w12, w12, #36
+// R2:       	and	w11, w11, w10
+// R2:       	neg	w11, w11
+// R2:       	eor	w13, w12, w11
+// R2:       	and	w11, w12, w11
+// R2:       	add	w11, w13, w11, lsl #1
+// R2:       	strb	w11, [x0, w8, uxtw]
 // R2:       	and	w11, w8, #0x1
 // R2:       	mvn	w12, w8
 // R2:       	orr	w12, w12, #0xfffffffe
@@ -53,21 +52,20 @@
 
 // R3-LABEL: _memcpy_xor:
 // R3:       LBB0_2:
-// R3:       	mov	w10, w9
-// R3:       	ldrb	w11, [x1, x10]
-// R3:       	orn	w12, w8, w11
-// R3:       	add	w12, w11, w12
-// R3:       	add	w13, w12, #36
-// R3:       	add	w11, w11, #35
-// R3:       	sub	w12, w8, w12
-// R3:       	eor	w14, w11, w12
-// R3:       	and	w11, w11, w12
-// R3:       	add	w11, w14, w11, lsl #1
-// R3:       	neg	w11, w11
-// R3:       	eor	w12, w11, w13
-// R3:       	and	w11, w11, w13
-// R3:       	add	w11, w12, w11, lsl #1
-// R3:       	strb	w11, [x0, x10]
+// R3:       	ldrb	w10, [x1, w9, uxtw]
+// R3:       	orn	w11, w8, w10
+// R3:       	add	w11, w10, w11
+// R3:       	add	w12, w11, #36
+// R3:       	add	w10, w10, #35
+// R3:       	sub	w11, w8, w11
+// R3:       	eor	w13, w10, w11
+// R3:       	and	w10, w10, w11
+// R3:       	add	w10, w13, w10, lsl #1
+// R3:       	neg	w10, w10
+// R3:       	eor	w11, w10, w12
+// R3:       	and	w10, w10, w12
+// R3:       	add	w10, w11, w10, lsl #1
+// R3:       	strb	w10, [x0, w9, uxtw]
 // R3:       	add	w10, w9, #1
 // R3:       	add	w11, w9, #2
 // R3:       	mvn	w9, w9

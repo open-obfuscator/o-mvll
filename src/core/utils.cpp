@@ -73,7 +73,8 @@ static Expected<std::string> getIPhoneOSSDKPath() {
 
   if (int EC = runExecutable(Args, Envs, Redirects))
     return createStringError(inconvertibleErrorCode(),
-                             "Unable to execute program.");
+                             "Unable to execute program: " +
+                                 std::to_string(EC));
 
   std::string Out;
   auto Buffer = MemoryBuffer::getFile(TempPath);
@@ -283,8 +284,12 @@ size_t demotePHINode(Function &F) {
 
     Count += PhiNodes.size();
     for (PHINode *Phi : PhiNodes)
+#if LLVM_VERSION_MAJOR > 18
+      DemotePHIToStack(Phi, F.begin()->getTerminator()->getIterator());
+#else
       DemotePHIToStack(Phi, F.begin()->getTerminator());
-  } while (!PhiNodes.empty());
+#endif
+    } while (!PhiNodes.empty());
   return Count;
 }
 
@@ -312,7 +317,11 @@ size_t demoteRegs(Function &F) {
 
     Count += WorkList.size();
     for (Instruction *I : WorkList)
+#if LLVM_VERSION_MAJOR > 18
+      DemoteRegToStack(*I, false, F.begin()->getTerminator()->getIterator());
+#else
       DemoteRegToStack(*I, false, F.begin()->getTerminator());
+#endif
   } while (!WorkList.empty());
   return Count;
 }
@@ -345,9 +354,15 @@ size_t reg2mem(Function &F) {
   BasicBlock::iterator I = BBEntry->begin();
   while (isa<AllocaInst>(I)) ++I;
 
-  CastInst *AllocaInsertionPoint = new BitCastInst(
+  CastInst *BCI = new BitCastInst(
       Constant::getNullValue(Type::getInt32Ty(F.getContext())),
       Type::getInt32Ty(F.getContext()), "reg2mem alloca point", &*I);
+
+#if LLVM_VERSION_MAJOR > 18
+  auto AllocaInsertionPoint = BCI->getIterator();
+#else
+  auto AllocaInsertionPoint = BCI;
+#endif  
 
   // Find the escaped instructions. But don't create stack slots for
   // allocas in entry block.

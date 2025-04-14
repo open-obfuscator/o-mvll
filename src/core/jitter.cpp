@@ -16,9 +16,9 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/TargetParser/Host.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include "omvll/jitter.hpp"
@@ -111,8 +111,11 @@ std::unique_ptr<MemoryBuffer> Jitter::jitAsm(const std::string &Asm,
   orc::JITTargetMachineBuilder JTMB{llvm::Triple(TT)};
   JTMB.setRelocationModel(Reloc::Model::PIC_);
   JTMB.setCodeModel(CodeModel::Large);
+#if LLVM_VERSION_MAJOR > 18
+  JTMB.setCodeGenOptLevel(CodeGenOptLevel::None);
+#else
   JTMB.setCodeGenOptLevel(CodeGenOpt::Level::None);
-
+#endif
   Builder.setPlatformSetUp(orc::setUpInactivePlatform)
       .setJITTargetMachineBuilder(JTMB);
   Builder.setJITTargetMachineBuilder(std::move(JTMB));
