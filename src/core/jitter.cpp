@@ -41,6 +41,13 @@ Jitter::Jitter(const std::string &Triple)
   InitializeNativeTarget();
   InitializeNativeTargetAsmParser();
   InitializeNativeTargetAsmPrinter();
+
+  // Explicitly initialize the AArch64 target
+  LLVMInitializeAArch64Target();
+  LLVMInitializeAArch64TargetMC();
+  LLVMInitializeAArch64TargetInfo();
+  LLVMInitializeAArch64AsmParser();
+  LLVMInitializeAArch64AsmPrinter();
 }
 
 std::unique_ptr<orc::LLJIT> Jitter::compile(Module &M) {
