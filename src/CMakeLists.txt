@@ -149,6 +149,8 @@ set(LLVM_LIBS_DEP
   demangle
   OrcJIT
   native
+  ARMCodeGen
+  ARMAsmParser
   AArch64CodeGen
   AArch64AsmParser
 )

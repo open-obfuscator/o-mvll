@@ -24,6 +24,8 @@
 #include "omvll/jitter.hpp"
 #include "omvll/utils.hpp"
 
+#include <spdlog/fmt/fmt.h>
+
 using namespace llvm;
 
 static constexpr auto AsmFunctionName = "__omvll_asm_func";
@@ -41,13 +43,28 @@ Jitter::Jitter(const std::string &Triple)
   InitializeNativeTarget();
   InitializeNativeTargetAsmParser();
   InitializeNativeTargetAsmPrinter();
+}
 
-  // Explicitly initialize the AArch64 target
-  LLVMInitializeAArch64Target();
-  LLVMInitializeAArch64TargetMC();
-  LLVMInitializeAArch64TargetInfo();
-  LLVMInitializeAArch64AsmParser();
-  LLVMInitializeAArch64AsmPrinter();
+void Jitter::initializeARMAssembler() {
+  if (!hasInitializedARMAssembler) {
+    LLVMInitializeARMTarget();
+    LLVMInitializeARMTargetMC();
+    LLVMInitializeARMTargetInfo();
+    LLVMInitializeARMAsmParser();
+    LLVMInitializeARMAsmPrinter();
+    hasInitializedARMAssembler = true;
+  }
+}
+
+void Jitter::initializeAArch64Assembler() {
+  if (!hasInitializedAArch64Assembler) {
+    LLVMInitializeAArch64Target();
+    LLVMInitializeAArch64TargetMC();
+    LLVMInitializeAArch64TargetInfo();
+    LLVMInitializeAArch64AsmParser();
+    LLVMInitializeAArch64AsmPrinter();
+    hasInitializedAArch64Assembler = true;
+  }
 }
 
 std::unique_ptr<orc::LLJIT> Jitter::compile(Module &M) {
@@ -113,9 +130,17 @@ std::unique_ptr<MemoryBuffer> Jitter::jitAsm(const std::string &Asm,
   IRB.CreateCall(FType, RawAsm);
   IRB.CreateRetVoid();
 
+  llvm::Triple TT = llvm::Triple(Triple);
+  if (TT.getArch() == llvm::Triple::ArchType::arm) {
+      initializeARMAssembler();
+  } else if (TT.getArch() == llvm::Triple::ArchType::aarch64) {
+      initializeAArch64Assembler();
+  } else {
+      fatalError(fmt::format("Unsupported arch type: {}", TT.getArch()));
+  }
+
   orc::LLJITBuilder Builder;
-  std::string TT = Triple;
-  orc::JITTargetMachineBuilder JTMB{llvm::Triple(TT)};
+  orc::JITTargetMachineBuilder JTMB{TT};
   JTMB.setRelocationModel(Reloc::Model::PIC_);
   JTMB.setCodeModel(CodeModel::Large);
 #if LLVM_VERSION_MAJOR > 18

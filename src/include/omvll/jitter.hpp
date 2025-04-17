@@ -47,6 +47,11 @@ protected:
 private:
   std::string Triple;
   std::unique_ptr<llvm::LLVMContext> Ctx;
+
+  bool hasInitializedARMAssembler = false;
+  void initializeARMAssembler();
+  bool hasInitializedAArch64Assembler = false;
+  void initializeAArch64Assembler();
 };
 
 } // end namespace omvll
