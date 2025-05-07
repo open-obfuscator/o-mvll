@@ -3,7 +3,7 @@
 // details.
 //
 
-// REQUIRES: aarch64-registered-target
+// REQUIRES: aarch64-registered-target && apple_abi
 
 // The default object contains the file-name string:
 //     RUN: clang++ -target aarch64-linux-android -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT  -DFILE_NAME=%s %s

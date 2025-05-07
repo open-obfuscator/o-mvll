@@ -26,30 +26,59 @@ if sys.platform == 'darwin':
 if sys.platform == 'win32':
     config.available_features.add('host-platform-windows')
 
-# Determine host architecture
-host_arch = platform.machine()
-
 # Allow tests to be based on the host architecture
+host_arch = platform.machine()
 if host_arch == 'x86_64':
     config.available_features.add('host-arch-x86')
 elif host_arch == 'arm64':
     config.available_features.add('host-arch-arm64')
 
-# The tools directory defaults to LLVM_BINARY_DIR. In order to run tests with a different compiler,
-# pass the installation base path via LLVM_TOOLS_DIR at configuration time explicitly.
+# For Anroid tests, use clang from AndroidNDK
+if config.omvll_plugin_abi == 'Android':
+    config.available_features.add('android_abi')
+    config.available_features.add('native_abi') if sys.platform.startswith('linux') else None
+
+    clang_exe = os.path.join(config.llvm_bin_dir, 'clang')
+    if not os.path.exists(clang_exe):
+        print("clang compiler not found:", clang_exe)
+        exit(1)
+    print("Testing compiler:", clang_exe)
+    clang_path = config.llvm_bin_dir
+
 # For iOS tests, always use Apple Clang as default compiler.
-if sys.platform == 'darwin':
+if config.omvll_plugin_abi == 'Apple':
+    config.available_features.add('apple_abi')
+
     try:
         xcode_path = subprocess.check_output(['xcode-select', '-p'], stderr=subprocess.PIPE).strip().decode()
-        compiler_dir_path = os.path.join(xcode_path, 'Toolchains/XcodeDefault.xctoolchain/usr/bin')
     except (subprocess.CalledProcessError, OSError):
         print("xcode-select not found. Please install Xcode.")
         exit(1)
-else:
-    compiler_dir_path = config.llvm_tools_dir
+    clang_path = os.path.join(xcode_path, 'Toolchains/XcodeDefault.xctoolchain/usr/bin')
+    clang_exe = os.path.join(clang_path, 'clang')
+    print("Testing compiler:", clang_exe)
 
-print("Running tests with:", os.path.join(compiler_dir_path, 'clang'))
-llvm_config.add_tool_substitutions(["clang", "clang++"], compiler_dir_path)
+    try:
+        cmd = ["xcrun", "--show-sdk-path", "--sdk", "iphoneos"]
+        ios_sdk = subprocess.check_output(cmd, stderr=subprocess.PIPE).strip().decode()
+    except (subprocess.CalledProcessError, OSError):
+        print("xcrun not found. Please run command: xcode-select --install")
+        exit(1)
+    print("Using iOS SDK:", ios_sdk)
+    config.substitutions.append(('%EXTRA_CC_FLAGS', f"-isysroot {ios_sdk}"))
+
+    if sys.platform == 'darwin':
+        config.available_features.add('native_abi')
+        try:
+            cmd = ["xcrun", "--show-sdk-path", "--sdk", "macosx"]
+            sdk_path = subprocess.check_output(cmd, stderr=subprocess.PIPE).strip().decode()
+        except (subprocess.CalledProcessError, OSError):
+            print("xcrun not found. Please run command: xcode-select --install")
+            exit(1)
+        print("Using macOS SDK:", sdk_path)
+        config.substitutions.append(('%NATIVE_LD_FLAGS', f"-Wl,-L{sdk_path}/usr/lib -Wl,-lSystem"))
+
+llvm_config.add_tool_substitutions(["clang", "clang++"], clang_path)
 llvm_config.add_tool_substitutions(["FileCheck", "count", "not"], config.llvm_tools_dir)
 
 # The plugin is a shared library in our build-tree
@@ -58,22 +87,6 @@ print("Testing plugin file:", plugin_file)
 config.substitutions.append(('%libOMVLL', plugin_file))
 
 print("Available features are:", config.available_features)
-
-extra_linker_flags = ''
-extra_cc_flags = ''
-if sys.platform == 'darwin':
-    try:
-        cmd = ["xcrun", "--show-sdk-path", "--sdk", "iphoneos"]
-        sdk_path = subprocess.check_output(cmd, stderr=subprocess.PIPE).strip().decode()
-        print("Using SDKROOT:", sdk_path)
-        extra_linker_flags = '-Wl,-L{}/usr/lib -Wl,-lSystem'.format(sdk_path)
-        extra_cc_flags = '-isysroot {}'.format(sdk_path)
-    except (subprocess.CalledProcessError, OSError):
-        print("xcrun not found. Please run command: xcode-select --install")
-        exit(1)
-
-config.substitutions.append(('%EXTRA_LINKER_FLAGS', extra_linker_flags))
-config.substitutions.append(('%EXTRA_CC_FLAGS', extra_cc_flags))
 
 # We need this to find the Python standard library
 if 'OMVLL_PYTHONPATH' in os.environ:

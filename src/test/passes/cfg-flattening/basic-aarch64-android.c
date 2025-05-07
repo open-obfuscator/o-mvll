@@ -3,8 +3,7 @@
 // details.
 //
 
-// REQUIRES: aarch64-registered-target
-// XFAIL: host-platform-macOS
+// REQUIRES: aarch64-registered-target && android_abi
 
 // RUN:                                   clang -target aarch64-linux-android                         -O1 -fno-verbose-asm -S %s -o -
 // RUN: env OMVLL_CONFIG=%S/config_all.py clang -target aarch64-linux-android -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=FLAT-ANDROID %s

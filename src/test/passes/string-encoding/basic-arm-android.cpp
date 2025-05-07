@@ -3,7 +3,7 @@
 // details.
 //
 
-// REQUIRES: arm-registered-target
+// REQUIRES: arm-registered-target && android_abi
 
 // The default object contains the file-name string:
 //     RUN: clang++ -target arm-linux-android -O1 -c %s -o - | strings | FileCheck --check-prefix=CHECK-DEFAULT  -DFILE_NAME=%s %s
