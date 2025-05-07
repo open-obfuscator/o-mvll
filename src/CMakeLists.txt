@@ -21,8 +21,20 @@ option(OMVLL_FORCE_LOG_DEBUG "Force the log debug output" OFF)
 option(OMVLL_PY_STANDALONE   "Build OMVLL as a standalone Python module" OFF)
 
 if(APPLE)
-  set(LLVM_REQUIRED_VERSION 19.1.4)
+  set(OMVLL_DEFAULT_ABI "Apple")
 else()
+  set(OMVLL_DEFAULT_ABI "Android")
+endif()
+
+set(OMVLL_ABI "" CACHE STRING
+  "Compiler ABI to build OMVLL against. Supported options are \"Apple\" and \"Android\". Defaults to ${OMVLL_DEFAULT_ABI}.")
+
+if(OMVLL_ABI STREQUAL "Apple")
+  set(LLVM_REQUIRED_VERSION 19.1.4)
+elseif(OMVLL_ABI STREQUAL "Android")
+  set(LLVM_REQUIRED_VERSION 17)
+else()
+  # TODO: switch Linux build to release NDK
   set(LLVM_REQUIRED_VERSION 17.0.2)
 endif()
 
@@ -183,9 +195,14 @@ llvm_map_components_to_libnames(llvm_libs
   ${LLVM_LIBS_DEP}
 )
 
-target_link_libraries(OMVLL PRIVATE
-  ${llvm_libs}
-)
+# TODO: double-check with NDK on Linux
+if(OMVLL_ABI STREQUAL "Android")
+  target_link_libraries(OMVLL PRIVATE LLVM)
+else()
+  target_link_libraries(OMVLL PRIVATE
+    ${llvm_libs}
+  )
+endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Release AND NOT OMVLL_FORCE_LOG_DEBUG)
   if(APPLE)

@@ -31,6 +31,8 @@ cp ${NDK_STAGE2}/bin/clang++ /test-deps/bin
 
 cd /o-mvll/src
 mkdir -p o-mvll-build_ndk_r26d && cd o-mvll-build_ndk_r26d
+
+# TODO: switch to release NDK
 cmake -GNinja .. \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_COMPILER=${NDK_STAGE1}/bin/clang++ \
@@ -43,7 +45,8 @@ cmake -GNinja .. \
       -Dspdlog_DIR=/data/spdlog-1.10.0-Linux/lib/cmake/spdlog \
       -DLLVM_DIR=${NDK_STAGE2}/lib/cmake/llvm \
       -DLLVM_TOOLS_DIR=/test-deps \
-      -DLLVM_EXTERNAL_LIT=/test-deps/bin/llvm-lit
+      -DLLVM_EXTERNAL_LIT=/test-deps/bin/llvm-lit \
+      -DOMVLL_ABI=CustomAndroid
 
 export OMVLL_PYTHONPATH=/Python-3.10.7/Lib
 ninja check
