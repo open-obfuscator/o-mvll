@@ -31,9 +31,11 @@ set(OMVLL_ABI "" CACHE STRING
 
 if(OMVLL_ABI STREQUAL "Apple")
   set(LLVM_REQUIRED_VERSION 19.1.4)
-else()
-  # TODO: also switch Linux build to release NDK
+elseif(OMVLL_ABI STREQUAL "Android")
   set(LLVM_REQUIRED_VERSION 17)
+else()
+  # TODO: switch Linux build to release NDK
+  set(LLVM_REQUIRED_VERSION 17.0.2)
 endif()
 
 find_package(LLVM ${LLVM_REQUIRED_VERSION} REQUIRED CONFIG NO_DEFAULT_PATH)
