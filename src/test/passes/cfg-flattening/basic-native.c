@@ -3,12 +3,11 @@
 // details.
 //
 
-// TODO: Require that the native target is registered.
-// TODO: Make sure Clang finds a linker on our host machine.
+// REQUIRES: native_abi
 
 // Compilation can fail, e.g. if we insert invalid inline assembly.
-// RUN:                                   clang                         %EXTRA_LINKER_FLAGS -O1 %s -o %T/basic-native
-// RUN: env OMVLL_CONFIG=%S/config_all.py clang -fpass-plugin=%libOMVLL %EXTRA_LINKER_FLAGS -O1 %s -o %T/basic-native-obf
+// RUN:                                   clang                         %NATIVE_LD_FLAGS -O1 %s -o %T/basic-native
+// RUN: env OMVLL_CONFIG=%S/config_all.py clang -fpass-plugin=%libOMVLL %NATIVE_LD_FLAGS -O1 %s -o %T/basic-native-obf
 
 // This execution test only fails, if the below C code is invalid.
 // RUN: %T/basic-native right

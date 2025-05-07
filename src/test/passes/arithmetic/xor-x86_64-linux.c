@@ -3,8 +3,7 @@
 // details.
 //
 
-// REQUIRES: x86-registered-target
-// XFAIL: host-platform-macOS
+// REQUIRES: x86-registered-target && android_abi
 
 // RUN:                                        clang -target x86_64-pc-linux-gnu                         -O1 -S %s -o - | FileCheck --check-prefix=R0 %s
 // RUN: env OMVLL_CONFIG=%S/config_rounds_0.py clang -target x86_64-pc-linux-gnu -fpass-plugin=%libOMVLL -O1 -S %s -o - | FileCheck --check-prefix=R0 %s

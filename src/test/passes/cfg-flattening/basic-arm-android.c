@@ -3,7 +3,7 @@
 // details.
 //
 
-// REQUIRES: arm-registered-target
+// REQUIRES: arm-registered-target && android_abi
 
 // RUN:                                   clang -target arm-linux-android                         -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=NO-FLAT %s
 // RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm-linux-android -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=FLAT %s
