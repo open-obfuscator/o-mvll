@@ -21,15 +21,15 @@ jobs:
       - name: O-MVLL Sign Xcode Plugin
         uses: indygreg/apple-code-sign-action@v1.0
         with:
-          input_path: ${{ github.workspace }}/src/build_xcode/omvll-xcode_unsigned.dylib
-          output_path: ${{ github.workspace }}/src/build_xcode/omvll-xcode.dylib
+          input_path: ${{ github.workspace }}/src/build_xcode/omvll_xcode_unsigned.dylib
+          output_path: ${{ github.workspace }}/src/build_xcode/omvll_xcode.dylib
           p12_file: ${{ github.workspace }}/scripts/certificates/SigningCertificate.p12
           p12_password: ${{ secrets.certificate_password }}
       - name: O-MVLL Sign NDK Plugin
         uses: indygreg/apple-code-sign-action@v1.0
         with:
-          input_path: ${{ github.workspace }}/src/build_xcode/omvll-ndk_unsigned.dylib
-          output_path: ${{ github.workspace }}/src/build_xcode/omvll-ndk.dylib
+          input_path: ${{ github.workspace }}/src/build_xcode/omvll_ndk_unsigned.dylib
+          output_path: ${{ github.workspace }}/src/build_xcode/omvll_ndk.dylib
           p12_file: ${{ github.workspace }}/scripts/certificates/SigningCertificate.p12
           p12_password: ${{ secrets.certificate_password }}
       - name: Generate distribution folder
