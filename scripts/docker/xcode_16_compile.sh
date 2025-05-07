@@ -101,8 +101,8 @@ cmake -GNinja -Bndk-x86_64 -S.. \
       -DOMVLL_ABI=Android
 ninja -C ndk-x86_64
 
-lipo -create -output /o-mvll/src/build_xcode/omvll_xcode_unsigned.dylib ./xcode-arm64/libOMVLL.dylib ./xcode-x86_64/libOMVLL.dylib
-lipo -create -output /o-mvll/src/build_xcode/omvll_ndk_unsigned.dylib ./ndk-arm64/libOMVLL.dylib ./ndk-x86_64/libOMVLL.dylib
+lipo -create -output omvll-xcode_unsigned.dylib ./xcode-arm64/libOMVLL.dylib ./xcode-x86_64/libOMVLL.dylib
+lipo -create -output omvll-ndk_unsigned.dylib ./ndk-arm64/libOMVLL.dylib ./ndk-x86_64/libOMVLL.dylib
 
 chown -R 1000:1000 /o-mvll/src/build_xcode
 chmod -R 777 /o-mvll/src/build_xcode
