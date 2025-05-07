@@ -15,7 +15,7 @@ jobs:
           mkdir -p /tmp/third-party-xcode16
           tar xvf ./omvll-v1.4-macos-deps.tar --directory=/tmp/third-party-xcode16
           docker run --rm \
-            -v /tmp/third-party-xcode16:/third-party \
+            -v /tmp/third-party-xcode16/omvll-v1.4-macos-deps:/deps \
             -v $GITHUB_WORKSPACE:/o-mvll \
             openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/xcode_16_compile.sh
       - name: O-MVLL Sign Xcode Plugin

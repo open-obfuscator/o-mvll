@@ -6,15 +6,7 @@
 
 set -ex
 
-mkdir -p /deps && cd /deps
-
-cp /third-party/omvll-deps-xcode-*/LLVM-19.1.4git-arm64-Darwin.tar.gz .
-cp /third-party/omvll-deps-xcode-*/LLVM-19.1.4git-x86_64-Darwin.tar.gz .
-cp /third-party/omvll-deps-xcode-*/LLVM17-NDK26-Darwin.tar.gz .
-cp /third-party/omvll-deps-xcode-*/Python-slim.tar.gz .
-cp /third-party/omvll-deps-xcode-*/pybind11.tar.gz .
-cp /third-party/omvll-deps-xcode-*/spdlog-1.10.0-Darwin.tar.gz .
-
+cd /deps
 tar xzvf LLVM-19.1.4git-arm64-Darwin.tar.gz
 tar xzvf LLVM-19.1.4git-x86_64-Darwin.tar.gz
 tar xzvf LLVM17-NDK26-Darwin.tar.gz
