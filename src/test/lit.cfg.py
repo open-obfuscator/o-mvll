@@ -34,7 +34,8 @@ elif host_arch == 'arm64':
     config.available_features.add('host-arch-arm64')
 
 # For Anroid tests, use clang from AndroidNDK
-if config.omvll_plugin_abi == 'Android':
+if config.omvll_plugin_abi == 'Android' or \
+   config.omvll_plugin_abi == 'CustomAndroid':
     config.available_features.add('android_abi')
 
     clang_exe = os.path.join(config.llvm_bin_dir, 'clang')
