@@ -26,7 +26,7 @@ else()
   set(OMVLL_DEFAULT_ABI "Android")
 endif()
 
-set(OMVLL_ABI "" CACHE STRING
+set(OMVLL_ABI "${OMVLL_DEFAULT_ABI}" CACHE STRING
   "Compiler ABI to build OMVLL against. Supported options are \"Apple\" and \"Android\". Defaults to ${OMVLL_DEFAULT_ABI}.")
 
 if(OMVLL_ABI STREQUAL "Apple")
