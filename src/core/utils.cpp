@@ -37,6 +37,11 @@ namespace detail {
 static int runExecutable(SmallVectorImpl<StringRef> &Args,
                          std::optional<ArrayRef<StringRef>> Envs = std::nullopt,
                          ArrayRef<std::optional<StringRef>> Redirects = {}) {
+  std::string Buffer;
+  raw_string_ostream CmdStr(Buffer);
+  for (StringRef Arg : Args)
+    CmdStr << Arg << " ";
+  SINFO("Invoke subprocess: {}", CmdStr.str());
   return sys::ExecuteAndWait(Args[0], Args, Envs, Redirects);
 }
 
@@ -134,11 +139,6 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
       return errorCodeToError(EC);
     OS << Code;
   }
-
-  // TODO: Write to omvll debug log instead of stderr.
-  for (StringRef Entry : Args)
-    errs() << Entry << " ";
-  errs() << "\n";
 
   if (int EC = runExecutable(Args))
     return createStringError(inconvertibleErrorCode(),
