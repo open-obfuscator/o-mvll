@@ -37,7 +37,6 @@ elif host_arch == 'arm64':
 if config.omvll_plugin_abi == 'Android' or \
    config.omvll_plugin_abi == 'CustomAndroid':
     config.available_features.add('android_abi')
-    config.available_features.add('native_abi') if sys.platform.startswith('linux') else None
 
     clang_exe = os.path.join(config.llvm_bin_dir, 'clang')
     if not os.path.exists(clang_exe):
@@ -67,17 +66,6 @@ if config.omvll_plugin_abi == 'Apple':
         exit(1)
     print("Using iOS SDK:", ios_sdk)
     config.substitutions.append(('%EXTRA_CC_FLAGS', f"-isysroot {ios_sdk}"))
-
-    if sys.platform == 'darwin':
-        config.available_features.add('native_abi')
-        try:
-            cmd = ["xcrun", "--show-sdk-path", "--sdk", "macosx"]
-            sdk_path = subprocess.check_output(cmd, stderr=subprocess.PIPE).strip().decode()
-        except (subprocess.CalledProcessError, OSError):
-            print("xcrun not found. Please run command: xcode-select --install")
-            exit(1)
-        print("Using macOS SDK:", sdk_path)
-        config.substitutions.append(('%NATIVE_LD_FLAGS', f"-Wl,-L{sdk_path}/usr/lib -Wl,-lSystem"))
 
 llvm_config.add_tool_substitutions(["clang", "clang++"], clang_path)
 llvm_config.add_tool_substitutions(["FileCheck", "count", "not"], config.llvm_tools_dir)
