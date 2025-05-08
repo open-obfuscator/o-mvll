@@ -37,6 +37,11 @@ namespace detail {
 static int runExecutable(SmallVectorImpl<StringRef> &Args,
                          std::optional<ArrayRef<StringRef>> Envs = std::nullopt,
                          ArrayRef<std::optional<StringRef>> Redirects = {}) {
+  std::string Buffer;
+  raw_string_ostream CmdStr(Buffer);
+  for (const StringRef &Arg : Args)
+    CmdStr << Arg << " ";
+  SINFO("Invoke subprocess: {}", CmdStr.str());
   return sys::ExecuteAndWait(Args[0], Args, Envs, Redirects);
 }
 
