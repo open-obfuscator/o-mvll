@@ -40,12 +40,7 @@ static int runExecutable(SmallVectorImpl<StringRef> &Args,
   return sys::ExecuteAndWait(Args[0], Args, Envs, Redirects);
 }
 
-static std::string getAppleClangPath() {
-  static int Unused;
-  return sys::fs::getMainExecutable("clang", (void *)&Unused);
-}
-
-static Expected<std::string> getIPhoneOSSDKPath() {
+static Expected<std::string> xcrun(ArrayRef<StringRef> Args) {
   ErrorOr<std::string> MaybeXcrunPath = sys::findProgramByName("xcrun");
   if (!MaybeXcrunPath)
     return createStringError(MaybeXcrunPath.getError(),
@@ -58,20 +53,14 @@ static Expected<std::string> getIPhoneOSSDKPath() {
           sys::fs::createTemporaryFile("xcrun-output", "txt", FD, TempPath))
     return createStringError(EC, "Failed to create temporary file.");
 
-  SmallVector<StringRef, 8> Args = {XcrunPath, "--sdk", "iphoneos",
-                                    "--show-sdk-path"};
-
-  const auto &ClangPath = getAppleClangPath();
-  size_t DirPos = ClangPath.find("/Contents/Developer");
-  std::string DeveloperDir =
-      ClangPath.substr(0, DirPos + strlen("/Contents/Developer"));
-  const auto &DeveloperDirEnvVar = "DEVELOPER_DIR=" + DeveloperDir;
-  SmallVector<StringRef, 1> Envs = {DeveloperDirEnvVar};
-
   std::optional<StringRef> Redirects[] = {std::nullopt, StringRef(TempPath),
                                           std::nullopt};
 
-  if (int EC = runExecutable(Args, Envs, Redirects))
+  SmallVector<StringRef, 8> Cmd{XcrunPath};
+  for (const StringRef &Arg : Args)
+    Cmd.push_back(Arg);
+
+  if (int EC = runExecutable(Cmd, std::nullopt, Redirects))
     return createStringError(inconvertibleErrorCode(),
                              "Unable to execute program: " +
                                  std::to_string(EC));
@@ -87,10 +76,33 @@ static Expected<std::string> getIPhoneOSSDKPath() {
   return Out;
 }
 
+static Expected<std::string> getAppleSDKPath(StringRef Name) {
+  // Typically: /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
+  return xcrun({"--sdk", Name, "--show-sdk-path"});
+}
+
+static Expected<std::string> getAppleClangPath() {
+  // Typically: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
+  return xcrun({"--find", "clang"});
+}
+
+static std::string getHostCompilerPath() {
+  static int Unused;
+  return sys::fs::getMainExecutable("clang", (void *)&Unused);
+}
+
 static Expected<std::string>
 runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
                    const std::vector<std::string> &ExtraArgs) {
-  const auto &ClangPath = getAppleClangPath();
+  std::string ClangPath = getHostCompilerPath();
+  if (Triple.isMacOSX() || Triple.isiOS()) {
+    if (auto AppleClang = getAppleClangPath()) {
+      ClangPath = *AppleClang;
+    } else {
+      SWARN("Cannot find AppleClang: {}", toString(AppleClang.takeError()));
+    }
+  }
+
   SmallVector<StringRef, 16> Args = {ClangPath, "-S", "-emit-llvm"};
 
   // Always add the target triple.
@@ -98,15 +110,20 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
   Args.push_back("-target");
   Args.push_back(TargetTriple);
 
-  std::string SDKPath;
+  // Specify SDK on Apple platforms
+  std::string SDKName;
   if (Triple.isiOS()) {
-    auto MaybeSDKPath = getIPhoneOSSDKPath();
-    if (Error E = MaybeSDKPath.takeError()) {
-      SWARN("Warning: {}", toString(std::move(E)));
-    } else {
-      SDKPath = *MaybeSDKPath;
+    SDKName = "iphoneos";
+  } else if (Triple.isMacOSX()) {
+    SDKName = "macosx";
+  }
+
+  if (!SDKName.empty()) {
+    if (Expected<std::string> SDKPath = getAppleSDKPath(SDKName)) {
       Args.push_back("-isysroot");
-      Args.push_back(SDKPath);
+      Args.push_back(*SDKPath);
+    } else {
+      SWARN("Cannot find '{}' SDK: {}", SDKName, toString(SDKPath.takeError()));
     }
   }
 
