@@ -3,7 +3,7 @@
 // details.
 //
 
-// REQUIRES: x86-registered-target && native_abi
+// REQUIRES: x86-registered-target
 
 // RUN:                                                                  clang -target x86_64-pc-linux-gnu                         -O1 -S %s -o - | FileCheck --check-prefix=DEFAULT %s
 // RUN: env OMVLL_CONFIG=%S/config_defaultConfig_empty_params.py         clang -target x86_64-pc-linux-gnu -fpass-plugin=%libOMVLL -O1 -S %s -o - | FileCheck --check-prefix=DEFAULT %s
