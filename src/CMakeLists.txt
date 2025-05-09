@@ -149,7 +149,6 @@ set(LLVM_LIBS_DEP
   demangle
   OrcJIT
   native
-
 )
 
 # Used for jitAsm in Jitter. Remove when we switch to calling the host compiler.
