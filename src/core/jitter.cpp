@@ -38,33 +38,53 @@ class MachOObjectFile;
 
 namespace omvll {
 
+bool Jitter::HasArchTargetInitialized = false;
+
 Jitter::Jitter(const std::string &Triple)
     : Triple{Triple}, Ctx{new LLVMContext{}} {
   InitializeNativeTarget();
   InitializeNativeTargetAsmParser();
   InitializeNativeTargetAsmPrinter();
+  // Necessary for jitAsm to work cross-platform
+  // TODO: Switch to using the host compiler like the encode() method in string obfuscation instead of including
+  //       the llvm libraries, as this bloats the o-mvll binary.
+  //       See discussion: https://github.com/open-obfuscator/o-mvll/pull/78#pullrequestreview-2780108790
+  initializeArchTarget();
+}
+
+void Jitter::initializeArchTarget() {
+  if (!HasArchTargetInitialized) {
+    llvm::Triple TT(Triple);
+    if (TT.isARM()) initializeARMAssembler();
+    else if (TT.isAArch64()) initializeAArch64Assembler();
+    else if (TT.isX86()) initializeX86Assembler();
+    else fatalError(fmt::format("Unsupported arch type: {}", TT.getArch()));
+    HasArchTargetInitialized = true;
+  }
 }
 
 void Jitter::initializeARMAssembler() {
-  if (!hasInitializedARMAssembler) {
-    LLVMInitializeARMTarget();
-    LLVMInitializeARMTargetMC();
-    LLVMInitializeARMTargetInfo();
-    LLVMInitializeARMAsmParser();
-    LLVMInitializeARMAsmPrinter();
-    hasInitializedARMAssembler = true;
-  }
+  LLVMInitializeARMTarget();
+  LLVMInitializeARMTargetMC();
+  LLVMInitializeARMTargetInfo();
+  LLVMInitializeARMAsmParser();
+  LLVMInitializeARMAsmPrinter();
 }
 
 void Jitter::initializeAArch64Assembler() {
-  if (!hasInitializedAArch64Assembler) {
-    LLVMInitializeAArch64Target();
-    LLVMInitializeAArch64TargetMC();
-    LLVMInitializeAArch64TargetInfo();
-    LLVMInitializeAArch64AsmParser();
-    LLVMInitializeAArch64AsmPrinter();
-    hasInitializedAArch64Assembler = true;
-  }
+  LLVMInitializeAArch64Target();
+  LLVMInitializeAArch64TargetMC();
+  LLVMInitializeAArch64TargetInfo();
+  LLVMInitializeAArch64AsmParser();
+  LLVMInitializeAArch64AsmPrinter();
+}
+
+void Jitter::initializeX86Assembler() {
+  LLVMInitializeX86Target();
+  LLVMInitializeX86TargetMC();
+  LLVMInitializeX86TargetInfo();
+  LLVMInitializeX86AsmParser();
+  LLVMInitializeX86AsmPrinter();
 }
 
 std::unique_ptr<orc::LLJIT> Jitter::compile(Module &M) {
@@ -130,17 +150,9 @@ std::unique_ptr<MemoryBuffer> Jitter::jitAsm(const std::string &Asm,
   IRB.CreateCall(FType, RawAsm);
   IRB.CreateRetVoid();
 
-  llvm::Triple TT = llvm::Triple(Triple);
-  if (TT.getArch() == llvm::Triple::ArchType::arm) {
-      initializeARMAssembler();
-  } else if (TT.getArch() == llvm::Triple::ArchType::aarch64) {
-      initializeAArch64Assembler();
-  } else {
-      fatalError(fmt::format("Unsupported arch type: {}", TT.getArch()));
-  }
-
   orc::LLJITBuilder Builder;
-  orc::JITTargetMachineBuilder JTMB{TT};
+  std::string TT = Triple;
+  orc::JITTargetMachineBuilder JTMB{llvm::Triple(TT)};
   JTMB.setRelocationModel(Reloc::Model::PIC_);
   JTMB.setCodeModel(CodeModel::Large);
 #if LLVM_VERSION_MAJOR > 18

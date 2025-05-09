@@ -48,10 +48,11 @@ private:
   std::string Triple;
   std::unique_ptr<llvm::LLVMContext> Ctx;
 
-  bool hasInitializedARMAssembler = false;
+  static bool HasArchTargetInitialized;
+  void initializeArchTarget();
   void initializeARMAssembler();
-  bool hasInitializedAArch64Assembler = false;
   void initializeAArch64Assembler();
+  void initializeX86Assembler();
 };
 
 } // end namespace omvll
