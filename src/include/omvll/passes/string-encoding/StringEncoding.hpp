@@ -13,6 +13,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/RandomNumberGenerator.h"
 
+#include "omvll/passes/string-encoding/Routines.h"
 #include "omvll/passes/string-encoding/StringEncodingOpt.hpp"
 
 // Forward declarations
@@ -29,8 +30,6 @@ class Jitter;
 
 // See https://obfuscator.re/omvll/passes/strings-encoding for details.
 struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
-  using EncRoutineFn = void (*)(uint8_t *Out, const char *In, uint64_t Key,
-                                int Len);
   using KeyBufferTy = std::vector<uint8_t>;
   using KeyIntTy = uint64_t;
   using KeyTy = std::variant<std::monostate, KeyBufferTy, KeyIntTy>;
@@ -49,7 +48,7 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
     EncodingTy Type = EncodingTy::None;
     KeyTy Key;
     std::unique_ptr<llvm::Module> TM;
-    std::unique_ptr<llvm::Module> HM;
+    EncRoutineFn *BuiltinFn;
   };
 
   llvm::PreservedAnalyses run(llvm::Module &M,
@@ -85,8 +84,6 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
   }
 
 private:
-  static inline Jitter *HostJIT = nullptr;
-
   void genRoutines(const llvm::Triple &Triple, EncodingInfo &EI,
                    llvm::LLVMContext &Ctx);
   void annotateRoutine(llvm::Module &M);

@@ -48,37 +48,6 @@ static constexpr auto CtorPrefixName = "__omvll_ctor_";
 
 namespace omvll {
 
-static const std::vector<std::string> Routines = {
-    R"delim(
-    void encode(char *out, char *in, unsigned long long key, int size) {
-      unsigned char *raw_key = (unsigned char*)(&key);
-      for (int i = 0; i < size; ++i) {
-        out[i] = in[i] ^ raw_key[i % sizeof(key)];
-      }
-    }
-    void decode(char *out, char *in, unsigned long long key, int size) {
-      unsigned char *raw_key = (unsigned char*)(&key);
-      for (int i = 0; i < size; ++i) {
-        out[i] = in[i] ^ raw_key[i % sizeof(key)];
-      }
-    }
-  )delim",
-    R"delim(
-    void encode(char *out, char *in, unsigned long long key, int size) {
-      unsigned char *raw_key = (unsigned char*)(&key);
-      for (int i = 0; i < size; ++i) {
-        out[i] = in[i] ^ raw_key[i % sizeof(key)] ^ i;
-      }
-    }
-    void decode(char *out, char *in, unsigned long long key, int size) {
-      unsigned char *raw_key = (unsigned char*)(&key);
-      for (int i = 0; i < size; ++i) {
-        out[i] = in[i] ^ raw_key[i % sizeof(key)] ^ i;
-      }
-    }
-  )delim",
-};
-
 inline bool isEligible(const GlobalVariable &G) {
   if (G.isNullValue() || G.isZeroValue())
     return false;
@@ -483,18 +452,12 @@ bool StringEncoding::processGlobal(Instruction &I, Use &Op, GlobalVariable &G,
 
   SDEBUG("Key for {}: 0x{:010x}", Str.str(), Key);
 
-  std::vector<uint8_t> Encoded(StrSz);
+  std::vector<char> Encoded(StrSz);
   EncodingInfo EI(EncodingTy::Global);
   EI.Key = Key;
   genRoutines(Triple(M->getTargetTriple()), EI, Ctx);
 
-  auto JIT = StringEncoding::HostJIT->compile(*EI.HM);
-  if (auto EncodeSym = JIT->lookup("encode")) {
-    auto EncodeFn = reinterpret_cast<EncRoutineFn>(EncodeSym->getValue());
-    EncodeFn(Encoded.data(), Str.data(), Key, StrSz);
-  } else {
-    fatalError("Cannot find encode routine");
-  }
+  EI.BuiltinFn(Encoded.data(), Str.data(), Key, StrSz);
 
   Constant *StrEnc = ConstantDataArray::get(Ctx, Encoded);
   G.setConstant(false);
@@ -529,22 +492,15 @@ bool StringEncoding::processGlobal(Instruction &I, Use &Op, GlobalVariable &G,
 
 void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
                                  LLVMContext &Ctx) {
-  Triple HostTriple(sys::getProcessTriple());
-  if (!HostJIT)
-    HostJIT = new Jitter(HostTriple.getTriple());
-
-  std::uniform_int_distribution<size_t> Dist(0, Routines.size() - 1);
+  unsigned NumBuiltinRoutines = getNumEncodeDecodeRoutines();
+  std::uniform_int_distribution<size_t> Dist(0, NumBuiltinRoutines - 1);
   size_t Idx = Dist(*RNG);
 
-  ExitOnError ExitOnErr("Nested clang invocation failed: ");
-  std::string Routine =
-      (Twine("extern \"C\" {\n") + Routines[Idx] + "}\n").str();
+  EI.BuiltinFn = getEncodeRoutine(Idx);
 
-  {
-    EI.HM = ExitOnErr(generateModule(Routine, HostTriple, "cpp",
-                                     HostJIT->getContext(),
-                                     {"-std=c++17", "-fno-stack-check"}));
-  }
+  ExitOnError ExitOnErr("Nested clang invocation failed: ");
+  const char *DecodeFn = getDecodeRoutine(Idx);
+  std::string Routine = (Twine("extern \"C\" {\n") + DecodeFn + "}\n").str();
 
   {
     Ctx.setDiscardValueNames(false);
@@ -582,19 +538,12 @@ bool StringEncoding::processLocal(Instruction &I, Use &Op, GlobalVariable &G,
 
   SDEBUG("Key for {}: 0x{:010x}", Str.str(), Key);
 
-  std::vector<uint8_t> Encoded(StrSz);
+  std::vector<char> Encoded(StrSz);
   EncodingInfo EI(EncodingTy::Local);
   EI.Key = Key;
 
   genRoutines(Triple(I.getModule()->getTargetTriple()), EI, Ctx);
-
-  auto JIT = StringEncoding::HostJIT->compile(*EI.HM);
-  if (auto EncodeSym = JIT->lookup("encode")) {
-    auto EncodeFn = reinterpret_cast<EncRoutineFn>(EncodeSym->getValue());
-    EncodeFn(Encoded.data(), Str.data(), Key, StrSz);
-  } else {
-    fatalError("Cannot find encode routine");
-  }
+  EI.BuiltinFn(Encoded.data(), Str.data(), Key, StrSz);
 
   Constant *StrEnc = ConstantDataArray::get(Ctx, Encoded);
   G.setInitializer(StrEnc);
