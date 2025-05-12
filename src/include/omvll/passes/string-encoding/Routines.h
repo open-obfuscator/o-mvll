@@ -12,4 +12,4 @@ EncRoutineFn *getEncodeRoutine(unsigned Idx);
 const char *getDecodeRoutine(unsigned Idx);
 unsigned getNumEncodeDecodeRoutines();
 
-} // namespace omvll
+} // end namespace omvll

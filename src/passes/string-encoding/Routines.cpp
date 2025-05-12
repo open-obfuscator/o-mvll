@@ -41,7 +41,7 @@ omvll::EncRoutineFn *EncodeRoutines[] = {
       }
     }};
 
-} // namespace
+} // end anonymous namespace
 
 namespace omvll {
 
