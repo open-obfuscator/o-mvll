@@ -3,8 +3,7 @@
 // details.
 //
 
-// REQUIRES: aarch64-registered-target
-// XFAIL: host-platform-linux
+// REQUIRES: aarch64-registered-target && apple_abi
 
 // RUN:                                        clang -target arm64-apple-ios                         -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s
 // RUN: env OMVLL_CONFIG=%S/config_rounds_0.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=R0 %s

@@ -3,12 +3,10 @@
 // details.
 //
 
-// REQUIRES: x86-registered-target
-// XFAIL: host-platform-linux
+// REQUIRES: x86-registered-target && apple_abi
 
 // RUN:                                        clang -target x86_64-apple-darwin                         -O1 -S %s -o - | FileCheck --check-prefix=R0 %s
 // RUN: env OMVLL_CONFIG=%S/config_rounds_0.py clang -target x86_64-apple-darwin -fpass-plugin=%libOMVLL -O1 -S %s -o - | FileCheck --check-prefix=R0 %s
-// RUN: env OMVLL_CONFIG=%S/config_rounds_1.py clang -target x86_64-apple-darwin -fpass-plugin=%libOMVLL -O1 -S %s -o - | FileCheck --check-prefix=R1 %s
 // RUN: env OMVLL_CONFIG=%S/config_rounds_2.py clang -target x86_64-apple-darwin -fpass-plugin=%libOMVLL -O1 -S %s -o - | FileCheck --check-prefix=R2 %s
 // RUN: env OMVLL_CONFIG=%S/config_rounds_3.py clang -target x86_64-apple-darwin -fpass-plugin=%libOMVLL -O1 -S %s -o - | FileCheck --check-prefix=R3 %s
 
@@ -20,16 +18,6 @@
 // R0:           incq	%rcx
 // R0:           cmpq	%rcx, %rax
 // R0:           jne	LBB0_2
-
-// FIXME: It seems like rounds=1 doesn't actually do anything!
-// R1-LABEL: _memcpy_xor:
-// R1:       LBB0_2:
-// R1:           movzbl	(%rsi,%rcx), %edx
-// R1:           xorb	$35, %dl
-// R1:           movb	%dl, (%rdi,%rcx)
-// R1:           incq	%rcx
-// R1:           cmpq	%rcx, %rax
-// R1:           jne	LBB0_2
 
 // R2-LABEL: _memcpy_xor:
 // R2:       LBB0_2:

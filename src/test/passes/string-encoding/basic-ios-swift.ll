@@ -2,7 +2,7 @@
 ; This file is distributed under the Apache License v2.0. See LICENSE for details.
 ;
 
-; REQUIRES: aarch64-registered-target
+; REQUIRES: aarch64-registered-target && apple_abi
 
 ; The 'replace' configuration encodes the string and adds logic that decodes it at load-time:
 ;     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \

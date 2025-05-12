@@ -5,6 +5,7 @@
 import lit.llvm
 
 config.omvll_plugin_dir = "@PROJECT_BINARY_DIR@"
+config.omvll_plugin_abi = "@OMVLL_ABI@"
 config.test_exec_root = "@CMAKE_CURRENT_BINARY_DIR@"
 config.llvm_bin_dir = "@LLVM_BINARY_DIR@/bin"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@/bin"
