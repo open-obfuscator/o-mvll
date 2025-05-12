@@ -163,6 +163,17 @@ set(LLVM_LIBS_DEP
   native
 )
 
+# Used for jitAsm in Jitter. Remove when we switch to calling the host compiler.
+# See discussion: https://github.com/open-obfuscator/o-mvll/pull/78#pullrequestreview-2780108790
+list(APPEND LLVM_LIBS_DEP
+    ARMCodeGen
+    ARMAsmParser
+    AArch64CodeGen
+    AArch64AsmParser
+    X86CodeGen
+    X86AsmParser
+)
+
 if(APPLE)
   list(APPEND
     LLVM_LIBS_DEP

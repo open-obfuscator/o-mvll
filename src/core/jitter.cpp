@@ -24,6 +24,8 @@
 #include "omvll/jitter.hpp"
 #include "omvll/utils.hpp"
 
+#include <spdlog/fmt/fmt.h>
+
 using namespace llvm;
 
 static constexpr auto AsmFunctionName = "__omvll_asm_func";
@@ -36,11 +38,59 @@ class MachOObjectFile;
 
 namespace omvll {
 
+bool Jitter::HasArchTargetInitialized = false;
+
 Jitter::Jitter(const std::string &Triple)
     : Triple{Triple}, Ctx{new LLVMContext{}} {
   InitializeNativeTarget();
   InitializeNativeTargetAsmParser();
   InitializeNativeTargetAsmPrinter();
+  // Necessary for jitAsm to work cross-platform
+  // TODO: Switch to using the host compiler like the encode() method in string
+  // obfuscation instead of including
+  //       the llvm libraries, as this bloats the o-mvll binary.
+  //       See discussion:
+  //       https://github.com/open-obfuscator/o-mvll/pull/78#pullrequestreview-2780108790
+  initializeArchTarget();
+}
+
+void Jitter::initializeArchTarget() {
+  if (!HasArchTargetInitialized) {
+    llvm::Triple TT(Triple);
+    if (TT.isARM())
+      initializeARMAssembler();
+    else if (TT.isAArch64())
+      initializeAArch64Assembler();
+    else if (TT.isX86())
+      initializeX86Assembler();
+    else
+      fatalError(fmt::format("Unsupported arch type: {}", TT.getArch()));
+    HasArchTargetInitialized = true;
+  }
+}
+
+void Jitter::initializeARMAssembler() {
+  LLVMInitializeARMTarget();
+  LLVMInitializeARMTargetMC();
+  LLVMInitializeARMTargetInfo();
+  LLVMInitializeARMAsmParser();
+  LLVMInitializeARMAsmPrinter();
+}
+
+void Jitter::initializeAArch64Assembler() {
+  LLVMInitializeAArch64Target();
+  LLVMInitializeAArch64TargetMC();
+  LLVMInitializeAArch64TargetInfo();
+  LLVMInitializeAArch64AsmParser();
+  LLVMInitializeAArch64AsmPrinter();
+}
+
+void Jitter::initializeX86Assembler() {
+  LLVMInitializeX86Target();
+  LLVMInitializeX86TargetMC();
+  LLVMInitializeX86TargetInfo();
+  LLVMInitializeX86AsmParser();
+  LLVMInitializeX86AsmPrinter();
 }
 
 std::unique_ptr<orc::LLJIT> Jitter::compile(Module &M) {

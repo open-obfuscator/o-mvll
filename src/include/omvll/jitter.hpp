@@ -47,6 +47,12 @@ protected:
 private:
   std::string Triple;
   std::unique_ptr<llvm::LLVMContext> Ctx;
+
+  static bool HasArchTargetInitialized;
+  void initializeArchTarget();
+  void initializeARMAssembler();
+  void initializeAArch64Assembler();
+  void initializeX86Assembler();
 };
 
 } // end namespace omvll
