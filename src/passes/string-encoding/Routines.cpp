@@ -65,4 +65,4 @@ const char *getDecodeRoutine(unsigned Idx) {
   return DecodeRoutines[Idx];
 }
 
-} // namespace omvll
+} // end namespace omvll
