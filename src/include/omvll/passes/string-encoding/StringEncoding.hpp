@@ -48,7 +48,7 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
     EncodingTy Type = EncodingTy::None;
     KeyTy Key;
     std::unique_ptr<llvm::Module> TM;
-    EncRoutineFn *BuiltinFn;
+    EncRoutineFn *EncodeFn;
   };
 
   llvm::PreservedAnalyses run(llvm::Module &M,

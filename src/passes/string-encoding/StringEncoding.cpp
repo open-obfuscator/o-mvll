@@ -457,7 +457,7 @@ bool StringEncoding::processGlobal(Instruction &I, Use &Op, GlobalVariable &G,
   EI.Key = Key;
   genRoutines(Triple(M->getTargetTriple()), EI, Ctx);
 
-  EI.BuiltinFn(Encoded.data(), Str.data(), Key, StrSz);
+  EI.EncodeFn(Encoded.data(), Str.data(), Key, StrSz);
 
   Constant *StrEnc = ConstantDataArray::get(Ctx, Encoded);
   G.setConstant(false);
@@ -496,7 +496,7 @@ void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
   std::uniform_int_distribution<size_t> Dist(0, NumBuiltinRoutines - 1);
   size_t Idx = Dist(*RNG);
 
-  EI.BuiltinFn = getEncodeRoutine(Idx);
+  EI.EncodeFn = getEncodeRoutine(Idx);
 
   ExitOnError ExitOnErr("Nested clang invocation failed: ");
   const char *DecodeFn = getDecodeRoutine(Idx);
@@ -543,7 +543,7 @@ bool StringEncoding::processLocal(Instruction &I, Use &Op, GlobalVariable &G,
   EI.Key = Key;
 
   genRoutines(Triple(I.getModule()->getTargetTriple()), EI, Ctx);
-  EI.BuiltinFn(Encoded.data(), Str.data(), Key, StrSz);
+  EI.EncodeFn(Encoded.data(), Str.data(), Key, StrSz);
 
   Constant *StrEnc = ConstantDataArray::get(Ctx, Encoded);
   G.setInitializer(StrEnc);
