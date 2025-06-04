@@ -37,6 +37,8 @@ class PyObfuscationConfig : public ObfuscationConfig {
   OpaqueConstantsOpt obfuscateConstants(llvm::Module *M,
                                         llvm::Function *F) override;
 
+  IndirectBranchOpt indirectBranch(llvm::Module *M, llvm::Function *F) override;
+
   bool defaultConfig(llvm::Module *M, llvm::Function *F,
                      const std::vector<std::string> &ModuleExcludes = {},
                      const std::vector<std::string> &FunctionExcludes = {},
