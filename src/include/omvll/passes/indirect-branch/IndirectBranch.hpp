@@ -1,0 +1,23 @@
+#pragma once
+
+//
+// This file is distributed under the Apache License v2.0. See LICENSE for
+// details.
+//
+
+#include "llvm/IR/PassManager.h"
+
+namespace omvll {
+
+struct IndirectBranch : llvm::PassInfoMixin<IndirectBranch> {
+  llvm::PreservedAnalyses run(llvm::Module &M,
+                              llvm::ModuleAnalysisManager &MAM);
+
+  bool process(llvm::Function &F, const llvm::DataLayout &DL,
+               llvm::LLVMContext &Ctx);
+
+private:
+  unsigned Seed = 0;
+};
+
+} // end namespace omvll

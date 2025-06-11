@@ -329,6 +329,13 @@ void OMVLLCtor(py::module_ &m) {
          )delim",
            "module"_a, "function"_a)
 
+      .def("indirect_branch", &ObfuscationConfig::indirectBranch,
+           R"delim(
+         The default user-callback to enable control-flow edges replacement of
+         ordinary branches into indirect jumps.
+         )delim",
+           "module"_a, "function"_a)
+
       .def("report_diff", &ObfuscationConfig::reportDiff,
            R"delim(
          User-callback to monitor IR-level changes from individual obfuscation passes.

@@ -14,6 +14,7 @@ using namespace pybind11::literals;
 namespace omvll {
 
 py::module_ &py_init_obf_opt(py::module_ &m) {
+  // clang-format off
   // Strings Encoding
   py::class_<StringEncOptSkip>(m, "StringEncOptSkip",
     R"delim(
@@ -155,7 +156,17 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     )delim")
     .def(py::init<std::vector<uint64_t>>(), "constants"_a);
 
+  // Indirect Branch
+  py::class_<IndirectBranchOpt>(m, "IndirectBranchOpt",
+    R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.indirect_branch` protection.
+
+    This option only accepts a boolean value (e.g. ``IndirectBranchOpt(True)``)
+    )delim")
+    .def(py::init<bool>(), "value"_a);
+
   return m;
+  // clang-format on
 }
 
 } // end namespace omvll
