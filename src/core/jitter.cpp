@@ -57,7 +57,7 @@ Jitter::Jitter(const std::string &Triple)
 void Jitter::initializeArchTarget() {
   if (!HasArchTargetInitialized) {
     llvm::Triple TT(Triple);
-    if (TT.isARM())
+    if (TT.isARM() || TT.isThumb())
       initializeARMAssembler();
     else if (TT.isAArch64())
       initializeAArch64Assembler();
