@@ -95,7 +95,7 @@ template <class IRBTy> void EmitDefaultCaseAssembly(IRBTy &IRB, Triple TT) {
       /* hasSideEffects */ true,
       /* isStackAligned */ true
     ));
-  } else if (TT.isARM()) {
+  } else if (TT.isARM() || TT.isThumb()) {
     IRB.CreateCall(FType, InlineAsm::get(
       FType,
       R"delim(
