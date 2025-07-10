@@ -18,119 +18,116 @@ using namespace llvm;
 
 namespace omvll {
 
-static constexpr uint8_t StackAlignment = 0x04;
-
 /* ========= Zero Value Gen ========= */
-Value *getOpaqueZero1(Instruction &I, OpaqueContext &C, Type *Ty,
+Value *getOpaqueZero1(Instruction &I, Type *Ty,
                       RandomNumberGenerator &RNG) {
   IRBuilder<NoFolder> IRB(&I);
 
-  auto *T1Ptr = IRB.CreatePointerCast(C.T1, Ty->getPointerTo());
-  auto *T2Ptr = IRB.CreatePointerCast(C.T2, Ty->getPointerTo());
+  // Generate a random 64-bit constant (limited to 48 bits if safer for embedded platforms)
+  std::uniform_int_distribution<uint64_t> Dist(1, 0xFFFFFFFFFFFF);
+  uint64_t RandVal = Dist(RNG);
 
-  auto *Tmp1 = IRB.CreateLoad(Ty, T1Ptr, true);
-  auto *Tmp2 = IRB.CreateLoad(Ty, T2Ptr, true);
+  // Choose two identical constants
+  auto *Cst = ConstantInt::get(Ty, RandVal);
+  Value *X = Cst;
+  Value *Y = Cst;
 
-  Value *MBAXor = IRB.CreateXor(Tmp2, Tmp1);
-  if (auto *Inst = dyn_cast<Instruction>(MBAXor))
+  // (X ^ Y) - (Y ^ X) == 0
+  Value *Xor1 = IRB.CreateXor(X, Y);
+  if (auto *Inst = dyn_cast<Instruction>(Xor1))
     addMetadata(*Inst, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
 
-  // MBA(x ^ y) - (x ^ y)
-  Value *NewZero = IRB.CreateIntCast(
-      IRB.CreateSub(MBAXor, IRB.CreateXor(Tmp2, Tmp1)), Ty, false);
-  return NewZero;
+  Value *Xor2 = IRB.CreateXor(Y, X);
+  if (auto *Inst = dyn_cast<Instruction>(Xor2))
+    addMetadata(*Inst, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
+
+  Value *MBA = IRB.CreateSub(Xor1, Xor2);
+  if (auto *Inst = dyn_cast<Instruction>(MBA))
+    addMetadata(*Inst, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
+
+  Value *Zero = IRB.CreateIntCast(MBA, Ty, false);
+  if (auto *Inst = dyn_cast<Instruction>(Zero))
+    addMetadata(*Inst, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
+
+  return Zero;
 }
 
-Value *getOpaqueZero2(Instruction &I, OpaqueContext &C, Type *Ty,
+Value *getOpaqueZero2(Instruction &I, Type *Ty,
                       RandomNumberGenerator &RNG) {
-  return getOpaqueZero1(I, C, Ty, RNG);
+  return getOpaqueZero1(I, Ty, RNG);
 }
 
-Value *getOpaqueZero3(Instruction &I, OpaqueContext &C, Type *Ty,
+Value *getOpaqueZero3(Instruction &I, Type *Ty,
                       RandomNumberGenerator &RNG) {
-  return getOpaqueZero1(I, C, Ty, RNG);
+  return getOpaqueZero1(I, Ty, RNG);
 }
 
 /* ========= One Value Gen ========= */
-Value *getOpaqueOne1(Instruction &I, OpaqueContext &C, Type *Ty,
-                     RandomNumberGenerator &RNG) {
-  std::uniform_int_distribution<uint8_t> Dist(1, 50);
-  uint8_t Odd = Dist(RNG);
-  if (Odd % 2 == 0)
-    Odd += 1;
-
+Value *getOpaqueOne1(Instruction &I, Type *Ty, RandomNumberGenerator &RNG) {
   IRBuilder<NoFolder> IRB(&I);
-  auto *T2Addr = IRB.CreatePtrToInt(C.T2, IRB.getInt64Ty());
-  auto *OddAddr =
-      IRB.CreateAdd(T2Addr, ConstantInt::get(IRB.getInt64Ty(), Odd, false));
 
-  auto *LSB =
-      IRB.CreateAnd(OddAddr, ConstantInt::get(IRB.getInt64Ty(), 1, false));
-  auto *OpaqueOne = IRB.CreateIntCast(LSB, Ty, false);
+  std::uniform_int_distribution<uint64_t> Dist(3, 101);
+  uint64_t N = Dist(RNG);
+  if (N % 2 == 0) N++;  // ensure odd
 
-  return OpaqueOne;
+  Value *Even = ConstantInt::get(Ty, N);
+  Value *One  = ConstantInt::get(Ty, 1);
+  Value *Or   = IRB.CreateOr(Even, One);
+  if (auto *Inst = dyn_cast<Instruction>(Or))
+    addMetadata(*Inst, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
+
+  Value *Opaque = IRB.CreateAnd(Or, One); // (X | 1) & 1 => 1
+  if (auto *Inst = dyn_cast<Instruction>(Opaque))
+    addMetadata(*Inst, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
+
+  return Opaque;
 }
 
-Value *getOpaqueOne2(Instruction &I, OpaqueContext &C, Type *Ty,
+Value *getOpaqueOne2(Instruction &I, Type *Ty,
                      RandomNumberGenerator &RNG) {
-  return getOpaqueOne1(I, C, Ty, RNG);
+  return getOpaqueOne1(I, Ty, RNG);
 }
 
-Value *getOpaqueOne3(Instruction &I, OpaqueContext &C, Type *Ty,
+Value *getOpaqueOne3(Instruction &I, Type *Ty,
                      RandomNumberGenerator &RNG) {
-  return getOpaqueOne1(I, C, Ty, RNG);
+  return getOpaqueOne1(I, Ty, RNG);
 }
 
 /* ========= Value != {0, 1} Gen ========= */
-Value *getOpaqueConst1(Instruction &I, OpaqueContext &C, const ConstantInt &CI,
+Value *getOpaqueConst1(Instruction &I, const ConstantInt &CI,
                        RandomNumberGenerator &RNG) {
   uint64_t Val = CI.getLimitedValue();
-  if (Val <= 1)
+  if (Val <= 1 || Val == std::numeric_limits<uint64_t>::max())
     return nullptr;
 
-  std::uniform_int_distribution<uint8_t> Dist(1, Val);
-  uint8_t Split = Dist(RNG);
-  Module *M = I.getModule();
-  GlobalVariable *GV = M->getGlobalVariable(OpaqueGVName, true);
-  if (!GV)
-    fatalError("Cannot find __omvll_opaque_gv");
+  std::uniform_int_distribution<uint64_t> Dist(1, Val - 1);
+  uint64_t Split = Dist(RNG);
 
   uint64_t LHS = Val - Split;
   uint64_t RHS = Split;
 
-  auto *Ty = CI.getType();
   IRBuilder<NoFolder> IRB(&I);
+  auto *Ty = CI.getType();
 
-  auto *GVPtr = IRB.CreatePointerCast(GV, Ty->getPointerTo());
-  auto *T1Ptr = IRB.CreatePointerCast(C.T1, Ty->getPointerTo());
+  Value *OpaqueLHS = ConstantInt::get(Ty, LHS);
+  Value *OpaqueRHS = ConstantInt::get(Ty, RHS);
 
-  auto *T2Addr = IRB.CreatePtrToInt(C.T2, IRB.getInt64Ty());
-  auto *LSB = IRB.CreateAnd(
-      T2Addr, ConstantInt::get(IRB.getInt64Ty(), StackAlignment, false));
-  auto *OpaqueZero = IRB.CreateIntCast(LSB, Ty, false);
+  Value *Sum = IRB.CreateAdd(OpaqueLHS, OpaqueRHS);
 
-  auto *OpaqueLHS = IRB.CreateAdd(OpaqueZero, ConstantInt::get(Ty, LHS, false));
-  auto *OpaqueRHS = IRB.CreateAdd(OpaqueZero, ConstantInt::get(Ty, RHS, false));
+  if (auto *Inst = dyn_cast<Instruction>(Sum))
+    addMetadata(*Inst, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
 
-  IRB.CreateStore(OpaqueLHS, GVPtr, /*volatile=*/true);
-  IRB.CreateStore(OpaqueRHS, T1Ptr, /*volatile=*/true);
-
-  auto *Add = IRB.CreateAdd(IRB.CreateLoad(Ty, GVPtr, true),
-                            IRB.CreateLoad(Ty, T1Ptr, true));
-  if (auto *InstAdd = dyn_cast<Instruction>(Add))
-    addMetadata(*InstAdd, MetaObf(MetaObfTy::OpaqueOp, 3LLU));
-
-  return Add;
+  return Sum;
 }
 
-Value *getOpaqueConst2(Instruction &I, OpaqueContext &C, const ConstantInt &CI,
+Value *getOpaqueConst2(Instruction &I, const ConstantInt &CI,
                        RandomNumberGenerator &RNG) {
-  return getOpaqueConst1(I, C, CI, RNG);
+  return getOpaqueConst1(I, CI, RNG);
 }
 
-Value *getOpaqueConst3(Instruction &I, OpaqueContext &C, const ConstantInt &CI,
+Value *getOpaqueConst3(Instruction &I, const ConstantInt &CI,
                        RandomNumberGenerator &RNG) {
-  return getOpaqueConst1(I, C, CI, RNG);
+  return getOpaqueConst1(I, CI, RNG);
 }
 
 } // end namespace omvll

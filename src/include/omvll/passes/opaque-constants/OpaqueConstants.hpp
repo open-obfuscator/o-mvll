@@ -37,18 +37,12 @@ struct OpaqueConstants : llvm::PassInfoMixin<OpaqueConstants> {
   bool process(llvm::Instruction &I, llvm::Use &Op, llvm::ConstantInt &CI,
                OpaqueConstantsOpt *Opt);
 
-  OpaqueContext *getOrCreateContext(llvm::BasicBlock &BB);
-
-  llvm::Value *getOpaqueZero(llvm::Instruction &I, OpaqueContext &C,
-                             llvm::Type *Ty);
-  llvm::Value *getOpaqueOne(llvm::Instruction &I, OpaqueContext &C,
-                            llvm::Type *Ty);
-  llvm::Value *getOpaqueCst(llvm::Instruction &I, OpaqueContext &C,
-                            const llvm::ConstantInt &Val);
+  llvm::Value *getOpaqueZero(llvm::Instruction &I, llvm::Type *Ty);
+  llvm::Value *getOpaqueOne(llvm::Instruction &I, llvm::Type *Ty);
+  llvm::Value *getOpaqueCst(llvm::Instruction &I, const llvm::ConstantInt &Val);
 
 private:
   std::unique_ptr<llvm::RandomNumberGenerator> RNG;
-  llvm::DenseMap<llvm::BasicBlock *, OpaqueContext> Ctx;
   llvm::DenseMap<llvm::Function *, OpaqueConstantsOpt> Opts;
 };
 
