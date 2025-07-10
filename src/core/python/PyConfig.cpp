@@ -336,6 +336,13 @@ void OMVLLCtor(py::module_ &m) {
          )delim",
            "module"_a, "function"_a)
 
+      .def("indirect_call", &ObfuscationConfig::indirectCall,
+           R"delim(
+         The default user-callback to convert direct function calls into indirect
+         ones, by splitting the target address into two additive shares.
+         )delim",
+           "module"_a, "function"_a)
+
       .def("report_diff", &ObfuscationConfig::reportDiff,
            R"delim(
          User-callback to monitor IR-level changes from individual obfuscation passes.

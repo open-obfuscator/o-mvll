@@ -348,6 +348,36 @@ IndirectBranchOpt PyObfuscationConfig::indirectBranch(llvm::Module *M,
   return std::nullopt;
 }
 
+IndirectCallOpt PyObfuscationConfig::indirectCall(llvm::Module *M,
+                                                  llvm::Function *F) {
+  py::gil_scoped_acquire gil;
+  py::function override = py::get_override(
+      static_cast<const ObfuscationConfig *>(this), "indirect_call");
+  if (override) {
+    try {
+      py::object out = override(M, F);
+      if (out.is_none())
+        return std::nullopt;
+
+      if (py::isinstance<py::bool_>(out)) {
+        bool Res = out.cast<py::bool_>();
+        return IndirectCallConfig(Res);
+      }
+
+      if (py::detail::cast_is_temporary_value_reference<
+              IndirectCallOpt>::value) {
+        static pybind11::detail::override_caster_t<IndirectCallOpt> caster;
+        return pybind11::detail::cast_ref<IndirectCallOpt>(std::move(out),
+                                                           caster);
+      }
+      return pybind11::detail::cast_safe<IndirectCallOpt>(std::move(out));
+    } catch (const std::exception &e) {
+      fatalError("Error in 'indirect_call': '"s + e.what() + "'");
+    }
+  }
+  return std::nullopt;
+}
+
 bool PyObfuscationConfig::defaultConfig(
     llvm::Module *M, llvm::Function *F,
     const std::vector<std::string> &ModuleExcludes,

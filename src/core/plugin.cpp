@@ -133,6 +133,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
                     // be changed, which can be confusing for the user.
                     MPM.addPass(omvll::ObjCleaner());
 #endif
+                    MPM.addPass(omvll::IndirectCall());
                     MPM.addPass(omvll::IndirectBranch());
                     MPM.addPass(omvll::Cleaning());
                     Once = true;

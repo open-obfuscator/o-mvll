@@ -54,6 +54,8 @@ struct ObfuscationConfig {
   virtual IndirectBranchOpt indirectBranch(llvm::Module *M,
                                            llvm::Function *F) = 0;
 
+  virtual IndirectCallOpt indirectCall(llvm::Module *M, llvm::Function *F) = 0;
+
   virtual bool defaultConfig(llvm::Module *M, llvm::Function *F,
                              const std::vector<std::string> &ModuleExcludes,
                              const std::vector<std::string> &FunctionExcludes,

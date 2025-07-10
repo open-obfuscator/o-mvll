@@ -165,6 +165,15 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     )delim")
     .def(py::init<bool>(), "value"_a);
 
+  // Indirect Call
+  py::class_<IndirectCallOpt>(m, "IndirectCallOpt",
+    R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.indirect_call` protection.
+
+    This option only accepts a boolean value (e.g. ``IndirectCallOpt(True)``)
+    )delim")
+    .def(py::init<bool>(), "value"_a);
+
   return m;
   // clang-format on
 }

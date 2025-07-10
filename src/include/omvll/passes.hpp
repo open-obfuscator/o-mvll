@@ -12,6 +12,7 @@
 #include "omvll/passes/cfg-flattening/ControlFlowFlattening.hpp"
 #include "omvll/passes/cleaning/Cleaning.hpp"
 #include "omvll/passes/indirect-branch/IndirectBranch.hpp"
+#include "omvll/passes/indirect-call/IndirectCall.hpp"
 #include "omvll/passes/objc-cleaner/ObjCleaner.hpp"
 #include "omvll/passes/opaque-constants/OpaqueConstants.hpp"
 #include "omvll/passes/opaque-field-access/OpaqueFieldAccess.hpp"

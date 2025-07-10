@@ -22,6 +22,7 @@ void initDefaultConfig() {
       OpaqueConstants::name().str(),
       Arithmetic::name().str(),
       IndirectBranch::name().str(),
+      IndirectCall::name().str(),
 
       // Last pass.
       Cleaning::name().str(),
