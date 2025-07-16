@@ -26,7 +26,7 @@ using namespace llvm;
 namespace omvll {
 
 inline bool isEligible(const Instruction &I) {
-  return !isa<CallInst>(I) && !isa<GetElementPtrInst>(I) && !isa<SwitchInst>(I);
+  return isa<LoadInst>(I) || isa<StoreInst>(I) || isa<BinaryOperator>(I);
 }
 
 inline bool isSkip(const OpaqueConstantsOpt &Opt) {
@@ -37,13 +37,6 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
                               OpaqueConstantsOpt *Opt) {
   if (!isEligible(I))
     return false;
-
-  BasicBlock &BB = *I.getParent();
-  OpaqueContext *Ctx = getOrCreateContext(BB);
-  if (!Ctx) {
-    SWARN("[{}] Cannot opaque {}", name(), ToString(BB));
-    return false;
-  }
 
   // Special processing for 0 values.
   if (CI.isZero()) {
@@ -61,7 +54,7 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
         return false;
     }
 
-    Value *NewZero = getOpaqueZero(I, *Ctx, CI.getType());
+    Value *NewZero = getOpaqueZero(I, CI.getType());
     if (!NewZero) {
       SWARN("[{}] Cannot opaque {}", name(), ToString(CI));
       return false;
@@ -86,7 +79,7 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
         return false;
     }
 
-    Value *NewOne = getOpaqueOne(I, *Ctx, CI.getType());
+    Value *NewOne = getOpaqueOne(I, CI.getType());
     if (!NewOne) {
       SWARN("[{}] Cannot opaque {}", name(), ToString(CI));
       return false;
@@ -115,7 +108,7 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
   if (!ShouldProtect)
     return false;
 
-  Value *NewCst = getOpaqueCst(I, *Ctx, CI);
+  Value *NewCst = getOpaqueCst(I, CI);
   if (!NewCst) {
     SWARN("[{}] Cannot opaque {}", name(), ToString(CI));
     return false;
@@ -124,8 +117,7 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
   return true;
 }
 
-Value *OpaqueConstants::getOpaqueZero(Instruction &I, OpaqueContext &C,
-                                      Type *Ty) {
+Value *OpaqueConstants::getOpaqueZero(Instruction &I, Type *Ty) {
   static constexpr auto MaxCases = 3;
   static_assert(RandomNumberGenerator::max() >= MaxCases);
   std::uniform_int_distribution<uint8_t> Dist(1, MaxCases);
@@ -133,11 +125,11 @@ Value *OpaqueConstants::getOpaqueZero(Instruction &I, OpaqueContext &C,
   uint8_t Sel = Dist(*RNG);
   switch (Sel) {
   case 1:
-    return getOpaqueZero1(I, C, Ty, *RNG);
+    return getOpaqueZero1(I, Ty, *RNG);
   case 2:
-    return getOpaqueZero2(I, C, Ty, *RNG);
+    return getOpaqueZero2(I, Ty, *RNG);
   case 3:
-    return getOpaqueZero3(I, C, Ty, *RNG);
+    return getOpaqueZero3(I, Ty, *RNG);
   default: {
     SWARN("[{}] RNG number ({}) out of range for generating opaque zero",
           name(), Sel);
@@ -146,8 +138,7 @@ Value *OpaqueConstants::getOpaqueZero(Instruction &I, OpaqueContext &C,
   }
 }
 
-Value *OpaqueConstants::getOpaqueOne(Instruction &I, OpaqueContext &C,
-                                     Type *Ty) {
+Value *OpaqueConstants::getOpaqueOne(Instruction &I, Type *Ty) {
   static constexpr auto MaxCases = 3;
   static_assert(RandomNumberGenerator::max() >= MaxCases);
   std::uniform_int_distribution<uint8_t> Dist(1, MaxCases);
@@ -155,11 +146,11 @@ Value *OpaqueConstants::getOpaqueOne(Instruction &I, OpaqueContext &C,
   uint8_t Sel = Dist(*RNG);
   switch (Sel) {
   case 1:
-    return getOpaqueOne1(I, C, Ty, *RNG);
+    return getOpaqueOne1(I, Ty, *RNG);
   case 2:
-    return getOpaqueOne2(I, C, Ty, *RNG);
+    return getOpaqueOne2(I, Ty, *RNG);
   case 3:
-    return getOpaqueOne3(I, C, Ty, *RNG);
+    return getOpaqueOne3(I, Ty, *RNG);
   default: {
     SWARN("[{}] RNG number ({}) out of range for generating opaque one", name(),
           Sel);
@@ -168,8 +159,7 @@ Value *OpaqueConstants::getOpaqueOne(Instruction &I, OpaqueContext &C,
   }
 }
 
-Value *OpaqueConstants::getOpaqueCst(Instruction &I, OpaqueContext &C,
-                                     const ConstantInt &CI) {
+Value *OpaqueConstants::getOpaqueCst(Instruction &I, const ConstantInt &CI) {
   static constexpr auto MaxCases = 3;
   static_assert(RandomNumberGenerator::max() >= MaxCases);
   std::uniform_int_distribution<uint8_t> Dist(1, MaxCases);
@@ -177,11 +167,11 @@ Value *OpaqueConstants::getOpaqueCst(Instruction &I, OpaqueContext &C,
   uint8_t Sel = Dist(*RNG);
   switch (Sel) {
   case 1:
-    return getOpaqueConst1(I, C, CI, *RNG);
+    return getOpaqueConst1(I, CI, *RNG);
   case 2:
-    return getOpaqueConst2(I, C, CI, *RNG);
+    return getOpaqueConst2(I, CI, *RNG);
   case 3:
-    return getOpaqueConst3(I, C, CI, *RNG);
+    return getOpaqueConst3(I, CI, *RNG);
   default: {
     SWARN("[{}] RNG number ({}) out of range for generating opaque value",
           name(), Sel);
@@ -206,27 +196,6 @@ bool OpaqueConstants::process(Instruction &I, OpaqueConstantsOpt *Opt) {
 #endif
 
   return Changed;
-}
-
-OpaqueContext *OpaqueConstants::getOrCreateContext(BasicBlock &BB) {
-  if (auto It = Ctx.find(&BB); It != Ctx.end())
-    return &It->second;
-
-  auto InsertPt = BB.getFirstInsertionPt();
-  if (InsertPt == BB.end())
-    return nullptr;
-
-  OpaqueContext &OpaqueCtx = Ctx[&BB];
-  IRBuilder<NoFolder> IRB(&*InsertPt);
-  OpaqueCtx.T1 = IRB.CreateAlloca(IRB.getInt64Ty());
-  OpaqueCtx.T2 = IRB.CreateAlloca(IRB.getInt64Ty());
-
-  IRB.CreateAlignedStore(IRB.CreatePtrToInt(OpaqueCtx.T2, IRB.getInt64Ty()),
-                         OpaqueCtx.T1, Align(8));
-  IRB.CreateAlignedStore(IRB.CreatePtrToInt(OpaqueCtx.T1, IRB.getInt64Ty()),
-                         OpaqueCtx.T2, Align(8));
-
-  return &OpaqueCtx;
 }
 
 bool OpaqueConstants::runOnBasicBlock(llvm::BasicBlock &BB,
@@ -255,13 +224,6 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
   RNG = M.createRNG(name());
-
-  auto *Int64Ty = Type::getInt64Ty(M.getContext());
-  M.getOrInsertGlobal(OpaqueGVName, Int64Ty, [&]() {
-    return new GlobalVariable(M, Int64Ty, /*isConstant=*/false,
-                              GlobalValue::PrivateLinkage,
-                              ConstantInt::get(Int64Ty, 0), OpaqueGVName);
-  });
 
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F))
