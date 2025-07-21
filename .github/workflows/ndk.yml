@@ -21,6 +21,14 @@ jobs:
             -v ${{ github.workspace }}/dist/Python-3.10.7:/Python-3.10.7 \
             -v $GITHUB_WORKSPACE:/o-mvll \
             openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/ndk_r26_compile.sh
+      - name: Get deploy version
+        id: versioning
+        run: |
+          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          CURRENT_TAG="${CURRENT_TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_TAG"
+          NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
       - name: Generate deployment tar
         uses: a7ul/tar-action@v1.1.3
         id: compress
@@ -31,7 +39,7 @@ jobs:
             ./omvll_ndk_r26d.so
             ./sample-omvll-config.py
             ./Python-3.10.7
-          outPath: ${{ github.workspace }}/dist/omvll_v1-4-0_linux.tar.gz
+          outPath: ${{ github.workspace }}/dist/omvll_v${{ steps.versioning.outputs.next_version }}_linux.tar.gz
       - name: O-MVLL Deployment
         env:
           BUILD38_S3_KEY: ${{ secrets.BUILD38_S3_KEY }}
