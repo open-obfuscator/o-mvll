@@ -8,6 +8,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Get deployment version
+        id: versioning
+        run: |
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          LATEST_TAG="${LATEST_TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
+          NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
       - name: O-MVLL Build Plugins
         shell: bash
         run: |
@@ -50,7 +58,7 @@ jobs:
             ./omvll-ndk.dylib
             ./Python-3.10.7
             ./sample-omvll-config.py
-          outPath: ${{ github.workspace }}/dist/omvll_v1-4-0_macos.tar.gz
+          outPath: ${{ github.workspace }}/dist/omvll_v${{ steps.versioning.outputs.next_version }}_macos.tar.gz
       - name: O-MVLL Deployment
         env:
           BUILD38_S3_KEY: ${{ secrets.BUILD38_S3_KEY }}
