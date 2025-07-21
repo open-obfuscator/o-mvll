@@ -14,7 +14,7 @@ jobs:
           LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
           LATEST_TAG="${LATEST_TAG#v}"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
-          NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          NEXT_VERSION="${MAJOR}-$((MINOR + 1))-0"
           echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
       - name: O-MVLL Build Plugins
         shell: bash
