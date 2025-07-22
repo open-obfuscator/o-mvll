@@ -3,6 +3,8 @@
 // details.
 //
 
+#include <utility>
+
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
@@ -38,146 +40,87 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
   if (!isEligible(I))
     return false;
 
-  // Special processing for 0 values.
-  if (CI.isZero()) {
-    if (Opt) {
-      bool ShouldProtect =
-          std::visit(overloaded{
-                         [](OpaqueConstantsSkip &) { return false; },
-                         [](OpaqueConstantsBool &V) { return V.Value; },
-                         [](OpaqueConstantsLowerLimit &V) { return false; },
-                         [](OpaqueConstantsSet &V) { return V.contains(0); },
-                     },
-                     *Opt);
+  auto ShouldProtect = [&](const ConstantInt &CI) -> bool {
+    return std::visit(overloaded{
+                          [](OpaqueConstantsSkip &) { return false; },
+                          [](OpaqueConstantsBool &V) { return V.Value; },
+                          [&](OpaqueConstantsLowerLimit &V) {
+                            if (CI.isZero())
+                              return false;
+                            if (CI.isOne())
+                              return V.Value >= 1;
+                            return CI.getLimitedValue() > V.Value;
+                          },
+                          [&](OpaqueConstantsSet &V) {
+                            if (CI.isZero())
+                              return V.contains(0);
+                            if (CI.isOne())
+                              return V.contains(1);
+                            static constexpr uint64_t Magic =
+                                0x4208D8DF2C6415BC;
+                            const uint64_t LV = CI.getLimitedValue(Magic);
+                            if (LV == Magic)
+                              return true;
+                            return !V.empty() && V.contains(LV);
+                          },
+                      },
+                      *Opt);
+  };
 
-      if (!ShouldProtect)
-        return false;
-    }
-
-    Value *NewZero = getOpaqueZero(I, CI.getType());
-    if (!NewZero) {
-      SWARN("[{}] Cannot opaque {}", name(), ToString(CI));
-      return false;
-    }
-    Op.set(NewZero);
-    return true;
-  }
-
-  // Special processing for 1 values.
-  if (CI.isOne()) {
-    if (Opt) {
-      bool ShouldProtect = std::visit(
-          overloaded{
-              [](OpaqueConstantsSkip &) { return false; },
-              [](OpaqueConstantsBool &V) { return V.Value; },
-              [](OpaqueConstantsLowerLimit &V) { return V.Value >= 1; },
-              [](OpaqueConstantsSet &V) { return V.contains(1); },
-          },
-          *Opt);
-
-      if (!ShouldProtect)
-        return false;
-    }
-
-    Value *NewOne = getOpaqueOne(I, CI.getType());
-    if (!NewOne) {
-      SWARN("[{}] Cannot opaque {}", name(), ToString(CI));
-      return false;
-    }
-    Op.set(NewOne);
-    return true;
-  }
-
-  bool ShouldProtect =
-      std::visit(overloaded{
-                     [](OpaqueConstantsSkip &) { return false; },
-                     [](OpaqueConstantsBool &V) { return V.Value; },
-                     [&CI](OpaqueConstantsLowerLimit &V) {
-                       return CI.getLimitedValue() > V.Value;
-                     },
-                     [&CI](OpaqueConstantsSet &V) {
-                       static constexpr uint64_t Magic = 0x4208D8DF2C6415BC;
-                       const uint64_t LV = CI.getLimitedValue(Magic);
-                       if (LV == Magic)
-                         return true;
-                       return !V.empty() && V.contains(LV);
-                     },
-                 },
-                 *Opt);
-
-  if (!ShouldProtect)
+  if (Opt && !ShouldProtect(CI))
     return false;
 
-  Value *NewCst = getOpaqueCst(I, CI);
-  if (!NewCst) {
+  Value *NewVal = nullptr;
+  if (CI.isZero()) {
+    // Special processing for 0 values.
+    NewVal = getOpaqueZero(I, CI.getType());
+  } else if (CI.isOne()) {
+    // Special processing for 1 values.
+    NewVal = getOpaqueOne(I, CI.getType());
+  } else {
+    NewVal = getOpaqueCst(I, CI);
+  }
+
+  if (!NewVal) {
     SWARN("[{}] Cannot opaque {}", name(), ToString(CI));
     return false;
   }
-  Op.set(NewCst);
+
+  Op.set(NewVal);
   return true;
 }
 
-Value *OpaqueConstants::getOpaqueZero(Instruction &I, Type *Ty) {
+template <typename CasesT, typename... ArgsT>
+static Value *
+getOpaqueRandomRoutine(std::unique_ptr<llvm::RandomNumberGenerator> &RNG,
+                       const CasesT &Cases, ArgsT &&...Args) {
   static constexpr auto MaxCases = 3;
   static_assert(RandomNumberGenerator::max() >= MaxCases);
-  std::uniform_int_distribution<uint8_t> Dist(1, MaxCases);
+  std::uniform_int_distribution<size_t> Dist(0, MaxCases - 1);
+  const auto Idx = Dist(*RNG);
+  assert(Idx < Cases.size() && "Shouldn't have Idx out of bounds?");
 
-  uint8_t Sel = Dist(*RNG);
-  switch (Sel) {
-  case 1:
-    return getOpaqueZero1(I, Ty, *RNG);
-  case 2:
-    return getOpaqueZero2(I, Ty, *RNG);
-  case 3:
-    return getOpaqueZero3(I, Ty, *RNG);
-  default: {
-    SWARN("[{}] RNG number ({}) out of range for generating opaque zero",
-          name(), Sel);
-    return nullptr;
-  }
-  }
+  if (Value *V = (*Cases[Idx])(std::forward<ArgsT>(Args)..., *RNG))
+    return V;
+  return nullptr;
+}
+
+Value *OpaqueConstants::getOpaqueZero(Instruction &I, Type *Ty) {
+  static constexpr std::array Cases{&getOpaqueZero1, &getOpaqueZero2,
+                                    &getOpaqueZero3};
+  return getOpaqueRandomRoutine(RNG, Cases, I, Ty);
 }
 
 Value *OpaqueConstants::getOpaqueOne(Instruction &I, Type *Ty) {
-  static constexpr auto MaxCases = 3;
-  static_assert(RandomNumberGenerator::max() >= MaxCases);
-  std::uniform_int_distribution<uint8_t> Dist(1, MaxCases);
-
-  uint8_t Sel = Dist(*RNG);
-  switch (Sel) {
-  case 1:
-    return getOpaqueOne1(I, Ty, *RNG);
-  case 2:
-    return getOpaqueOne2(I, Ty, *RNG);
-  case 3:
-    return getOpaqueOne3(I, Ty, *RNG);
-  default: {
-    SWARN("[{}] RNG number ({}) out of range for generating opaque one", name(),
-          Sel);
-    return nullptr;
-  }
-  }
+  static constexpr std::array Cases{&getOpaqueOne1, &getOpaqueOne2,
+                                    &getOpaqueOne3};
+  return getOpaqueRandomRoutine(RNG, Cases, I, Ty);
 }
 
 Value *OpaqueConstants::getOpaqueCst(Instruction &I, const ConstantInt &CI) {
-  static constexpr auto MaxCases = 3;
-  static_assert(RandomNumberGenerator::max() >= MaxCases);
-  std::uniform_int_distribution<uint8_t> Dist(1, MaxCases);
-
-  uint8_t Sel = Dist(*RNG);
-  switch (Sel) {
-  case 1:
-    return getOpaqueConst1(I, CI, *RNG);
-  case 2:
-    return getOpaqueConst2(I, CI, *RNG);
-  case 3:
-    return getOpaqueConst3(I, CI, *RNG);
-  default: {
-    SWARN("[{}] RNG number ({}) out of range for generating opaque value",
-          name(), Sel);
-    return nullptr;
-  }
-  }
+  static constexpr std::array Cases{&getOpaqueConst1, &getOpaqueConst2,
+                                    &getOpaqueConst3};
+  return getOpaqueRandomRoutine(RNG, Cases, I, CI);
 }
 
 bool OpaqueConstants::process(Instruction &I, OpaqueConstantsOpt *Opt) {
