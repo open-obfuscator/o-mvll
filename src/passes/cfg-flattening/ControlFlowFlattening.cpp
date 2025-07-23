@@ -351,6 +351,10 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
       continue;
     }
 
+    if (isa<IndirectBrInst>(Term))
+      // Avoid flattening when encountering an indirectbr.
+      continue;
+
     if (isa<ResumeInst>(Term))
       // Nothing to do as it will 'resume' from information already known.
       continue;
