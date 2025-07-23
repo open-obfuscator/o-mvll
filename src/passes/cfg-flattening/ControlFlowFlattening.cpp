@@ -352,7 +352,7 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
     }
 
     if (isa<IndirectBrInst>(Term))
-      // Nothing to do as CFG reverts indirect branch.
+      // Avoid flattening when encountering an indirectbr.
       continue;
 
     if (isa<ResumeInst>(Term))
