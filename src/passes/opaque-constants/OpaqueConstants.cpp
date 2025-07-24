@@ -28,7 +28,8 @@ using namespace llvm;
 namespace omvll {
 
 inline bool isEligible(const Instruction &I) {
-  return isa<LoadInst>(I) || isa<StoreInst>(I) || isa<BinaryOperator>(I);
+  return isa<LoadInst>(I) || isa<StoreInst>(I) || isa<BinaryOperator>(I) ||
+         isa<ReturnInst>(I);
 }
 
 inline bool isSkip(const OpaqueConstantsOpt &Opt) {
@@ -39,6 +40,13 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
                               OpaqueConstantsOpt *Opt) {
   if (!isEligible(I))
     return false;
+
+  Function &F = *I.getFunction();
+  OpaqueContext *Ctx = getOrCreateContext(F);
+  if (!Ctx) {
+    SWARN("[{}] Cannot opaque {}", name(), ToString(F));
+    return false;
+  }
 
   auto ShouldProtect = [&](const ConstantInt &CI) -> bool {
     return std::visit(overloaded{
@@ -71,14 +79,15 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
     return false;
 
   Value *NewVal = nullptr;
+
   if (CI.isZero()) {
     // Special processing for 0 values.
-    NewVal = getOpaqueZero(I, CI.getType());
+    NewVal = getOpaqueZero(I, *Ctx, CI.getType());
   } else if (CI.isOne()) {
     // Special processing for 1 values.
-    NewVal = getOpaqueOne(I, CI.getType());
+    NewVal = getOpaqueOne(I, *Ctx, CI.getType());
   } else {
-    NewVal = getOpaqueCst(I, CI);
+    NewVal = getOpaqueCst(I, *Ctx, CI);
   }
 
   if (!NewVal) {
@@ -105,22 +114,25 @@ getOpaqueRandomRoutine(std::unique_ptr<llvm::RandomNumberGenerator> &RNG,
   return nullptr;
 }
 
-Value *OpaqueConstants::getOpaqueZero(Instruction &I, Type *Ty) {
+Value *OpaqueConstants::getOpaqueZero(Instruction &I, OpaqueContext &Ctx,
+                                      Type *Ty) {
   static constexpr std::array Cases{&getOpaqueZero1, &getOpaqueZero2,
                                     &getOpaqueZero3};
-  return getOpaqueRandomRoutine(RNG, Cases, I, Ty);
+  return getOpaqueRandomRoutine(RNG, Cases, I, Ctx, Ty);
 }
 
-Value *OpaqueConstants::getOpaqueOne(Instruction &I, Type *Ty) {
+Value *OpaqueConstants::getOpaqueOne(Instruction &I, OpaqueContext &Ctx,
+                                     Type *Ty) {
   static constexpr std::array Cases{&getOpaqueOne1, &getOpaqueOne2,
                                     &getOpaqueOne3};
-  return getOpaqueRandomRoutine(RNG, Cases, I, Ty);
+  return getOpaqueRandomRoutine(RNG, Cases, I, Ctx, Ty);
 }
 
-Value *OpaqueConstants::getOpaqueCst(Instruction &I, const ConstantInt &CI) {
+Value *OpaqueConstants::getOpaqueCst(Instruction &I, OpaqueContext &Ctx,
+                                     const ConstantInt &CI) {
   static constexpr std::array Cases{&getOpaqueConst1, &getOpaqueConst2,
                                     &getOpaqueConst3};
-  return getOpaqueRandomRoutine(RNG, Cases, I, CI);
+  return getOpaqueRandomRoutine(RNG, Cases, I, Ctx, CI);
 }
 
 bool OpaqueConstants::process(Instruction &I, OpaqueConstantsOpt *Opt) {
@@ -139,6 +151,26 @@ bool OpaqueConstants::process(Instruction &I, OpaqueConstantsOpt *Opt) {
 #endif
 
   return Changed;
+}
+
+OpaqueContext *OpaqueConstants::getOrCreateContext(Function &F) {
+  if (auto It = OpaqueCtx.find(&F); It != OpaqueCtx.end())
+    return &It->second;
+
+  const DataLayout &DL = F.getParent()->getDataLayout();
+  Align PtrAlign(DL.getPointerSize());
+  OpaqueContext &Ctx = OpaqueCtx[&F];
+
+  IRBuilder<NoFolder> IRB(&*F.getEntryBlock().getFirstInsertionPt());
+  Ctx.T1 = IRB.CreateAlloca(IRB.getInt64Ty(), nullptr, "opaque.t1");
+  Ctx.T2 = IRB.CreateAlloca(IRB.getInt64Ty(), nullptr, "opaque.t2");
+
+  IRB.CreateAlignedStore(IRB.CreatePtrToInt(Ctx.T2, IRB.getInt64Ty()), Ctx.T1,
+                         PtrAlign);
+  IRB.CreateAlignedStore(IRB.CreatePtrToInt(Ctx.T1, IRB.getInt64Ty()), Ctx.T2,
+                         PtrAlign);
+
+  return &Ctx;
 }
 
 bool OpaqueConstants::runOnBasicBlock(llvm::BasicBlock &BB,
@@ -169,7 +201,8 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
   RNG = M.createRNG(name());
 
   for (Function &F : M) {
-    if (isFunctionGloballyExcluded(&F))
+    if (isFunctionGloballyExcluded(&F) || F.isDeclaration() ||
+        F.isIntrinsic() || F.getName().starts_with("__omvll"))
       continue;
 
     OpaqueConstantsOpt Opt = Config.getUserConfig()->obfuscateConstants(&M, &F);

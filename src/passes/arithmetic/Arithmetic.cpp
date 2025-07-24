@@ -192,6 +192,9 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
     for (BasicBlock &BB : *F) {
       for (size_t Idx = 0; Idx < Round; ++Idx) {
         for (Instruction &I : BB) {
+          if (getObf(I, MetaObfTy::OpaqueCst))
+            continue;
+
           Builder.SetInsertPoint(&I);
           Instruction *Result = Visitor.visit(I);
 
