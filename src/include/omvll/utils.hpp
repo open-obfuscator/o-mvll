@@ -48,6 +48,8 @@ size_t reg2mem(llvm::Function &F);
 void shuffleFunctions(llvm::Module &M);
 bool isModuleGloballyExcluded(llvm::Module *M);
 bool isFunctionGloballyExcluded(llvm::Function *F);
+bool containsSwiftErrorAlloca(const llvm::BasicBlock &BB);
+bool isEHBlock(const llvm::BasicBlock &BB);
 
 [[noreturn]] void fatalError(const char *Msg);
 [[noreturn]] void fatalError(const std::string &Msg);

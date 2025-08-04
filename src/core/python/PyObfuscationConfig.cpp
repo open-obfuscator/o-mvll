@@ -378,6 +378,45 @@ IndirectCallOpt PyObfuscationConfig::indirectCall(llvm::Module *M,
   return std::nullopt;
 }
 
+BasicBlockDuplicateOpt
+PyObfuscationConfig::basicBlockDuplicate(llvm::Module *M, llvm::Function *F) {
+  py::gil_scoped_acquire gil;
+  py::function override = py::get_override(
+      static_cast<const ObfuscationConfig *>(this), "basic_block_duplicate");
+  if (override) {
+    try {
+      py::object out = override(M, F);
+      if (out.is_none())
+        return BasicBlockDuplicateSkip();
+
+      if (py::isinstance<py::bool_>(out))
+        throw py::value_error(
+            "basic_block_duplicate: boolean value not accepted.");
+
+      if (py::isinstance<py::int_>(out)) {
+        unsigned Probability = out.cast<py::int_>();
+        if (Probability < 0 || Probability > 100)
+          throw py::value_error(
+              "basic_block_duplicate: probability must be within [0, 100].");
+        return BasicBlockDuplicateWithProbability(Probability);
+      }
+
+      if (py::detail::cast_is_temporary_value_reference<
+              BasicBlockDuplicateOpt>::value) {
+        static pybind11::detail::override_caster_t<BasicBlockDuplicateOpt>
+            caster;
+        return pybind11::detail::cast_ref<BasicBlockDuplicateOpt>(
+            std::move(out), caster);
+      }
+      return pybind11::detail::cast_safe<BasicBlockDuplicateOpt>(
+          std::move(out));
+    } catch (const std::exception &Exc) {
+      fatalError("Error in 'basic_block_duplicate': '"s + Exc.what() + "'");
+    }
+  }
+  return BasicBlockDuplicateSkip();
+}
+
 bool PyObfuscationConfig::defaultConfig(
     llvm::Module *M, llvm::Function *F,
     const std::vector<std::string> &ModuleExcludes,

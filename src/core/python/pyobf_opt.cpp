@@ -174,6 +174,26 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     )delim")
     .def(py::init<bool>(), "value"_a);
 
+  // BasicBlock Duplicate
+  py::class_<BasicBlockDuplicateSkip>(m, "BasicBlockDuplicateSkip",
+    R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.basic_block_duplicate` protection.
+
+    Alias for not enabling BasicBlockDuplicate.
+    )delim")
+    .def(py::init<>());
+
+  py::class_<BasicBlockDuplicateWithProbability>(m, "BasicBlockDuplicateWithProbability",
+    R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.basic_block_duplicate` protection.
+
+    This option defines a probability to be used when choosing basic blocks to be duplicated.
+    For example, ``BasicBlockDuplicateWithProbability(0)`` implies that the pass never runs,
+    whereas ``BasicBlockDuplicateWithProbability(100)`` duplicates all basic blocks in a
+    function.
+    )delim")
+    .def(py::init<unsigned>(), "probability"_a);
+
   return m;
   // clang-format on
 }
