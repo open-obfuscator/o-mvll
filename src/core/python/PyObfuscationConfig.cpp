@@ -394,14 +394,18 @@ bool PyObfuscationConfig::defaultConfig(
 
   // Exclude functions.
   if (!FunctionExcludes.empty() &&
-      llvm::count(FunctionExcludes, F->getName()) != 0) {
+      llvm::count_if(FunctionExcludes, [&](const auto &ExcludedFunction) {
+        return F->getName().contains(ExcludedFunction);
+      }) != 0) {
     SDEBUG("defaultConfig: Function {} is excluded", F->getName());
     return false;
   }
 
   // Include functions.
   if (!FunctionIncludes.empty() &&
-      llvm::count(FunctionIncludes, F->getName()) != 0) {
+      llvm::count_if(FunctionIncludes, [&](const auto &IncludedFunction) {
+        return F->getName().contains(IncludedFunction);
+      }) != 0) {
     SDEBUG("defaultConfig: Function {} is added", F->getName());
     return true;
   }
