@@ -355,6 +355,10 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
       // Avoid flattening when encountering an indirectbr.
       continue;
 
+    if (isa<CallBrInst>(Term))
+      // Avoid flattening when encountering an callbr.
+      continue;
+
     if (isa<ResumeInst>(Term))
       // Nothing to do as it will 'resume' from information already known.
       continue;
@@ -479,7 +483,8 @@ PreservedAnalyses ControlFlowFlattening::run(Module &M,
 
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F) ||
-        !Config.getUserConfig()->controlFlowGraphFlattening(&M, &F))
+        !Config.getUserConfig()->controlFlowGraphFlattening(&M, &F) ||
+        F.isDeclaration() || F.isIntrinsic() || F.getName().starts_with("__omvll"))
       continue;
 
     bool MadeChange = runOnFunction(F, *RNG);
