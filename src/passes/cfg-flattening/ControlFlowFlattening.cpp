@@ -484,7 +484,8 @@ PreservedAnalyses ControlFlowFlattening::run(Module &M,
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F) ||
         !Config.getUserConfig()->controlFlowGraphFlattening(&M, &F) ||
-        F.isDeclaration() || F.isIntrinsic() || F.getName().starts_with("__omvll"))
+        F.isDeclaration() || F.isIntrinsic() ||
+        F.getName().starts_with("__omvll"))
       continue;
 
     bool MadeChange = runOnFunction(F, *RNG);
