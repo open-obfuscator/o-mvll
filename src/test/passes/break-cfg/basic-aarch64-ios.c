@@ -9,38 +9,52 @@
 // RUN: env OMVLL_CONFIG=%S/config_all.py clang -target arm64-apple-ios -fpass-plugin=%libOMVLL -O1 -fno-verbose-asm -S %s -o - | FileCheck --check-prefix=BREAKCFG-IOS %s
 
 // BREAKCFG-IOS-LABEL: _check_password.1:
-//                     ; adr x1, #0x10
-//                     ; ldr x0, [x1, #61]
-//                     ; ldr x1, #16
-//                     ; blr x1
-// BREAKCFG-IOS:       .byte	129
-// BREAKCFG-IOS:       .byte	0
-// BREAKCFG-IOS:       .byte	0
-// BREAKCFG-IOS:       .byte	16
-// BREAKCFG-IOS:       .byte	32
-// BREAKCFG-IOS:       .byte	208
-// BREAKCFG-IOS:       .byte	67
-// BREAKCFG-IOS:       .byte	248  
-// BREAKCFG-IOS:       .byte	129
-// BREAKCFG-IOS:       .byte	0
-// BREAKCFG-IOS:       .byte	0
-// BREAKCFG-IOS:       .byte	88
-// BREAKCFG-IOS:       .byte	32
-// BREAKCFG-IOS:       .byte	0
-// BREAKCFG-IOS:       .byte	63
-// BREAKCFG-IOS:       .byte	214
+// BREAKCFG-IOS:              .cfi_startproc
+// BREAKCFG-IOS-NEXT:         .byte 16
+// BREAKCFG-IOS-NEXT:         .byte 0
+// BREAKCFG-IOS-NEXT:         .byte 0
+// BREAKCFG-IOS-NEXT:         .byte 16
+// BREAKCFG-IOS-NEXT:         .byte 32
+// BREAKCFG-IOS-NEXT:         .byte 12
+// BREAKCFG-IOS-NEXT:         .byte 64
+// BREAKCFG-IOS-NEXT:         .byte 249
+// BREAKCFG-IOS-NEXT:         .byte 65
+// BREAKCFG-IOS-NEXT:         .byte 0
+// BREAKCFG-IOS-NEXT:         .byte 0
+// BREAKCFG-IOS-NEXT:         .byte 88
+// BREAKCFG-IOS-NEXT:         .byte 32
+// BREAKCFG-IOS-NEXT:         .byte 2
+// BREAKCFG-IOS-NEXT:         .byte 63
+// BREAKCFG-IOS-NEXT:         .byte 214
+// BREAKCFG-IOS-NEXT:         .byte 65
+// BREAKCFG-IOS-NEXT:         .byte 0
+// BREAKCFG-IOS-NEXT:         .byte 0
+// BREAKCFG-IOS-NEXT:         .byte 88
+// BREAKCFG-IOS-NEXT:         .byte 96
+// BREAKCFG-IOS-NEXT:         .byte 6
+// BREAKCFG-IOS-NEXT:         .byte 63
+// BREAKCFG-IOS-NEXT:         .byte 214
+// BREAKCFG-IOS-NEXT:         .byte 241
+// BREAKCFG-IOS-NEXT:         .byte 255
+// BREAKCFG-IOS-NEXT:         .byte 242
+// BREAKCFG-IOS-NEXT:         .byte 162
+// BREAKCFG-IOS-NEXT:         .byte 248
+// BREAKCFG-IOS-NEXT:         .byte 255
+// BREAKCFG-IOS-NEXT:         .byte 226
+// BREAKCFG-IOS-NEXT:         .byte 194
+// BREAKCFG-IOS-NEXT:         cmp w1, #5
 
 // CHECK-LABEL: _check_password:
-// BREAKCFG-IOS:       Lloh0:
-// BREAKCFG-IOS:       adrp	x8, _check_password.1@PAGE
-// BREAKCFG-IOS:       Lloh1:
-// BREAKCFG-IOS:       add	x8, x8, _check_password.1@PAGEOFF
-// BREAKCFG-IOS:       str	x8, [sp, #-16]!
-// BREAKCFG-IOS:       add	x8, x8, #32
-// BREAKCFG-IOS:       str	x8, [sp, #8]
-// BREAKCFG-IOS:       ldr	x2, [sp, #8]
-// BREAKCFG-IOS:       add	sp, sp, #16
-// BREAKCFG-IOS:       br	x2
+// BREAKCFG-IOS:            Lloh0:
+// BREAKCFG-IOS-NEXT:       adrp  x8, _check_password.1@PAGE
+// BREAKCFG-IOS-NEXT:       Lloh1:
+// BREAKCFG-IOS-NEXT:       add x8, x8, _check_password.1@PAGEOFF
+// BREAKCFG-IOS-NEXT:       str x8, [sp, #-16]!
+// BREAKCFG-IOS:            add x8, x8, #32
+// BREAKCFG-IOS-NEXT:       str x8, [sp, #8]
+// BREAKCFG-IOS-NEXT:       ldr x2, [sp, #8]
+// BREAKCFG-IOS-NEXT:       add sp, sp, #16
+// BREAKCFG-IOS-NEXT:       br  x2
 
 int check_password(const char* passwd, unsigned len) {
   if (len != 5) {

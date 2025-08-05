@@ -23,8 +23,6 @@ struct BreakControlFlow : llvm::PassInfoMixin<BreakControlFlow> {
   llvm::PreservedAnalyses run(llvm::Module &M,
                               llvm::ModuleAnalysisManager &FAM);
 
-  bool runOnEntryBlock(llvm::Function &F, llvm::BasicBlock &EntryBlock);
-  bool runOnTerminators(llvm::Function &F, llvm::BasicBlock &TBlock);
   bool runOnFunction(llvm::Function &F);
 
   std::unique_ptr<Jitter> JIT;
