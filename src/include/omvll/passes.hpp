@@ -8,6 +8,7 @@
 #include "omvll/passes/ObfuscationOpt.hpp"
 #include "omvll/passes/anti-hook/AntiHook.hpp"
 #include "omvll/passes/arithmetic/Arithmetic.hpp"
+#include "omvll/passes/basic-block-duplicate/BasicBlockDuplicate.hpp"
 #include "omvll/passes/break-cfg/BreakControlFlow.hpp"
 #include "omvll/passes/cfg-flattening/ControlFlowFlattening.hpp"
 #include "omvll/passes/cleaning/Cleaning.hpp"

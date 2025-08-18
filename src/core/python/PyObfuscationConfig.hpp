@@ -41,6 +41,9 @@ class PyObfuscationConfig : public ObfuscationConfig {
 
   IndirectCallOpt indirectCall(llvm::Module *M, llvm::Function *F) override;
 
+  BasicBlockDuplicateOpt basicBlockDuplicate(llvm::Module *M,
+                                             llvm::Function *F) override;
+
   bool defaultConfig(llvm::Module *M, llvm::Function *F,
                      const std::vector<std::string> &ModuleExcludes = {},
                      const std::vector<std::string> &FunctionExcludes = {},

@@ -497,6 +497,18 @@ bool isFunctionGloballyExcluded(Function *F) {
   return is_contained(Config.GlobalFunctionExclude, F->getName());
 }
 
+bool containsSwiftErrorAlloca(const BasicBlock &BB) {
+  for (const Instruction &I : BB)
+    if (const auto *AI = dyn_cast<AllocaInst>(&I))
+      if (AI->isSwiftError())
+        return true;
+  return false;
+}
+
+bool isEHBlock(const BasicBlock &BB) {
+  return BB.isEHPad() || BB.isLandingPad();
+}
+
 // Default value is false.
 bool RandomGenerator::Seeded = false;
 

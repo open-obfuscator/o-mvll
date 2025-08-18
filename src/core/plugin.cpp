@@ -124,6 +124,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
                     MPM.addPass(omvll::AntiHook());
                     MPM.addPass(omvll::StringEncoding());
                     MPM.addPass(omvll::OpaqueFieldAccess());
+                    MPM.addPass(omvll::BasicBlockDuplicate());
                     MPM.addPass(omvll::ControlFlowFlattening());
                     MPM.addPass(omvll::BreakControlFlow());
                     MPM.addPass(omvll::OpaqueConstants());

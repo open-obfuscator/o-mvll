@@ -343,6 +343,13 @@ void OMVLLCtor(py::module_ &m) {
          )delim",
            "module"_a, "function"_a)
 
+      .def("basic_block_duplicate", &ObfuscationConfig::basicBlockDuplicate,
+           R"delim(
+           The default user-callback to randomly select basic blocks to be
+           duplicated in a function.
+         )delim",
+           "module"_a, "function"_a)
+
       .def("report_diff", &ObfuscationConfig::reportDiff,
            R"delim(
          User-callback to monitor IR-level changes from individual obfuscation passes.
