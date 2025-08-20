@@ -417,6 +417,42 @@ PyObfuscationConfig::basicBlockDuplicate(llvm::Module *M, llvm::Function *F) {
   return BasicBlockDuplicateSkip();
 }
 
+FunctionOutlineOpt PyObfuscationConfig::functionOutline(llvm::Module *M,
+                                                        llvm::Function *F) {
+  py::gil_scoped_acquire gil;
+  py::function override = py::get_override(
+      static_cast<const ObfuscationConfig *>(this), "function_outline");
+  if (override) {
+    try {
+      py::object out = override(M, F);
+      if (out.is_none())
+        return FunctionOutlineSkip();
+
+      if (py::isinstance<py::bool_>(out))
+        throw py::value_error("function_outline: boolean value not accepted.");
+
+      if (py::isinstance<py::int_>(out)) {
+        unsigned Probability = out.cast<py::int_>();
+        if (Probability < 0 || Probability > 100)
+          throw py::value_error(
+              "function_outline: probability must be within [0, 100].");
+        return FunctionOutlineWithProbability(Probability);
+      }
+
+      if (py::detail::cast_is_temporary_value_reference<
+              FunctionOutlineOpt>::value) {
+        static pybind11::detail::override_caster_t<FunctionOutlineOpt> caster;
+        return pybind11::detail::cast_ref<FunctionOutlineOpt>(std::move(out),
+                                                              caster);
+      }
+      return pybind11::detail::cast_safe<FunctionOutlineOpt>(std::move(out));
+    } catch (const std::exception &Exc) {
+      fatalError("Error in 'function_outline': '"s + Exc.what() + "'");
+    }
+  }
+  return FunctionOutlineSkip();
+}
+
 bool PyObfuscationConfig::defaultConfig(
     llvm::Module *M, llvm::Function *F,
     const std::vector<std::string> &ModuleExcludes,

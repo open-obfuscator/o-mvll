@@ -350,6 +350,13 @@ void OMVLLCtor(py::module_ &m) {
          )delim",
            "module"_a, "function"_a)
 
+      .def("function_outline", &ObfuscationConfig::functionOutline,
+           R"delim(
+           The default user-callback to randomly select basic blocks to be
+           outlined each into a new function.
+         )delim",
+           "module"_a, "function"_a)
+
       .def("report_diff", &ObfuscationConfig::reportDiff,
            R"delim(
          User-callback to monitor IR-level changes from individual obfuscation passes.
