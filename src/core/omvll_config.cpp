@@ -24,6 +24,7 @@ void initDefaultConfig() {
       IndirectBranch::name().str(),
       IndirectCall::name().str(),
       BasicBlockDuplicate::name().str(),
+      FunctionOutline::name().str(),
 
       // Last pass.
       Cleaning::name().str(),
