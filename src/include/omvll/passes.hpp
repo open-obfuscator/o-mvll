@@ -12,6 +12,7 @@
 #include "omvll/passes/break-cfg/BreakControlFlow.hpp"
 #include "omvll/passes/cfg-flattening/ControlFlowFlattening.hpp"
 #include "omvll/passes/cleaning/Cleaning.hpp"
+#include "omvll/passes/function-outline/FunctionOutline.hpp"
 #include "omvll/passes/indirect-branch/IndirectBranch.hpp"
 #include "omvll/passes/indirect-call/IndirectCall.hpp"
 #include "omvll/passes/objc-cleaner/ObjCleaner.hpp"

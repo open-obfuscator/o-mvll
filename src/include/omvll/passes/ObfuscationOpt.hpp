@@ -10,6 +10,7 @@
 #include "omvll/passes/basic-block-duplicate/BasicBlockDuplicateOpt.hpp"
 #include "omvll/passes/break-cfg/BreakControlFlowOpt.hpp"
 #include "omvll/passes/cfg-flattening/ControlFlowFlatteningOpt.hpp"
+#include "omvll/passes/function-outline/FunctionOutlineOpt.hpp"
 #include "omvll/passes/indirect-branch/IndirectBranchOpt.hpp"
 #include "omvll/passes/indirect-call/IndirectCallOpt.hpp"
 #include "omvll/passes/opaque-constants/OpaqueConstantsOpt.hpp"

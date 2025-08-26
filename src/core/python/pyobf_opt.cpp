@@ -194,6 +194,26 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     )delim")
     .def(py::init<unsigned>(), "probability"_a);
 
+  // Function Outline
+  py::class_<FunctionOutlineSkip>(m, "FunctionOutlineSkip",
+    R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.function_outline` protection.
+
+    Alias for not enabling FunctionOutline.
+    )delim")
+    .def(py::init<>());
+
+  py::class_<FunctionOutlineWithProbability>(m, "FunctionOutlineWithProbability",
+    R"delim(
+    Option for the :meth:`omvll.ObfuscationConfig.function_outline` protection.
+
+    This option defines a probability to be used when choosing basic blocks to be outlined.
+    For example, ``FunctionOutlineWithProbability(0)`` implies that the pass never runs,
+    whereas ``FunctionOutlineWithProbability(100)`` outlines all the candidate basic blocks
+    within a function.
+    )delim")
+    .def(py::init<unsigned>(), "probability"_a);
+
   return m;
   // clang-format on
 }
