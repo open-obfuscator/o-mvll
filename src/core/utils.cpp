@@ -49,7 +49,9 @@ static Expected<std::string> getAppleClangPath() {
   static int Unused;
   std::string HostExePath =
       sys::fs::getMainExecutable("clang", (void *)&Unused);
-  if (StringRef(HostExePath).ends_with("clang"))
+
+  // clang, clang++, clang-17, etc. are fine
+  if (sys::path::filename(HostExePath).starts_with("clang"))
     return HostExePath;
 
   SmallString<128> ClangPath = sys::path::parent_path(HostExePath);
