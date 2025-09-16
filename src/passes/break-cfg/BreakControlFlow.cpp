@@ -158,16 +158,6 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   ClonedF->setPrologueData(Prologue);
   ClonedF->setLinkage(GlobalValue::InternalLinkage);
 
-  // "Demote" StructRet arguments as it can introduces
-  // a conflict in CodeGen (observed in CPython - _PyEval_InitGIL).
-  for (const auto &Arg : ClonedF->args()) {
-    if (Arg.hasStructRetAttr()) {
-      unsigned ArgNo = Arg.getArgNo();
-      ClonedF->removeParamAttr(ArgNo, Attribute::StructRet);
-      ClonedF->addParamAttr(ArgNo, Attribute::NoAlias);
-    }
-  }
-
   BasicBlock *Entry =
       BasicBlock::Create(Trampoline.getContext(), "Entry", &Trampoline);
   IRBuilder<NoFolder> IRB(Entry);
@@ -206,6 +196,33 @@ bool BreakControlFlow::runOnFunction(Function &F) {
 
   Value *FuncPtr = IRB.CreateIntToPtr(FAddr, FTyPtrTy);
   CallInst *Call = IRB.CreateCall(FTy, FuncPtr, Args);
+
+  // Copy ABI parameter attributes from the cloned function to its call-site.
+  auto IsABIAttribute = [](Attribute::AttrKind K) {
+    switch (K) {
+    case Attribute::ByRef:
+    case Attribute::ByVal:
+    case Attribute::InAlloca:
+    case Attribute::InReg:
+    case Attribute::Preallocated:
+    case Attribute::Returned:
+    case Attribute::SExt:
+    case Attribute::StackAlignment:
+    case Attribute::StructRet:
+    case Attribute::SwiftAsync:
+    case Attribute::SwiftError:
+    case Attribute::SwiftSelf:
+    case Attribute::ZExt:
+      return true;
+    default:
+      return false;
+    }
+  };
+
+  for (unsigned ArgNo = 0; ArgNo < ClonedF->arg_size(); ++ArgNo)
+    for (const Attribute &Attr : ClonedF->getAttributes().getParamAttrs(ArgNo))
+      if (IsABIAttribute(Attr.getKindAsEnum()))
+        Call->addParamAttr(ArgNo, Attr);
 
   if (FTy->getReturnType()->isVoidTy()) {
     IRB.CreateRetVoid();
