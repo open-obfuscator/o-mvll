@@ -497,6 +497,16 @@ bool isFunctionGloballyExcluded(Function *F) {
   return is_contained(Config.GlobalFunctionExclude, F->getName());
 }
 
+bool isCoroutine(Function *F) {
+  for (const auto &BB : *F)
+    for (const Instruction &I : BB)
+      if (auto *CI = dyn_cast<CallInst>(&I))
+        if (Function *F = CI->getCalledFunction())
+          if (F->getName().starts_with("llvm.coro.begin"))
+            return true;
+  return false;
+}
+
 bool containsSwiftErrorAlloca(const BasicBlock &BB) {
   for (const Instruction &I : BB)
     if (const auto *AI = dyn_cast<AllocaInst>(&I))
