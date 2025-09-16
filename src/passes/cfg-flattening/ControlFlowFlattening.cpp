@@ -488,6 +488,9 @@ PreservedAnalyses ControlFlowFlattening::run(Module &M,
         F.getName().starts_with("__omvll"))
       continue;
 
+    if (isCoroutine(&F))
+      continue;
+
     bool MadeChange = runOnFunction(F, *RNG);
     if (MadeChange)
       reg2mem(F);

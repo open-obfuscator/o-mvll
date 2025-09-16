@@ -137,7 +137,8 @@ PreservedAnalyses FunctionOutline::run(Module &M, ModuleAnalysisManager &MAM) {
 
     auto *P = std::get_if<FunctionOutlineWithProbability>(&Opt);
     if (P && !isFunctionGloballyExcluded(&F) && !F.isDeclaration() &&
-        !F.isIntrinsic() && !F.getName().starts_with("__omvll"))
+        !F.isIntrinsic() && !F.getName().starts_with("__omvll") &&
+        !isCoroutine(&F))
       ToVisit.emplace_back(&F, P->Probability);
   }
 

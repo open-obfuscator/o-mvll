@@ -11,6 +11,7 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/Error.h"
@@ -514,6 +515,31 @@ bool isModuleGloballyExcluded(Module *M) {
 
 bool isFunctionGloballyExcluded(Function *F) {
   return is_contained(Config.GlobalFunctionExclude, F->getName());
+}
+
+bool isCoroutine(Function *F) {
+  for (const Instruction &I : instructions(F)) {
+    if (const auto *II = dyn_cast<IntrinsicInst>(&I)) {
+      switch (II->getIntrinsicID()) {
+      case Intrinsic::coro_begin:
+      case Intrinsic::coro_id:
+      case Intrinsic::coro_suspend:
+      case Intrinsic::coro_suspend_retcon:
+      case Intrinsic::coro_resume:
+      case Intrinsic::coro_destroy:
+      case Intrinsic::coro_end:
+      case Intrinsic::coro_frame:
+      case Intrinsic::coro_save:
+      case Intrinsic::coro_alloc:
+      case Intrinsic::coro_free:
+        return true;
+      default:
+        break;
+      }
+    }
+  }
+
+  return false;
 }
 
 bool containsSwiftErrorAlloca(const BasicBlock &BB) {

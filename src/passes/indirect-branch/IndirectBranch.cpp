@@ -152,6 +152,9 @@ PreservedAnalyses IndirectBranch::run(Module &M, ModuleAnalysisManager &MAM) {
     if (!Opt || !*Opt)
       continue;
 
+    if (isCoroutine(&F))
+      continue;
+
     if (isFunctionGloballyExcluded(&F) ||
         F.hasFnAttribute(Attribute::AlwaysInline) || F.isDeclaration() ||
         F.isIntrinsic() || F.getName().starts_with("__omvll"))
