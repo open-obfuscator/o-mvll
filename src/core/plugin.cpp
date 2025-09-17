@@ -108,6 +108,10 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
   static std::atomic<bool> Once = false;
   Logger::set_level(spdlog::level::level_enum::debug);
 
+#ifdef NDEBUG
+  srand(time(NULL));
+#endif
+
   omvll::initYamlConfig();
   omvll::initPythonpath();
 

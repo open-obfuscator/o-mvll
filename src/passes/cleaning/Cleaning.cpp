@@ -48,6 +48,8 @@ PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
   SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",
         M.getName());
 
+  Logger::bindModule(M.getName().str());
+
   return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 

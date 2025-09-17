@@ -13,6 +13,8 @@
 
 #include "omvll/config.hpp"
 
+#include <filesystem>
+
 #ifdef OMVLL_DEBUG
 #define SDEBUG(...) Logger::debug(__VA_ARGS__)
 #else
@@ -75,6 +77,8 @@ public:
     Logger::instance().Sink->warn(Fmt, Args...);
   }
 
+  static void bindModule(std::string Name);
+
   ~Logger();
 
 private:
@@ -83,6 +87,8 @@ private:
   Logger &operator=(Logger &&);
 
   static void destroy();
-  static inline Logger *Instance = nullptr;
+  static thread_local inline Logger *Instance = nullptr;
   std::shared_ptr<spdlog::logger> Sink;
+  unsigned LoggerId;
+  std::filesystem::path ModName;
 };
