@@ -498,12 +498,9 @@ bool isFunctionGloballyExcluded(Function *F) {
 }
 
 bool isCoroutine(Function *F) {
-  for (const auto &BB : *F)
-    for (const Instruction &I : BB)
-      if (auto *CI = dyn_cast<CallInst>(&I))
-        if (Function *F = CI->getCalledFunction())
-          if (F->getName().starts_with("llvm.coro.begin"))
-            return true;
+  for (const Instruction &I : instructions(F))
+    if (isa<CoroBeginInst>(&I))
+      return true;
   return false;
 }
 
