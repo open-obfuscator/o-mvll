@@ -55,7 +55,7 @@ static Expected<std::string> getAppleClangPath() {
   SmallString<128> ClangPath = sys::path::parent_path(HostExePath);
   llvm::sys::path::append(ClangPath, "clang");
   if (llvm::sys::fs::exists(ClangPath))
-    return ClangPath.str().str();
+    return std::string(ClangPath);
 
   return createStringError(inconvertibleErrorCode(),
                            "Cannot find clang compiler: " + ClangPath);
