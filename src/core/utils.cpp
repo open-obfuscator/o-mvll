@@ -52,7 +52,7 @@ static Expected<std::string> getAppleClangPath() {
   if (StringRef(HostExePath).ends_with("clang"))
     return HostExePath;
 
-  SmallString<128> ClangPath = llvm::sys::path::parent_path(HostExePath);
+  SmallString<128> ClangPath = sys::path::parent_path(HostExePath);
   llvm::sys::path::append(ClangPath, "clang");
   if (llvm::sys::fs::exists(ClangPath))
     return ClangPath.str().str();
