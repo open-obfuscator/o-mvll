@@ -49,7 +49,9 @@ static Expected<std::string> getAppleClangPath() {
   static int Unused;
   std::string HostExePath =
       sys::fs::getMainExecutable("clang", (void *)&Unused);
-  if (StringRef(HostExePath).ends_with("clang"))
+
+  // clang, clang++, clang-17, etc. are fine
+  if (sys::path::filename(HostExePath).starts_with("clang"))
     return HostExePath;
 
   SmallString<128> ClangPath = sys::path::parent_path(HostExePath);
@@ -108,8 +110,9 @@ static Expected<std::string> getIPhoneOSSDKPath() {
 static Expected<std::string>
 runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
                    const std::vector<std::string> &ExtraArgs) {
-  const auto &ClangPath = getAppleClangPath();
-  SINFO("ClangPath: {}", *ClangPath);
+  Expected<std::string> ClangPath = getAppleClangPath();
+  if (!ClangPath)
+    return ClangPath.takeError();
   SmallVector<StringRef, 16> Args = {*ClangPath, "-S", "-emit-llvm"};
 
   // Always add the target triple.
