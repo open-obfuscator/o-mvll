@@ -110,8 +110,9 @@ static Expected<std::string> getIPhoneOSSDKPath() {
 static Expected<std::string>
 runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
                    const std::vector<std::string> &ExtraArgs) {
-  const auto &ClangPath = getAppleClangPath();
-  SINFO("ClangPath: {}", *ClangPath);
+  Expected<std::string> ClangPath = getAppleClangPath();
+  if (!ClangPath)
+    return ClangPath.takeError();
   SmallVector<StringRef, 16> Args = {*ClangPath, "-S", "-emit-llvm"};
 
   // Always add the target triple.
