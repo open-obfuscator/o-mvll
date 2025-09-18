@@ -45,9 +45,20 @@ static int runExecutable(SmallVectorImpl<StringRef> &Args,
   return sys::ExecuteAndWait(Args[0], Args, Envs, Redirects);
 }
 
-static std::string getAppleClangPath() {
+static Expected<std::string> getAppleClangPath() {
   static int Unused;
-  return sys::fs::getMainExecutable("clang", (void *)&Unused);
+  std::string HostExePath =
+      sys::fs::getMainExecutable("clang", (void *)&Unused);
+  if (StringRef(HostExePath).ends_with("clang"))
+    return HostExePath;
+
+  SmallString<128> ClangPath = sys::path::parent_path(HostExePath);
+  llvm::sys::path::append(ClangPath, "clang");
+  if (llvm::sys::fs::exists(ClangPath))
+    return std::string(ClangPath);
+
+  return createStringError(inconvertibleErrorCode(),
+                           "Cannot find clang compiler: " + ClangPath);
 }
 
 static Expected<std::string> getIPhoneOSSDKPath() {
@@ -66,10 +77,12 @@ static Expected<std::string> getIPhoneOSSDKPath() {
   SmallVector<StringRef, 8> Args = {XcrunPath, "--sdk", "iphoneos",
                                     "--show-sdk-path"};
 
-  const auto &ClangPath = getAppleClangPath();
-  size_t DirPos = ClangPath.find("/Contents/Developer");
+  Expected<std::string> ClangPath = getAppleClangPath();
+  if (!ClangPath)
+    return ClangPath.takeError();
+  size_t DirPos = ClangPath->find("/Contents/Developer");
   std::string DeveloperDir =
-      ClangPath.substr(0, DirPos + strlen("/Contents/Developer"));
+      ClangPath->substr(0, DirPos + strlen("/Contents/Developer"));
   const auto &DeveloperDirEnvVar = "DEVELOPER_DIR=" + DeveloperDir;
   SmallVector<StringRef, 1> Envs = {DeveloperDirEnvVar};
 
@@ -96,7 +109,8 @@ static Expected<std::string>
 runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
                    const std::vector<std::string> &ExtraArgs) {
   const auto &ClangPath = getAppleClangPath();
-  SmallVector<StringRef, 16> Args = {ClangPath, "-S", "-emit-llvm"};
+  SINFO("ClangPath: {}", *ClangPath);
+  SmallVector<StringRef, 16> Args = {*ClangPath, "-S", "-emit-llvm"};
 
   // Always add the target triple.
   const auto &TargetTriple = Triple.str();
