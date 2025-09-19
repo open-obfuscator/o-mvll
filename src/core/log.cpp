@@ -11,6 +11,8 @@
 #include "omvll/log.hpp"
 
 #include <mutex>
+#include <unistd.h>
+#include <filesystem>
 
 static std::mutex LoggerInstantiation;
 static constexpr auto EnvLogName = "OMVLL_TRUNCATE_LOG";
@@ -18,7 +20,7 @@ static constexpr auto EnvLogName = "OMVLL_TRUNCATE_LOG";
 static std::string int2hexstr(unsigned Val, unsigned Digits) {
   static constexpr char HexChars[] = "0123456789abcdef";
   std::string Str(Digits, '0');
-  for (int i = Digits - 1; i >= 0; --i) {
+  for (int i = Digits - 1; i >= 0; i -= 1) {
     Str[i] = HexChars[Val % 16];
     Val /= 16;
   }
@@ -35,14 +37,15 @@ Logger::Logger() {
     Truncate = true;
 
   std::lock_guard<std::mutex> Lock(LoggerInstantiation);
-  std::string FileName;
   do {
-    LoggerId = rand();
-    FileName = "omvll-" + int2hexstr(LoggerId, 8) + ".log";
-  } while (std::filesystem::exists(FileName));
+    uint64_t Id = getpid();
+    Id <<= 32;
+    Id += rand();
+    FileNameTmp = "omvll-" + int2hexstr(Id, 16) + ".log";
+  } while (std::filesystem::exists(FileNameTmp));
 
-  std::string LogName = "omvll-" + int2hexstr(LoggerId, 8);
-  Sink = spdlog::basic_logger_mt(LogName, FileName, Truncate);
+  std::string Name = FileNameTmp.substr(0, FileNameTmp.size() - 4);
+  Sink = spdlog::basic_logger_mt(Name, FileNameTmp, Truncate);
   Sink->set_pattern("%v");
   Sink->set_level(spdlog::level::debug);
   Sink->flush_on(spdlog::level::debug);
@@ -57,26 +60,27 @@ Logger &Logger::instance() {
 }
 
 void Logger::bindModule(std::string Name) {
-  instance().ModName = std::move(Name);
+  assert(instance().FileNameFinal.empty() && "Bind module name once");
+  std::filesystem::path Path = Name;
+  instance().FileNameFinal = Path.filename().string() + ".omvll";
 }
 
 void Logger::destroy() {
-  if (Instance->ModName.empty()) {
+  if (Instance->FileNameFinal.empty()) {
     delete Instance;
     return;
   }
 
-  std::string TmpName = "omvll-" + int2hexstr(Instance->LoggerId, 8) + ".log";
-  std::string FixName = Instance->ModName.filename().string() + ".omvll";
-  delete Instance;
-
-  if (!std::filesystem::exists(TmpName)) {
-    SWARN("Temporary log file {} not found", TmpName);
+  std::string TmpName = Instance->FileNameTmp;
+  if (!std::filesystem::exists(Instance->FileNameTmp)) {
+    SWARN("Temporary log file {} not found", Instance->FileNameTmp);
     return;
   }
-
+  std::string FixName = Instance->FileNameFinal;
   if (std::filesystem::exists(FixName))
     std::filesystem::remove(FixName);
+
+  delete Instance;
   std::filesystem::rename(TmpName, FixName);
 }
 

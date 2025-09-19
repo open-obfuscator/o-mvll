@@ -13,7 +13,7 @@
 
 #include "omvll/config.hpp"
 
-#include <filesystem>
+#include <cstring>
 
 #ifdef OMVLL_DEBUG
 #define SDEBUG(...) Logger::debug(__VA_ARGS__)
@@ -89,6 +89,6 @@ private:
   static void destroy();
   static thread_local inline Logger *Instance = nullptr;
   std::shared_ptr<spdlog::logger> Sink;
-  unsigned LoggerId;
-  std::filesystem::path ModName;
+  std::string FileNameTmp;
+  std::string FileNameFinal;
 };

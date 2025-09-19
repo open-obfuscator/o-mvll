@@ -154,5 +154,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
 __attribute__((visibility("default")))
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo() {
+  //bool wait = true;
+  //while (wait) ;
   return getOMVLLPluginInfo();
 }
