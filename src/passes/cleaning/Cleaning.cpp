@@ -16,6 +16,8 @@ using namespace llvm;
 namespace omvll {
 
 PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
+  Logger::bindModule(M.getName().str());
+
   if (!Config.Cleaning)
     return PreservedAnalyses::all();
 
@@ -47,8 +49,6 @@ PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
 
   SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",
         M.getName());
-
-  Logger::bindModule(M.getName().str());
 
   return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
