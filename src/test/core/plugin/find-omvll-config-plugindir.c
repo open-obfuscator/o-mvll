@@ -2,6 +2,7 @@
 // This file is distributed under the Apache License v2.0. See LICENSE for
 // details.
 //
+// clang-format off
 
 // Prepare test output dir with plugin, yml-config, py-config and fake python-libs dir
 // RUN: rm -rf %T_plugindir
@@ -13,9 +14,9 @@
 
 // Run clang from a different CWD and pass plugin from the test output dir
 // RUN: cd /tmp
-// RUN: rm -rf omvll.log omvll.yml
+// RUN: rm -rf omvll.yml omvll-*.log find-omvll-config-plugindir.c.omvll
 // RUN: clang -target aarch64-linux-android -fpass-plugin=%T_plugindir/libOMVLL.so -S %s -o /dev/null
-// RUN: FileCheck %s -DPLUGIN_DIR=%T_plugindir < omvll.log
+// RUN: FileCheck %s -DPLUGIN_DIR=%T_plugindir < find-omvll-config-plugindir.c.omvll
 
 // Check that we load the yml-config from the test output dir
 // CHECK: Looking for omvll.yml in /tmp
