@@ -327,10 +327,12 @@ size_t demoteRegs(Function &F) {
   do {
     WorkList.clear();
     for (BasicBlock &BB : F)
-      for (Instruction &I : BB)
-        if (!(isa<AllocaInst>(I) && I.getParent() == BBEntry) &&
-            valueEscapes(I))
+      for (Instruction &I : BB) {
+        if (&BB == BBEntry || isa<AllocaInst>(I))
+          continue;
+        if (valueEscapes(I))
           WorkList.push_front(&I);
+      }
 
     Count += WorkList.size();
     for (Instruction *I : WorkList)
