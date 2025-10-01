@@ -27,15 +27,15 @@ using namespace pybind11::literals;
 namespace omvll {
 
 void initPythonpath() {
-  if (char *Config = getenv(PyConfig::PyEnv_Key)) {
-    Py_SetPath(Py_DecodeLocale(Config, nullptr));
-    setenv("PYTHONHOME", Config, true);
-    return;
-  }
-
   if (!PyConfig::YConfig.PythonPath.empty()) {
     Py_SetPath(Py_DecodeLocale(PyConfig::YConfig.PythonPath.c_str(), nullptr));
     setenv("PYTHONHOME", PyConfig::YConfig.PythonPath.c_str(), true);
+    return;
+  }
+
+  if (char *Config = getenv(PyConfig::PyEnv_Key)) {
+    Py_SetPath(Py_DecodeLocale(Config, nullptr));
+    setenv("PYTHONHOME", Config, true);
     return;
   }
 
@@ -412,10 +412,12 @@ PyConfig::PyConfig() {
   CoreMod = initOMVLLCore(Modules);
 
   llvm::StringRef ConfigPath;
-  if (char *Config = getenv(EnvKey))
-    ConfigPath = Config;
-  else if (!PyConfig::YConfig.OMVLLConfig.empty())
+  if (!PyConfig::YConfig.OMVLLConfig.empty())
     ConfigPath = PyConfig::YConfig.OMVLLConfig;
+  else if (char *Config = getenv(EnvKey))
+    ConfigPath = Config;
+
+  SINFO("Using OMVLL_CONFIG = {}", ConfigPath);
 
   std::string ModName = DefaultFileName;
   if (!ConfigPath.empty()) {
