@@ -51,4 +51,4 @@ cmake -GNinja .. \
 export OMVLL_PYTHONPATH=/Python-3.10.7/Lib
 ninja check
 
-mv /o-mvll/src/o-mvll-build_ndk_r26d/libOMVLL.so /o-mvll/dist/omvll_ndk_r26d.so
+mv /o-mvll/src/o-mvll-build_ndk_r26d/libOMVLL.so /o-mvll/dist/omvll-ndk.so
