@@ -36,7 +36,7 @@ jobs:
           command: c
           cwd: ${{ github.workspace }}/dist/
           files: |
-            ./omvll_ndk_r26d.so
+            ./omvll-ndk.so
             ./sample-omvll-config.py
             ./Python-3.10.7
           outPath: ${{ github.workspace }}/dist/omvll_v${{ steps.versioning.outputs.next_version }}_linux.tar.gz
