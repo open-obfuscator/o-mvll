@@ -13,6 +13,7 @@
 #include "llvm/IR/Module.h"
 
 #include "omvll/PyConfig.hpp"
+#include "omvll/log.hpp"
 #include "omvll/omvll_config.hpp"
 #include "omvll/utils.hpp"
 #include "omvll/versioning.hpp"
