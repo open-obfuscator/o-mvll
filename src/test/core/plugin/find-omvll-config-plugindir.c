@@ -18,11 +18,11 @@
 // RUN: FileCheck %s -DPLUGIN_DIR=%T_plugindir < omvll.log
 
 // Check that we load the yml-config from the test output dir
-// CHECK: Looking for omvll.yml in /tmp
-// CHECK: Looking for omvll.yml in /
-// CHECK: Looking for omvll.yml in [[PLUGIN_DIR]]
-// CHECK: Loading omvll.yml from [[PLUGIN_DIR]]/omvll.yml
-// CHECK: OMVLL_PYTHONPATH = Python-3.10.7/Lib
-// CHECK: OMVLL_CONFIG = config_empty.py
+// CHECK:      Looking for omvll.yml in /tmp
+// CHECK-NEXT: Looking for omvll.yml in /
+// CHECK-NEXT: Looking for omvll.yml in [[PLUGIN_DIR]]
+// CHECK-NEXT: Loading omvll.yml from [[PLUGIN_DIR]]/omvll.yml
+// CHECK-NEXT: OMVLL_PYTHONPATH = /Python-3.10.7/Lib
+// CHECK-NEXT: OMVLL_CONFIG = config_empty.py
 
 void test() {}
