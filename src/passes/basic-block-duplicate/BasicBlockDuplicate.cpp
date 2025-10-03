@@ -181,6 +181,9 @@ PreservedAnalyses BasicBlockDuplicate::run(Module &M,
   for (Function &F : M) {
     Opt = Config.getUserConfig()->basicBlockDuplicate(&M, &F);
 
+    if (isCoroutine(&F))
+      continue;
+
     auto *P = std::get_if<BasicBlockDuplicateWithProbability>(&Opt);
     if (P && !isFunctionGloballyExcluded(&F) && !F.isDeclaration() &&
         !F.isIntrinsic() && !F.getName().starts_with("__omvll"))
