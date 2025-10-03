@@ -207,6 +207,12 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   Value *FuncPtr = IRB.CreateIntToPtr(FAddr, FTyPtrTy);
   CallInst *Call = IRB.CreateCall(FTy, FuncPtr, Args);
 
+  // Copy parameter attributes from original function to call site
+  for (unsigned i = 0; i < F.arg_size(); i += 1) {
+    for (const Attribute &Attr : F.getAttributes().getParamAttrs(i))
+      Call->addParamAttr(i, Attr);
+  }
+
   if (FTy->getReturnType()->isVoidTy()) {
     IRB.CreateRetVoid();
   } else {
