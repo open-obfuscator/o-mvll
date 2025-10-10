@@ -4,6 +4,7 @@
 //
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/IR/Constants.h"
@@ -135,7 +136,7 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
   demotePHINode(F);
 
   BasicBlock *EntryBlock = &F.getEntryBlock();
-  DenseSet<BasicBlock *> NormalDest2Split;
+  SmallPtrSet<BasicBlock *, 8> NormalDest2Split;
 
   auto IsFromInvoke = [](const auto &BB) {
     return any_of(predecessors(&BB), [](const auto *Pred) {
