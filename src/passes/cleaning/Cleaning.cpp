@@ -16,6 +16,8 @@ using namespace llvm;
 namespace omvll {
 
 PreservedAnalyses Cleaning::run(Module &M, ModuleAnalysisManager &FAM) {
+  Logger::bindModule(M.getName().str());
+
   if (!Config.Cleaning)
     return PreservedAnalyses::all();
 
