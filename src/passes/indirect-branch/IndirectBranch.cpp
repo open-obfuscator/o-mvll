@@ -9,6 +9,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
@@ -30,7 +31,7 @@ bool IndirectBranch::process(Function &F, const DataLayout &DL,
                              LLVMContext &Ctx) {
   Module &M = *F.getParent();
   std::vector<Instruction *> TerminatorsToReplace;
-  DenseSet<BasicBlock *> SuccBlocks;
+  SmallPtrSet<BasicBlock *, 32> SuccBlocks;
 
   // Gather jumps and switch instructions.
   for (BasicBlock &BB : F) {
