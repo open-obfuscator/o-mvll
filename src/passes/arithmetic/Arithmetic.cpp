@@ -202,7 +202,7 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
             continue;
 
           SINFO("[{}][{}] Replacing {} with {}", name(), F->getName(),
-                I.getName(), Result->getName());
+                I.getOpcodeName(), Result->getName());
 
           BasicBlock *InstParent = I.getParent();
           BasicBlock::iterator InsertPos = I.getIterator();
