@@ -149,6 +149,12 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
     if (auto MO = getObf(I, MetaObfTy::OpaqueOp)) {
       if (auto *Val = MO->get<uint64_t>()) {
         Rounds = *Val;
+
+        if (auto It = Opts.find(BB.getParent()); It != Opts.end()) {
+          SINFO("[{}][{}] Metadata ({}) overrides rounds ({}) for {}", name(),
+                BB.getParent()->getName(), Rounds, It->second.Iterations,
+                I.getOpcodeName());
+        }
       }
     } else if (auto It = Opts.find(BB.getParent()); It != Opts.end()) {
       Rounds = It->second.Iterations;
@@ -202,12 +208,13 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
             continue;
 
           SINFO("[{}][{}] Replacing {} with {}", name(), F->getName(),
-                I.getName(), Result->getName());
+                I.getOpcodeName(), Result->getName());
 
           BasicBlock *InstParent = I.getParent();
           BasicBlock::iterator InsertPos = I.getIterator();
 
-          Result->copyMetadata(I, {LLVMContext::MD_dbg, LLVMContext::MD_annotation});
+          Result->copyMetadata(
+              I, {LLVMContext::MD_dbg, LLVMContext::MD_annotation});
           Result->takeName(&I);
           Result->insertInto(InstParent, InsertPos);
           I.replaceAllUsesWith(Result);
