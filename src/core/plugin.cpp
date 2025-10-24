@@ -111,7 +111,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
   omvll::initYamlConfig();
   omvll::initPythonpath();
 
-  return {LLVM_PLUGIN_API_VERSION, "OMVLL", "1.1.0", [](PassBuilder &PB) {
+  return {LLVM_PLUGIN_API_VERSION, "OMVLL", "1.4.1", [](PassBuilder &PB) {
             try {
               auto &Instance = omvll::PyConfig::instance();
               SDEBUG("Found OMVLL at: {}", Instance.configPath());
