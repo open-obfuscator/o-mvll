@@ -52,8 +52,7 @@ bool isCoroutine(llvm::Function *F);
 bool containsSwiftErrorAlloca(const llvm::BasicBlock &BB);
 bool isEHBlock(const llvm::BasicBlock &BB);
 
-[[noreturn]] void fatalError(const char *Msg);
-[[noreturn]] void fatalError(const std::string &Msg);
+[[noreturn]] void fatalError(std::string_view Msg);
 
 llvm::Expected<std::unique_ptr<llvm::Module>>
 generateModule(llvm::StringRef Routine, const llvm::Triple &Triple,

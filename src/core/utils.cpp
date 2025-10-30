@@ -440,14 +440,12 @@ void shuffleFunctions(Module &M) {
   });
 }
 
-void fatalError(const std::string &Msg) { fatalError(Msg.c_str()); }
-
-void fatalError(const char *Msg) {
+void fatalError(std::string_view Msg) {
   static LLVMContext Ctx;
+  SERR("Error: {}", Msg);
   Ctx.emitError(Msg);
 
   // emitError could return, so we make sure that we stop the execution.
-  SERR("Error: {}", Msg);
   std::abort();
 }
 
