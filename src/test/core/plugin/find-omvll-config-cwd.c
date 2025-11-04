@@ -13,7 +13,7 @@
 // Run clang from the test output dir
 // RUN: cd %T_cwd
 // RUN: clang -target aarch64-linux-android -fpass-plugin=%libOMVLL -S %s -o /dev/null
-// RUN: FileCheck %s -DCWD=%T_cwd < omvll.log
+// RUN: FileCheck %s -DCWD=%T_cwd < omvll-logs/omvll-init.log
 
 // Check that we load the yml-config from the test output dir
 // CHECK: Looking for omvll.yml in [[CWD]]

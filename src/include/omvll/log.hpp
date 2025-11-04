@@ -13,16 +13,17 @@
 
 #include "omvll/config.hpp"
 
+namespace omvll {
+
 #ifdef OMVLL_DEBUG
-#define SDEBUG(...) Logger::debug(__VA_ARGS__)
+#define SDEBUG(...) omvll::Logger::debug(__VA_ARGS__)
 #else
 #define SDEBUG(...)
 #endif
-
-#define STRACE(...) Logger::trace(__VA_ARGS__)
-#define SINFO(...)  Logger::info(__VA_ARGS__)
-#define SWARN(...)  Logger::warn(__VA_ARGS__)
-#define SERR(...)   Logger::err(__VA_ARGS__)
+#define STRACE(...) omvll::Logger::trace(__VA_ARGS__)
+#define SINFO(...) omvll::Logger::info(__VA_ARGS__)
+#define SWARN(...) omvll::Logger::warn(__VA_ARGS__)
+#define SERR(...) omvll::Logger::err(__VA_ARGS__)
 
 enum class LogLevel {
   Debug,
@@ -37,52 +38,52 @@ public:
   Logger(const Logger &) = delete;
   Logger &operator=(const Logger &) = delete;
 
-  static Logger &instance();
-
-  //! @brief Disable the logging module
-  static void disable();
-
-  //! @brief Enable the logging module
-  static void enable();
-
-  static void set_level(spdlog::level::level_enum Level);
-  static void set_level(LogLevel Level);
-
   template <typename... Ts>
   static void trace(const char *Fmt, const Ts &...Args) {
-    Logger::instance().Sink->trace(Fmt, Args...);
+    CurrentOrDefault()->trace(Fmt, Args...);
   }
 
   template <typename... Ts>
   static void debug(const char *Fmt, const Ts &...Args) {
 #ifdef OMVLL_DEBUG
-    Logger::instance().Sink->debug(Fmt, Args...);
+    CurrentOrDefault()->debug(Fmt, Args...);
 #endif
   }
 
   template <typename... Ts>
   static void info(const char *Fmt, const Ts &...Args) {
-    Logger::instance().Sink->info(Fmt, Args...);
-  }
-
-  template <typename... Ts>
-  static void err(const char *Fmt, const Ts &...Args) {
-    Logger::instance().Sink->error(Fmt, Args...);
+    CurrentOrDefault()->info(Fmt, Args...);
   }
 
   template <typename... Ts>
   static void warn(const char *Fmt, const Ts &...Args) {
-    Logger::instance().Sink->warn(Fmt, Args...);
+    CurrentOrDefault()->warn(Fmt, Args...);
   }
 
-  ~Logger();
+  template <typename... Ts>
+  static void err(const char *Fmt, const Ts &...Args) {
+    CurrentOrDefault()->error(Fmt, Args...);
+  }
+
+  static void SetLevel(spdlog::level::level_enum L);
+  static void set_level(spdlog::level::level_enum L) { SetLevel(L); }
+  static void set_level(LogLevel L);
+
+  static void BindModule(const std::string &Module, const std::string &Arch);
 
 private:
-  Logger(void);
-  Logger(Logger &&);
-  Logger &operator=(Logger &&);
+  static std::shared_ptr<spdlog::logger> CurrentOrDefault();
 
-  static void destroy();
-  static inline Logger *Instance = nullptr;
-  std::shared_ptr<spdlog::logger> Sink;
+private:
+  Logger();
+  static Logger &Instance();
+  spdlog::level::level_enum Level = spdlog::level::debug;
+
+  // Default sink used before any thread binds a module.
+  std::shared_ptr<spdlog::logger> Default;
+
+  // Per-thread bound module sink.
+  static thread_local std::shared_ptr<spdlog::logger> Current;
 };
+
+} // end namespace omvll

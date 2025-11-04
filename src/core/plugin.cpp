@@ -106,7 +106,7 @@ void omvll::initYamlConfig() {
 
 PassPluginLibraryInfo getOMVLLPluginInfo() {
   static std::atomic<bool> Once = false;
-  Logger::set_level(spdlog::level::level_enum::debug);
+  omvll::Logger::set_level(spdlog::level::level_enum::debug);
 
   omvll::initYamlConfig();
   omvll::initPythonpath();
@@ -121,6 +121,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
                     if (Once)
                       return true;
 
+                    MPM.addPass(omvll::LoggerBind());
                     MPM.addPass(omvll::AntiHook());
                     MPM.addPass(omvll::FunctionOutline());
                     MPM.addPass(omvll::StringEncoding());

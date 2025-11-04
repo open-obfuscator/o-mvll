@@ -3,72 +3,152 @@
 // details.
 //
 
-#include "spdlog/spdlog.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
+#include <fcntl.h>
+#include <filesystem>
+#include <mutex>
+#include <unistd.h>
+
 #include "spdlog/sinks/android_sink.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/null_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/spdlog.h"
 
 #include "omvll/log.hpp"
 
-static constexpr auto EnvLogName = "OMVLL_TRUNCATE_LOG";
-static constexpr auto LogFileName = "omvll.log";
-static constexpr auto LogName = "omvll";
+namespace omvll {
 
-Logger::Logger(Logger &&) = default;
-Logger &Logger::operator=(Logger &&) = default;
-Logger::~Logger() = default;
+static std::mutex BindLog;
+thread_local std::shared_ptr<spdlog::logger> Logger::Current;
+
+static constexpr auto LogsRootDir = "omvll-logs";
+static constexpr auto ModuleLogsDir = "omvll-module-logs";
+static constexpr auto InitLogFileName = "omvll-init.log";
+static constexpr auto DefaultLoggerKey = "omvll-default-shared";
+
+static inline unsigned getPid() { return ::getpid(); }
+
+static inline bool shouldTruncate() {
+  static constexpr auto LogEnvVar = "OMVLL_TRUNCATE_LOG";
+  return std::getenv(LogEnvVar);
+}
+
+static inline std::filesystem::path getLogsRootDir() {
+  return std::filesystem::path(LogsRootDir);
+}
+
+static inline std::string initLogPath() {
+  auto Dir = getLogsRootDir();
+  std::filesystem::create_directories(Dir);
+  return (Dir / InitLogFileName).string();
+}
+
+static bool tryOpenDefaultLog(const std::string &Path) {
+  int Fd = open(Path.c_str(), O_CREAT | O_WRONLY | O_EXCL, 0600);
+  if (Fd < 0)
+    return false;
+  close(Fd);
+  return true;
+}
+
+static std::string basename(const std::string &PathStr) {
+  std::filesystem::path P(PathStr);
+  assert(P.has_filename());
+  return P.filename().string();
+}
+
+static std::string makeKey(const std::string &Module) {
+  return basename(Module) + "-" + std::to_string(getPid());
+}
+
+static std::string makeLogPath(const std::string &Module,
+                               const std::string &Arch) {
+  const auto &File =
+      basename(Module) + "-omvll-" + std::to_string(getPid()) + ".log";
+  std::filesystem::path FinalPath =
+      getLogsRootDir() / std::filesystem::path(ModuleLogsDir) / Arch / File;
+  std::filesystem::create_directories(FinalPath.parent_path());
+  return FinalPath.string();
+}
+
+Logger &Logger::Instance() {
+  static Logger I;
+  return I;
+}
 
 Logger::Logger() {
-  bool Truncate = false;
-  if (getenv(EnvLogName))
-    Truncate = true;
+  std::shared_ptr<spdlog::logger> Logger;
+  const auto &InitLogPath = initLogPath();
 
-  Sink = spdlog::basic_logger_mt(LogName, LogFileName, Truncate);
-  Sink->set_pattern("%v");
-  Sink->set_level(spdlog::level::debug);
-  Sink->flush_on(spdlog::level::debug);
-}
-
-Logger &Logger::instance() {
-  if (!Instance) {
-    Instance = new Logger{};
-    std::atexit(destroy);
+  if (tryOpenDefaultLog(InitLogPath)) {
+    Logger = spdlog::basic_logger_mt(DefaultLoggerKey, InitLogPath,
+                                     shouldTruncate());
+  } else {
+    // Discard writes in this process, if default log already exists.
+    auto NullSink = std::make_shared<spdlog::sinks::null_sink_mt>();
+    Logger = std::make_shared<spdlog::logger>(DefaultLoggerKey, NullSink);
+    spdlog::register_logger(Logger);
   }
-  return *Instance;
+
+  Logger->set_pattern("%v");
+  Logger->set_level(Level);
+  Logger->flush_on(Level);
+  Default = std::move(Logger);
 }
 
-void Logger::destroy() { delete Instance; }
+void Logger::BindModule(const std::string &Module, const std::string &Arch) {
+  // TODO: Shouldn't be necessary even in whole-module compilation mode.
+  std::lock_guard<std::mutex> Lock(BindLog);
+  auto Key = makeKey(Module);
+  auto Logger = spdlog::get(Key);
+  if (!Logger)
+    Logger = spdlog::basic_logger_mt(Key, makeLogPath(Module, Arch),
+                                     shouldTruncate());
+  assert(Logger);
 
-void Logger::disable() {
-  Logger::instance().Sink->set_level(spdlog::level::off);
+  const auto &LI = Instance();
+  Logger->set_pattern("%v");
+  Logger->set_level(LI.Level);
+  Logger->flush_on(LI.Level);
+  Current = std::move(Logger);
 }
 
-void Logger::enable() {
-  Logger::instance().Sink->set_level(spdlog::level::warn);
+std::shared_ptr<spdlog::logger> Logger::CurrentOrDefault() {
+  if (Current)
+    return Current;
+  return Instance().Default;
 }
 
-void Logger::set_level(spdlog::level::level_enum Level) {
-  Logger &Instance = Logger::instance();
-  Instance.Sink->set_level(Level);
-  Instance.Sink->flush_on(Level);
-}
-
-void Logger::set_level(LogLevel Level) {
-  switch (Level) {
+void Logger::set_level(LogLevel L) {
+  switch (L) {
   case LogLevel::Debug:
-    Logger::set_level(spdlog::level::debug);
+    SetLevel(spdlog::level::debug);
     return;
   case LogLevel::Trace:
-    Logger::set_level(spdlog::level::trace);
+    SetLevel(spdlog::level::trace);
     return;
   case LogLevel::Info:
-    Logger::set_level(spdlog::level::info);
+    SetLevel(spdlog::level::info);
     return;
   case LogLevel::Warn:
-    Logger::set_level(spdlog::level::warn);
+    SetLevel(spdlog::level::warn);
     return;
   case LogLevel::Err:
-    Logger::set_level(spdlog::level::err);
+    SetLevel(spdlog::level::err);
     return;
   }
 }
+
+void Logger::SetLevel(spdlog::level::level_enum L) {
+  auto &LI = Instance();
+  LI.Level = L;
+  LI.Default->set_level(L);
+  LI.Default->flush_on(L);
+
+  spdlog::apply_all([L](const auto &Logger) {
+    Logger->set_level(L);
+    Logger->flush_on(L);
+  });
+}
+
+} // end namespace omvll
