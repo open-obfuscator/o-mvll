@@ -88,8 +88,10 @@ bool IndirectCall::process(Function &F, const DataLayout &DL,
     Value *PtrS2 =
         Builder.CreateInBoundsGEP(ArrTy, GVAddrShares2, {Zero, Index});
 
-    Value *Share1 = Builder.CreateLoad(IntPtrTy, PtrS1);
-    Value *Share2 = Builder.CreateLoad(IntPtrTy, PtrS2);
+    // Mark load as volatile to prevent simplification of the indirect calls
+    // by the optimizer.
+    Value *Share1 = Builder.CreateLoad(IntPtrTy, PtrS1, /* isVolatile */ true);
+    Value *Share2 = Builder.CreateLoad(IntPtrTy, PtrS2, /* isVolatile */ true);
 
     Value *Address = Builder.CreateSub(Share2, Share1);
     SDEBUG("[{}] Rewriting call-site: {}", name(), ToString(*CI));
