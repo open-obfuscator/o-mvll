@@ -11,6 +11,7 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/FileSystem.h"
 
 #include "omvll/PyConfig.hpp"
 #include "omvll/log.hpp"
@@ -146,6 +147,14 @@ void OMVLLCtor(py::module_ &m) {
                     the generator will use this predefined seed to ensure deterministic and reproducible randomness.
 
                     The default value is 1.
+                    )delim")
+
+      .def_readwrite("output_folder", &OMVLLConfig::OutputFolder,
+                     R"delim(
+                    output folder where omvll process will be stored.
+                    This is required for the Antitamper pass.
+
+                    By default, this value is empty.
                     )delim");
 
   m.attr("config") = &Config;
@@ -435,6 +444,12 @@ PyConfig::PyConfig() {
   } catch (const std::exception &Exc) {
     fatalError(Exc.what());
   }
+
+  // Check if configured output folder variable is not empty in order to create the parents
+  if (!Config.OutputFolder.empty())
+    if (std::error_code EC = llvm::sys::fs::create_directories(Config.OutputFolder))
+      fatalError("Failed to create output_folder " + Config.OutputFolder + ": " +
+                 EC.message());
 }
 
 std::string PyConfig::configPath() {
