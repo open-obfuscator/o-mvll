@@ -97,7 +97,7 @@ Logger::Logger() {
 }
 
 void Logger::BindModule(const std::string &Module, const std::string &Arch) {
-  // TODO: Shouldn't be necessary even in whole-module compilation mode.
+  static thread_local ThreadLoggerGuard Guard;
   std::lock_guard<std::mutex> Lock(BindLog);
   auto Key = makeKey(Module);
   auto Logger = spdlog::get(Key);

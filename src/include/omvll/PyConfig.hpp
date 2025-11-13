@@ -48,14 +48,16 @@ public:
 
   static inline YamlConfig YConfig;
 
+  PyConfig(const PyConfig &) = delete;
+  PyConfig &operator=(const PyConfig &) = delete;
+
 private:
   PyConfig();
   ~PyConfig();
-  static void destroy();
 
   std::unique_ptr<pybind11::module_> Mod;
   std::unique_ptr<pybind11::module_> CoreMod;
-  static inline PyConfig *Instance = nullptr;
+  std::string ModulePath;
 };
 
 } // end namespace omvll
