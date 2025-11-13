@@ -225,6 +225,7 @@ AntiHookOpt PyObfuscationConfig::antiHooking(llvm::Module *M,
 
 bool PyObfuscationConfig::hasReportDiffOverride() {
   std::call_once(OverridesReportDiffChecked, [this]() {
+    py::gil_scoped_acquire gil;
     const auto *Base = static_cast<const ObfuscationConfig *>(this);
     OverridesReportDiff =
         static_cast<bool>(py::get_override(Base, "report_diff"));

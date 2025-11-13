@@ -9,6 +9,7 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Threading.h"
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/YAMLTraits.h"
 
@@ -19,6 +20,8 @@
 #include "omvll/utils.hpp"
 
 using namespace llvm;
+
+static llvm::once_flag InitializePluginFlag;
 
 template <> struct yaml::MappingTraits<omvll::YamlConfig> {
   static void mapping(IO &IO, omvll::YamlConfig &Config) {
@@ -104,23 +107,22 @@ void omvll::initYamlConfig() {
   SINFO("Could not find omvll.yml");
 }
 
-PassPluginLibraryInfo getOMVLLPluginInfo() {
-  static std::atomic<bool> Once = false;
-  omvll::Logger::set_level(spdlog::level::level_enum::debug);
-
+static void initializePluginOnce() {
   omvll::initYamlConfig();
   omvll::initPythonpath();
 
+  auto &Instance = omvll::PyConfig::instance();
+  SINFO("Found OMVLL at: {}", Instance.configPath());
+}
+
+PassPluginLibraryInfo getOMVLLPluginInfo() {
+  omvll::Logger::set_level(spdlog::level::level_enum::debug);
+  llvm::call_once(InitializePluginFlag, initializePluginOnce);
+
   return {LLVM_PLUGIN_API_VERSION, "OMVLL", "1.4.1", [](PassBuilder &PB) {
             try {
-              auto &Instance = omvll::PyConfig::instance();
-              SDEBUG("Found OMVLL at: {}", Instance.configPath());
-
               PB.registerPipelineEarlySimplificationEPCallback(
                   [&](ModulePassManager &MPM, OptimizationLevel Opt) {
-                    if (Once)
-                      return true;
-
                     MPM.addPass(omvll::LoggerBind());
                     MPM.addPass(omvll::AntiHook());
                     MPM.addPass(omvll::FunctionOutline());
@@ -132,14 +134,13 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
                     MPM.addPass(omvll::OpaqueConstants());
                     MPM.addPass(omvll::Arithmetic());
 #ifdef OMVLL_EXPERIMENTAL
-                    // ObjCleaner must be the last pass as function's name could
-                    // be changed, which can be confusing for the user.
+                    // ObjCleaner must be the last pass as function's name
+                    // could be changed, which can be confusing for the user.
                     MPM.addPass(omvll::ObjCleaner());
 #endif
                     MPM.addPass(omvll::IndirectCall());
                     MPM.addPass(omvll::IndirectBranch());
                     MPM.addPass(omvll::Cleaning());
-                    Once = true;
                     return true;
                   });
             } catch (const std::exception &Exc) {

@@ -70,13 +70,10 @@ public:
   static void set_level(LogLevel L);
 
   static void BindModule(const std::string &Module, const std::string &Arch);
-
-private:
   static std::shared_ptr<spdlog::logger> CurrentOrDefault();
 
 private:
   Logger();
-  static Logger &Instance();
   spdlog::level::level_enum Level = spdlog::level::debug;
 
   // Default sink used before any thread binds a module.
@@ -84,6 +81,23 @@ private:
 
   // Per-thread bound module sink.
   static thread_local std::shared_ptr<spdlog::logger> Current;
+
+public:
+  static Logger &Instance();
+};
+
+class ThreadLoggerGuard {
+public:
+  ThreadLoggerGuard() = default;
+
+  ~ThreadLoggerGuard() {
+    auto Current = Logger::Instance().CurrentOrDefault();
+    if (Current)
+      Current->flush();
+  }
+
+  ThreadLoggerGuard(const ThreadLoggerGuard &) = delete;
+  ThreadLoggerGuard &operator=(const ThreadLoggerGuard &) = delete;
 };
 
 } // end namespace omvll
