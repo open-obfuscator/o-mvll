@@ -242,7 +242,12 @@ void PyObfuscationConfig::reportDiff(const std::string &Pass,
     py::function override = py::get_override(Base, "report_diff");
     assert(override && "Checked once in ctor");
     try {
+      // Invoke user-provided `report_diff`.
       override(Pass, Original, Obfuscated);
+      // Flush output streams.
+      auto sys = py::module_::import("sys");
+      sys.attr("stdout").attr("flush")();
+      sys.attr("stderr").attr("flush")();
     } catch (const std::exception &Exc) {
       fatalError("Error in report_diff: '"s + Exc.what() + "'");
     }
