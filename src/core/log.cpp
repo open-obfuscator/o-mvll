@@ -8,9 +8,6 @@
 #include <mutex>
 #include <unistd.h>
 
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Path.h"
-
 #include "spdlog/sinks/android_sink.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/null_sink.h"
