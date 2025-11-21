@@ -99,11 +99,8 @@ static void moveInitLogToUserProvidedFolder() {
     std::filesystem::remove(DefaultPath, ErrorCode);
     return;
   } else {
-    std::filesystem::copy_file(DefaultPath, NewPath,
-                               std::filesystem::copy_options::overwrite_existing, ErrorCode);
-    if (!ErrorCode) {
-      std::filesystem::remove(DefaultPath, ErrorCode);
-    }
+    std::error_code MoveErrorCode;
+    std::filesystem::rename(DefaultPath, NewPath, MoveErrorCode);
   }
 
   std::error_code RemoveErrorCode;
