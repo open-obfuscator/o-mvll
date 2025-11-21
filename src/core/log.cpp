@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Path.h" 
+#include "llvm/Support/Path.h"
 
 #include "spdlog/sinks/android_sink.h"
 #include "spdlog/sinks/basic_file_sink.h"
@@ -43,8 +43,8 @@ static inline std::filesystem::path getDefaultLogsRootDir() {
 
 static inline std::filesystem::path getLogsRootDir() {
   return Config.OutputFolder.empty()
-         ? getDefaultLogsRootDir()
-         : std::filesystem::path(Config.OutputFolder) / LogsRootDir;
+             ? getDefaultLogsRootDir()
+             : std::filesystem::path(Config.OutputFolder) / LogsRootDir;
 }
 
 static inline std::string initLogPath() {
@@ -82,12 +82,12 @@ static std::string makeLogPath(const std::string &Module,
 }
 
 static void moveInitLogToUserProvidedFolder() {
-  const auto DefaultDir  = getDefaultLogsRootDir();
+  const auto DefaultDir = getDefaultLogsRootDir();
   const auto DefaultPath = DefaultDir / InitLogFileName;
   if (!std::filesystem::exists(DefaultPath))
     return;
 
-  const auto NewDir  = getLogsRootDir();
+  const auto NewDir = getLogsRootDir();
   std::error_code ErrorCode;
   std::filesystem::create_directories(NewDir, ErrorCode);
 

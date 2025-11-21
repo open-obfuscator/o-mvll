@@ -445,11 +445,13 @@ PyConfig::PyConfig() {
     fatalError(Exc.what());
   }
 
-  // Check if configured output folder variable is not empty in order to create the parents
+  // Check if configured output folder variable is not empty in order to create
+  // the parents
   if (!Config.OutputFolder.empty())
-    if (std::error_code EC = llvm::sys::fs::create_directories(Config.OutputFolder))
-      fatalError("Failed to create output_folder " + Config.OutputFolder + ": " +
-                 EC.message());
+    if (std::error_code EC =
+            llvm::sys::fs::create_directories(Config.OutputFolder))
+      fatalError("Failed to create output_folder " + Config.OutputFolder +
+                 ": " + EC.message());
 }
 
 std::string PyConfig::configPath() {
