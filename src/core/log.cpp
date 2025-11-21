@@ -81,11 +81,7 @@ static std::string makeLogPath(const std::string &Module,
   return FinalPath.string();
 }
 
-static void migrateInitLogIfNeeded() {
-  // Only migrate if an output folder is defined now
-  if (Config.OutputFolder.empty())
-    return;
-
+static void moveInitLogToUserProvidedFolder() {
   const auto DefaultDir  = getDefaultLogsRootDir();
   const auto DefaultPath = DefaultDir / InitLogFileName;
   if (!std::filesystem::exists(DefaultPath))
@@ -103,16 +99,10 @@ static void migrateInitLogIfNeeded() {
     std::filesystem::remove(DefaultPath, ErrorCode);
     return;
   } else {
-    // rename method may fail if Config.OuputFolder
-    // and DefaultLogsRootDir are in different system mount partitions
-    std::error_code MoveErrorCode;
-    std::filesystem::rename(DefaultPath, NewPath, MoveErrorCode);
-    if (MoveErrorCode) {
-      std::filesystem::copy_file(DefaultPath, NewPath,
-                                 std::filesystem::copy_options::overwrite_existing, ErrorCode);
-      if (!ErrorCode) {
-        std::filesystem::remove(DefaultPath, ErrorCode);
-      }
+    std::filesystem::copy_file(DefaultPath, NewPath,
+                               std::filesystem::copy_options::overwrite_existing, ErrorCode);
+    if (!ErrorCode) {
+      std::filesystem::remove(DefaultPath, ErrorCode);
     }
   }
 
@@ -153,7 +143,7 @@ void Logger::BindModule(const std::string &Module, const std::string &Arch) {
 
   // If OutputFolder is now set, migrate init log (once)
   if (!Config.OutputFolder.empty())
-    migrateInitLogIfNeeded();
+    moveInitLogToUserProvidedFolder();
 
   auto Key = makeKey(Module);
   auto Logger = spdlog::get(Key);
