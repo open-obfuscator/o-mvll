@@ -8,7 +8,7 @@
 // RUN: FileCheck %s -DCWD=%T_cwd < %S/Inputs/tmp/omvll-logs/omvll-init.log
 
 // Check that we load the yml-config from the test output dir
-// CHECK: Found OMVLL at: {{.*}}/Inputs/config_output_folder.py
+// CHECK: Using OMVLL_CONFIG = {{.*}}/Inputs/config_output_folder.py
 
 // RUN: rm -rf  %S/Inputs/tmp
 
