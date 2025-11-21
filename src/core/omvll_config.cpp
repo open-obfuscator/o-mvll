@@ -36,6 +36,7 @@ void initDefaultConfig() {
   Config.GlobalModuleExclude.clear();
   Config.GlobalFunctionExclude.clear();
   Config.ProbabilitySeed = 1;
+  Config.OutputFolder = "";
 }
 
 } // end namespace omvll
