@@ -8,7 +8,7 @@
 // RUN: mkdir -p %T_plugindir
 // RUN: mkdir -p %T_plugindir/Python-3.10.7/Lib
 // RUN: cp %libOMVLL %T_plugindir/libOMVLL.so
-// RUN: cp %S/Inputs/omvll.yml %T_plugindir/omvll.yml
+// RUN: cp %S/Inputs/omvll_empty.yml %T_plugindir/omvll.yml
 // RUN: cp %S/Inputs/config_empty.py %T_plugindir/config_empty.py
 
 // Run clang from a different CWD and pass plugin from the test output dir
