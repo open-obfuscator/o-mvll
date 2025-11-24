@@ -89,9 +89,8 @@ static void moveInitLogToUserProvidedFolder() {
   std::filesystem::create_directories(NewDir, ErrorCode);
 
   auto NewPath = NewDir / InitLogFileName;
-  // If Output folder is not empty DefaultPath exists,
-  // but init file is already in target folder
-  // Means migration happened so we need to clean the origin Path and return
+  // If NewPath already exists, the init log was already migrated,
+  // thus remove the old DefaultPath.
   if (std::filesystem::exists(NewPath)) {
     std::filesystem::remove(DefaultPath, ErrorCode);
     return;
