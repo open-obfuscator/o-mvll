@@ -7,7 +7,7 @@
 // RUN: rm -rf %T_cwd
 // RUN: mkdir -p %T_cwd
 // RUN: mkdir -p %T_cwd/Python-3.10.7/Lib
-// RUN: cp %S/Inputs/omvll.yml %T_cwd/omvll.yml
+// RUN: cp %S/Inputs/omvll_empty.yml %T_cwd/omvll.yml
 // RUN: cp %S/Inputs/config_empty.py %T_cwd/config_empty.py
 
 // Run clang from the test output dir

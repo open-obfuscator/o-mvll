@@ -15,6 +15,7 @@
 #include "spdlog/spdlog.h"
 
 #include "omvll/log.hpp"
+#include "omvll/omvll_config.hpp"
 
 namespace omvll {
 
@@ -33,8 +34,14 @@ static inline bool shouldTruncate() {
   return std::getenv(LogEnvVar);
 }
 
-static inline std::filesystem::path getLogsRootDir() {
+static inline std::filesystem::path getDefaultLogsRootDir() {
   return std::filesystem::path(LogsRootDir);
+}
+
+static inline std::filesystem::path getLogsRootDir() {
+  return Config.OutputFolder.empty()
+             ? getDefaultLogsRootDir()
+             : std::filesystem::path(Config.OutputFolder) / LogsRootDir;
 }
 
 static inline std::string initLogPath() {
@@ -71,6 +78,33 @@ static std::string makeLogPath(const std::string &Module,
   return FinalPath.string();
 }
 
+static void moveInitLogToUserProvidedFolder() {
+  const auto DefaultDir = getDefaultLogsRootDir();
+  const auto DefaultPath = DefaultDir / InitLogFileName;
+  if (!std::filesystem::exists(DefaultPath))
+    return;
+
+  const auto NewDir = getLogsRootDir();
+  std::error_code ErrorCode;
+  std::filesystem::create_directories(NewDir, ErrorCode);
+
+  auto NewPath = NewDir / InitLogFileName;
+  // If NewPath already exists, the init log was already migrated,
+  // thus remove the old DefaultPath.
+  if (std::filesystem::exists(NewPath)) {
+    std::filesystem::remove(DefaultPath, ErrorCode);
+    return;
+  } else {
+    std::error_code MoveErrorCode;
+    std::filesystem::rename(DefaultPath, NewPath, MoveErrorCode);
+  }
+
+  std::error_code RemoveErrorCode;
+  if (std::filesystem::is_directory(DefaultDir) &&
+      std::filesystem::is_empty(DefaultDir, RemoveErrorCode))
+    std::filesystem::remove(DefaultDir, RemoveErrorCode);
+}
+
 Logger &Logger::Instance() {
   static Logger I;
   return I;
@@ -99,6 +133,11 @@ Logger::Logger() {
 void Logger::BindModule(const std::string &Module, const std::string &Arch) {
   // TODO: Shouldn't be necessary even in whole-module compilation mode.
   std::lock_guard<std::mutex> Lock(BindLog);
+
+  // If OutputFolder is now set, migrate init log (once)
+  if (!Config.OutputFolder.empty())
+    moveInitLogToUserProvidedFolder();
+
   auto Key = makeKey(Module);
   auto Logger = spdlog::get(Key);
   if (!Logger)
