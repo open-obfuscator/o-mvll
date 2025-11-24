@@ -151,8 +151,7 @@ void OMVLLCtor(py::module_ &m) {
 
       .def_readwrite("output_folder", &OMVLLConfig::OutputFolder,
                      R"delim(
-                    output folder where omvll process will be stored.
-                    This is required for the Antitamper pass.
+                    Output directory where o-mvll stores processed files (e.g., log files).
 
                     By default, this value is empty.
                     )delim");
