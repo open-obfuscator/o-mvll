@@ -10,9 +10,12 @@ import subprocess
 from lit.llvm import llvm_config
 
 config.name = "O-MVLL Tests"
-config.suffixes = ['.c', '.cpp', '.ll', '.m']
+config.suffixes = ['.c', '.cpp', '.ll', '.m', '.swift']
 config.test_format = lit.formats.ShTest(True)
 config.test_source_root = os.path.dirname(__file__)
+
+# Prevent helper files in Inputs directories from being treated as tests.
+config.excludes = ['Inputs']
 
 # Enable tests based on required targets, e.g. REQUIRES: x86-registered-target
 llvm_config.feature_config([('--targets-built',
@@ -43,7 +46,7 @@ if config.omvll_plugin_abi == 'Android' or \
         print("clang compiler not found:", clang_exe)
         exit(1)
     print("Testing compiler:", clang_exe)
-    clang_path = config.llvm_bin_dir
+    toolchain_dir = config.llvm_bin_dir
 
 # For iOS tests, always use Apple Clang as default compiler.
 if config.omvll_plugin_abi == 'Apple':
@@ -54,9 +57,11 @@ if config.omvll_plugin_abi == 'Apple':
     except (subprocess.CalledProcessError, OSError):
         print("xcode-select not found. Please install Xcode.")
         exit(1)
-    clang_path = os.path.join(xcode_path, 'Toolchains/XcodeDefault.xctoolchain/usr/bin')
-    clang_exe = os.path.join(clang_path, 'clang')
-    print("Testing compiler:", clang_exe)
+    toolchain_dir = os.path.join(xcode_path, 'Toolchains/XcodeDefault.xctoolchain/usr/bin')
+    clang_exe = os.path.join(toolchain_dir, 'clang')
+    swift_frontend_exe = os.path.join(toolchain_dir, 'swift-frontend')
+    print("Testing Apple Clang compiler:", clang_exe)
+    print("Testing Apple Swift compiler:", swift_frontend_exe)
 
     try:
         cmd = ["xcrun", "--show-sdk-path", "--sdk", "iphoneos"]
@@ -66,9 +71,13 @@ if config.omvll_plugin_abi == 'Apple':
         exit(1)
     print("Using iOS SDK:", ios_sdk)
     config.substitutions.append(('%EXTRA_CC_FLAGS', f"-isysroot {ios_sdk}"))
+    config.substitutions.append(('%EXTRA_SWIFT_FLAGS', f"-sdk {ios_sdk}"))
 
-llvm_config.add_tool_substitutions(["clang", "clang++"], clang_path)
+llvm_config.add_tool_substitutions(["clang", "clang++"], toolchain_dir)
 llvm_config.add_tool_substitutions(["FileCheck", "count", "not"], config.llvm_tools_dir)
+
+if config.omvll_plugin_abi == 'Apple':
+    llvm_config.add_tool_substitutions(["swift-frontend"], toolchain_dir)
 
 # The plugin is a shared library in our build-tree
 plugin_file = os.path.join(config.omvll_plugin_dir, 'libOMVLL' + config.llvm_plugin_suffix)
