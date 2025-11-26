@@ -388,16 +388,13 @@ std::unique_ptr<py::module_> initOMVLLCore(py::dict Modules) {
 PyConfig::~PyConfig() = default;
 
 PyConfig &PyConfig::instance() {
-  if (!Instance) {
-    Instance = new PyConfig{};
-    std::atexit(destroy);
-  }
-  return *Instance;
+  static PyConfig Instance;
+  return Instance;
 }
 
 ObfuscationConfig *PyConfig::getUserConfig() {
   try {
-    llvm::LLVMContext Ctx;
+    py::gil_scoped_acquire gil;
     if (!py::hasattr(*Mod, "omvll_get_config"))
       fatalError("Missing omvll_get_config");
 
@@ -414,6 +411,8 @@ ObfuscationConfig *PyConfig::getUserConfig() {
 
 PyConfig::PyConfig() {
   py::initialize_interpreter();
+  // initialize_interpreter() already holds the GIL.
+
   py::module_ SysMod = py::module_::import("sys");
   py::module_ PathLib = py::module_::import("pathlib");
   py::dict Modules = SysMod.attr("modules");
@@ -440,6 +439,7 @@ PyConfig::PyConfig() {
 
   try {
     Mod = std::make_unique<py::module_>(py::module_::import(ModName.c_str()));
+    ModulePath = Mod->attr("__file__").cast<std::string>();
   } catch (const std::exception &Exc) {
     fatalError(Exc.what());
   }
@@ -451,16 +451,13 @@ PyConfig::PyConfig() {
             llvm::sys::fs::create_directories(Config.OutputFolder))
       fatalError("Failed to create output_folder " + Config.OutputFolder +
                  ": " + EC.message());
+
+  // We have not manually acquired the GIL, so release it now. Subsequent
+  // accesses to Python configs will manually require acquiring the GIL.
+  PyEval_SaveThread();
 }
 
-std::string PyConfig::configPath() {
-  return Mod->attr("__file__").cast<std::string>();
-}
-
-void PyConfig::destroy() {
-  delete Instance;
-  py::finalize_interpreter();
-}
+std::string PyConfig::configPath() { return ModulePath; }
 
 } // end namespace omvll
 

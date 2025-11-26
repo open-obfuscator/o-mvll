@@ -131,7 +131,7 @@ Logger::Logger() {
 }
 
 void Logger::BindModule(const std::string &Module, const std::string &Arch) {
-  // TODO: Shouldn't be necessary even in whole-module compilation mode.
+  static thread_local ThreadLoggerGuard Guard;
   std::lock_guard<std::mutex> Lock(BindLog);
 
   // If OutputFolder is now set, migrate init log (once)
