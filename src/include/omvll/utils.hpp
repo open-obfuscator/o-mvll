@@ -51,6 +51,7 @@ bool isFunctionGloballyExcluded(llvm::Function *F);
 bool isCoroutine(llvm::Function *F);
 bool containsSwiftErrorAlloca(const llvm::BasicBlock &BB);
 bool isEHBlock(const llvm::BasicBlock &BB);
+void inlineWithoutLifetimeMarkers(llvm::CallInst *Call);
 
 [[noreturn]] void fatalError(std::string_view Msg);
 

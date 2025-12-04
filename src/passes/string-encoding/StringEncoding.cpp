@@ -349,13 +349,13 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
     Changed |= encodeStrings(*F, *UserConfig);
   }
 
-  // Inline functions.
-  for (CallInst *Callee : ToInline) {
-    InlineFunctionInfo IFI;
-    InlineResult Res = InlineFunction(*Callee, IFI);
-    if (!Res.isSuccess())
-      fatalError(Res.getFailureReason());
-  }
+  // Inline functions. Avoid emitting lifetime markers while inlining. After
+  // cloning the decode function from a Clang-generated module, the lifetime
+  // intrinsic decls created during inlining may end up with incorrect
+  // attributes (e.g., swiftself) with Swift modules, causing verification
+  // failures.
+  for (CallInst *Callee : ToInline)
+    inlineWithoutLifetimeMarkers(Callee);
 
   // Create constructors functions.
   for (Function *F : Ctors)

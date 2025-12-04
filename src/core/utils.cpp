@@ -23,6 +23,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 
 #include "omvll/ObfuscationConfig.hpp"
@@ -569,6 +570,16 @@ int RandomGenerator::checkProbability(int Target) {
   if (RandomGenerator::generate() < Target)
     return true;
   return false;
+}
+
+void inlineWithoutLifetimeMarkers(CallInst *Call) {
+  InlineFunctionInfo IFI;
+  InlineResult Result = InlineFunction(*Call, IFI,
+                                       /*MergeAttributes=*/false,
+                                       /*CalleeAAR=*/nullptr,
+                                       /*InsertLifetime=*/false);
+  if (!Result.isSuccess())
+    fatalError(Result.getFailureReason());
 }
 
 } // end namespace omvll
