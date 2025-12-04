@@ -19,10 +19,8 @@ define i32 @function_outline(i32 %x, i32 %y) {
 ; CHECK-NEXT:    store i32 [[SUM]], ptr [[RET_REG2MEM]], align 4
 ; CHECK-NEXT:    br i1 [[CMP]], label %[[CODEREPL:.*]], label %[[EXIT:.*]]
 ; CHECK:       [[CODEREPL]]:
-; CHECK-NEXT:    call void @llvm.lifetime.start.p0(i64 -1, ptr [[USE_LOC]])
 ; CHECK-NEXT:    call void @function_outline.bb(i32 [[SUM]], ptr [[USE_LOC]])
 ; CHECK-NEXT:    [[USE_RELOAD:%.*]] = load i32, ptr [[USE_LOC]], align 4
-; CHECK-NEXT:    call void @llvm.lifetime.end.p0(i64 -1, ptr [[USE_LOC]])
 ; CHECK-NEXT:    store i32 [[USE_RELOAD]], ptr [[RET_REG2MEM]], align 4
 ; CHECK-NEXT:    br label %[[EXIT:.*]]
 ; CHECK:       [[EXIT]]:

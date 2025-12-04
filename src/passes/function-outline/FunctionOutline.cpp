@@ -53,10 +53,6 @@ static bool outliningMayBeUnfavorable(const BasicBlock &BB) {
         return true;
       if (isa<CallBrInst>(CB))
         return true;
-      if (any_of(enumerate(CB->args()), [&](const auto &Arg) {
-            return CB->paramHasAttr(Arg.index(), Attribute::SwiftError);
-          }))
-        return true;
     }
   }
   return false;
@@ -74,6 +70,37 @@ static bool isOutlineCandidate(const BasicBlock &BB) {
   if (isa<InvokeInst>(T) || isa<ResumeInst>(T) || isa<CallBrInst>(T))
     return false;
   return true;
+}
+
+static bool
+hasSwiftErrorOrSwiftSelfAttribute(const SetVector<Value *> &Inputs) {
+  for (Value *V : Inputs) {
+    if (auto *AI = dyn_cast<AllocaInst>(V); AI && AI->isSwiftError())
+      return true;
+    if (auto *Arg = dyn_cast<Argument>(V); Arg && Arg->hasSwiftErrorAttr())
+      return true;
+    if (any_of(V->users(), [&](const auto *U) {
+          if (auto *CB = dyn_cast<CallBase>(U)) {
+            for (unsigned I = 0; I < CB->arg_size(); ++I)
+              if (CB->getArgOperand(I) == V &&
+                  (CB->paramHasAttr(I, Attribute::SwiftError) ||
+                   CB->paramHasAttr(I, Attribute::SwiftSelf)))
+                return true;
+          }
+          return false;
+        }))
+      return true;
+  }
+  return false;
+}
+
+static void eraseLifetimeMarkers(Function *F) {
+  for (BasicBlock &BB : *F)
+    for (Instruction &I : llvm::make_early_inc_range(BB))
+      if (auto *II = dyn_cast<LifetimeIntrinsic>(&I))
+        if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+            II->getIntrinsicID() == Intrinsic::lifetime_end)
+          II->eraseFromParent();
 }
 
 bool FunctionOutline::process(Function &F, LLVMContext &Ctx,
@@ -106,10 +133,17 @@ bool FunctionOutline::process(Function &F, LLVMContext &Ctx,
     if (!CE.isEligible())
       continue;
 
+    // For now also avoid inputs w/ swifterror or swiftself attribute.
+    SetVector<Value *> Inputs, Outputs, SinkCands;
+    CE.findInputsOutputs(Inputs, Outputs, SinkCands);
+    if (hasSwiftErrorOrSwiftSelfAttribute(Inputs))
+      continue;
+
     // Outline region and replace the original block with a call-site to the
     // newly-created function.
-    if ([[maybe_unused]] auto *OutlinedFn = CE.extractCodeRegion(CEAC)) {
+    if (auto *OutlinedFn = CE.extractCodeRegion(CEAC)) {
       SDEBUG("[{}] New outlined function {}", name(), OutlinedFn->getName());
+      eraseLifetimeMarkers(OutlinedFn);
       ++Outlined;
     }
   }
@@ -119,6 +153,9 @@ bool FunctionOutline::process(Function &F, LLVMContext &Ctx,
 
   SDEBUG("[{}] Outlined {} basic blocks within function {}", name(),
          std::to_string(Outlined), F.getName());
+
+  // Erase lifetime markers.
+  eraseLifetimeMarkers(&F);
   return true;
 }
 
@@ -151,6 +188,21 @@ PreservedAnalyses FunctionOutline::run(Module &M, ModuleAnalysisManager &MAM) {
 
   for (const auto &[F, P] : ToVisit)
     Changed |= process(*F, Ctx, P);
+
+  if (Changed) {
+    SmallVector<Function *, 4> ToRemove;
+    for (Function &F : M) {
+      if (F.isIntrinsic()) {
+        auto ID = F.getIntrinsicID();
+        if (ID == Intrinsic::lifetime_start || ID == Intrinsic::lifetime_end) {
+          if (F.use_empty())
+            ToRemove.push_back(&F);
+        }
+      }
+    }
+    for (auto *F : ToRemove)
+      F->eraseFromParent();
+  }
 
   SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",
         M.getName());
