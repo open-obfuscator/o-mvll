@@ -37,6 +37,8 @@ bool BasicBlockDuplicate::process(Function &F, LLVMContext &Ctx,
   // Collect basic blocks to be duplicated.
   auto ShouldDuplicate = [&]() { return (*RNG)() % 100U < Probability; };
   for (BasicBlock &BB : F) {
+    if (&BB == &F.getEntryBlock())
+      continue;
     if (isEHBlock(BB) || containsSwiftErrorAlloca(BB))
       continue;
     if (ShouldDuplicate())

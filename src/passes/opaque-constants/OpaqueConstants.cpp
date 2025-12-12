@@ -161,7 +161,15 @@ OpaqueContext *OpaqueConstants::getOrCreateContext(Function &F) {
   Align PtrAlign(DL.getPointerSize());
   OpaqueContext &Ctx = OpaqueCtx[&F];
 
-  IRBuilder<NoFolder> IRB(&*F.getEntryBlock().getFirstInsertionPt());
+  IRBuilder<NoFolder> IRB(F.getContext());
+  BasicBlock &Entry = F.getEntryBlock();
+  for (Instruction &I : Entry) {
+    if (!isa<AllocaInst>(&I)) {
+      IRB.SetInsertPoint(&I);
+      break;
+    }
+  }
+
   Ctx.T1 = IRB.CreateAlloca(IRB.getInt64Ty(), nullptr, "opaque.t1");
   Ctx.T2 = IRB.CreateAlloca(IRB.getInt64Ty(), nullptr, "opaque.t2");
 

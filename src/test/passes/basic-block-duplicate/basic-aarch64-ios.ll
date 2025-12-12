@@ -11,11 +11,6 @@ define i32 @dup(i32 %arg) {
 ; CHECK-LABEL: define i32 @dup(
 ; CHECK-SAME: i32 [[ARG:%.*]])
 ; CHECK-NEXT:  [[ENTRY:.*:]]
-; CHECK-NEXT:    [[CALL:%.*]] = call i64 @lrand48()
-; CHECK-NEXT:    [[AND:%.*]] = and i64 [[CALL]], 1
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i64 [[AND]], 0
-; CHECK-NEXT:    br i1 [[CMP]], label %[[ENTRY_SPLIT_CLONE:.*]], label %[[ENTRY_SPLIT:.*]]
-; CHECK:       [[ENTRY_SPLIT]]:
 ; CHECK-NEXT:    br label %[[BB:.*]]
 ; CHECK:       [[BB]]:
 ; CHECK-NEXT:    [[CALL1:%.*]] = call i64 @lrand48()
@@ -34,8 +29,6 @@ define i32 @dup(i32 %arg) {
 ; CHECK:       [[EXIT_SPLIT]]:
 ; CHECK-NEXT:    [[Y:%.*]] = add i32 [[X1]], 1
 ; CHECK-NEXT:    ret i32 [[Y]]
-; CHECK:       [[ENTRY_SPLIT_CLONE]]:
-; CHECK-NEXT:    br label %[[BB:.*]]
 ; CHECK:       [[BB_SPLIT_CLONE]]:
 ; CHECK-NEXT:    [[X_CLONE:%.*]] = add i32 [[ARG]], 2
 ; CHECK-NEXT:    br label %[[EXIT:.*]]

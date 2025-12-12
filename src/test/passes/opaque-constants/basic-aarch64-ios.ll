@@ -13,15 +13,15 @@
 define i32 @opaque_constants() {
 ; CHECK-LABEL:  define i32 @opaque_constants(
 ; CHECK-LABEL:  entry
-; CHECK-O0:       %opaque.t1 = alloca i64, align 8
+; CHECK-O0:       %stack.0 = alloca i32, align 4
+; CHECK-O0-NEXT:  %stack.1 = alloca i32, align 4
+; CHECK-O0-NEXT:  %stack.2 = alloca i32, align 4
+; CHECK-O0-NEXT:  %opaque.t1 = alloca i64, align 8
 ; CHECK-O0-NEXT:  %opaque.t2 = alloca i64, align 8
 ; CHECK-O0-NEXT:  %0 = ptrtoint ptr %opaque.t2 to i64
 ; CHECK-O0-NEXT:  store i64 %0, ptr %opaque.t1, align 8
 ; CHECK-O0-NEXT:  %1 = ptrtoint ptr %opaque.t1 to i64
 ; CHECK-O0-NEXT:  store i64 %1, ptr %opaque.t2, align 8
-; CHECK-O0-NEXT:  %stack.0 = alloca i32, align 4
-; CHECK-O0-NEXT:  %stack.1 = alloca i32, align 4
-; CHECK-O0-NEXT:  %stack.2 = alloca i32, align 4
 ; CHECK-O0-NEXT:  %2 = load volatile i32, ptr %opaque.t1, align 4
 ; CHECK-O0-NEXT:  %3 = load volatile i32, ptr %opaque.t2, align 4
 ; CHECK-O0-NEXT:  %4 = xor i32 %2, %3, !obf !0
