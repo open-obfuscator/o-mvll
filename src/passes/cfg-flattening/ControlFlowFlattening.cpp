@@ -222,11 +222,9 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
 
   if (auto *Branch = dyn_cast<BranchInst>(EntryBlock->getTerminator())) {
     if (Branch->isConditional()) {
-      Value *Cond = Branch->getCondition();
-      if (auto *Inst = dyn_cast<Instruction>(Cond)) {
-        BasicBlock *EntrySplit =
-            EntryBlock->splitBasicBlockBefore(Inst, "EntrySplit");
-        FlattedBBs.insert(FlattedBBs.begin(), EntryBlock);
+      BasicBlock *EntrySplit =
+          EntryBlock->splitBasicBlockBefore(Branch, "EntrySplit");
+      FlattedBBs.insert(FlattedBBs.begin(), EntryBlock);
 
 #ifdef OMVLL_DEBUG
         for (Instruction &I : *EntrySplit) {
@@ -241,10 +239,9 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
 #endif
 
         EntryBlock = EntrySplit;
-      } else {
-        SWARN("[{}] Found condition that is not an instruction",
-              ControlFlowFlattening::name());
-      }
+    } else {
+      SWARN("[{}] Found condition that is not an instruction",
+            ControlFlowFlattening::name());
     }
   } else if (auto *Switch = dyn_cast<SwitchInst>(EntryBlock->getTerminator())) {
     BasicBlock *EntrySplit =

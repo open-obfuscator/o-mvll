@@ -22,42 +22,40 @@
 // NO-FLAT-NEXT:    beq	.LBB0_4
 
 // FLAT-LABEL:    check_password:
-// FLAT-ARM:            sub	sp, sp, #20
-// FLAT-ARM-NEXT:       str	r1, [r11, #-48]
+// FLAT-ARM:            str	r1, [sp, #4]
 // FLAT-ARM-NEXT:       ldr	r1, .LCPI0_0
-// FLAT-ARM-NEXT:       str	r1, [r11, #-36]
-// FLAT-ARM-NEXT:       ldr	r12, .LCPI0_1
+// FLAT-ARM-NEXT:       str	r1, [sp, #16]
+// FLAT-ARM-NEXT:       ldr	r10, .LCPI0_1
 // FLAT-ARM-NEXT:       ldr	r2, .LCPI0_2
-// FLAT-ARM-NEXT:       ldr	r9, .LCPI0_3
+// FLAT-ARM-NEXT:       ldr	r8, .LCPI0_3
 // FLAT-ARM-NEXT:       ldr	lr, .LCPI0_10
 // FLAT-ARM-NEXT:       ldr	r3, .LCPI0_13
-// FLAT-ARM-NEXT:       ldr	r8, .LCPI0_11
-// FLAT-ARM-NEXT:       ldr	r4, .LCPI0_12
-// FLAT-ARM-NEXT:       ldr	r10, .LCPI0_4
-// FLAT-ARM-NEXT:       b	.LBB0_5
+// FLAT-ARM-NEXT:       ldr	r4, .LCPI0_11
+// FLAT-ARM-NEXT:       ldr	r5, .LCPI0_12
+// FLAT-ARM-NEXT:       ldr	r9, .LCPI0_4
+// FLAT-ARM-NEXT:       b	.LBB0_4
 
-// FLAT-THUMB:          sub sp, sp, #20
-// FLAT-THUMB-NEXT:     str r1, [r11, #-48]
-// FLAT-THUMB-NEXT:     movw  r1, #10559
-// FLAT-THUMB-NEXT:     movt  r1, #51969
-// FLAT-THUMB-NEXT:     str r1, [r11, #-36]
-// FLAT-THUMB-NEXT:     movw  r12, #59329
-// FLAT-THUMB-NEXT:     movt  r12, #19126
-// FLAT-THUMB-NEXT:     movw  r2, #44195
-// FLAT-THUMB-NEXT:     movt  r2, #62802
-// FLAT-THUMB-NEXT:     movw  r9, #13808
-// FLAT-THUMB-NEXT:     movt  r9, #56121
-// FLAT-THUMB-NEXT:     movw  lr, #43693
-// FLAT-THUMB-NEXT:     movt  lr, #47459
-// FLAT-THUMB-NEXT:     movw  r3, #60166
-// FLAT-THUMB-NEXT:     movt  r3, #34246
-// FLAT-THUMB-NEXT:     movw  r8, #43694
-// FLAT-THUMB-NEXT:     movt  r8, #47459
-// FLAT-THUMB-NEXT:     movw  r4, #39329
-// FLAT-THUMB-NEXT:     movt  r4, #48675
-// FLAT-THUMB-NEXT:     movw  r10, #44384
-// FLAT-THUMB-NEXT:     movt  r10, #62802
-// FLAT-THUMB-NEXT:     b .LBB0_6
+// FLAT-THUMB:          str	r1, [sp, #4]
+// FLAT-THUMB-NEXT:     movw	r1, #10559
+// FLAT-THUMB-NEXT:     movt	r1, #51969
+// FLAT-THUMB-NEXT:     str	r1, [sp, #16]
+// FLAT-THUMB-NEXT:     movw	r10, #59329
+// FLAT-THUMB-NEXT:     movt	r10, #19126
+// FLAT-THUMB-NEXT:     movw	r2, #44195
+// FLAT-THUMB-NEXT:     movt	r2, #62802
+// FLAT-THUMB-NEXT:     movw	r8, #13808
+// FLAT-THUMB-NEXT:     movt	r8, #56121
+// FLAT-THUMB-NEXT:     movw	lr, #43693
+// FLAT-THUMB-NEXT:     movt	lr, #47459
+// FLAT-THUMB-NEXT:     movw	r3, #60166
+// FLAT-THUMB-NEXT:     movt	r3, #34246
+// FLAT-THUMB-NEXT:     movw	r4, #43694
+// FLAT-THUMB-NEXT:     movt	r4, #47459
+// FLAT-THUMB-NEXT:     movw	r5, #39329
+// FLAT-THUMB-NEXT:     movt	r5, #48675
+// FLAT-THUMB-NEXT:     movw	r9, #44384
+// FLAT-THUMB-NEXT:     movt	r9, #62802
+// FLAT-THUMB-NEXT:     b	.LBB0_4
 
 int check_password(const char* passwd, unsigned len) {
   if (len != 5) {

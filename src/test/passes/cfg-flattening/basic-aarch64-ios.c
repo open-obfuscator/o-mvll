@@ -11,7 +11,6 @@
 // Check for jump table targets setup at the beginning of the function.
 
 // FLAT-IOS-LABEL:        check_password:
-// FLAT-IOS:                sub	sp, sp, #16
 // FLAT-IOS:                mov	w19, #19350
 // FLAT-IOS-NEXT:           movk	w19, #38589, lsl #16
 // FLAT-IOS-NEXT:           mov	w20, #22813
