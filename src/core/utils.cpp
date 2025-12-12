@@ -457,8 +457,18 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
 
   hash_code HashValue = hash_combine(Routine, Triple.getTriple());
 
-  SmallString<128> TempPath;
-  sys::path::system_temp_directory(true, TempPath);
+  // TempPath depends on Output folder availability. If it is not present
+  // assign current path to avoid problems on parallel builds
+  SmallString<256> TempPath;
+  if (!Config.OutputFolder.empty()) {
+    TempPath = Config.OutputFolder;
+  } else {
+    sys::fs::current_path(TempPath);
+    sys::path::append(TempPath, "omvll-tmp");
+  }
+
+  sys::path::append(TempPath, "cache");
+  llvm::sys::fs::create_directories(TempPath);
   sys::path::append(TempPath, "omvll-cache-" + Triple.getTriple() + "-" +
                                   std::to_string(HashValue) + ".ll");
   std::string IRModuleFilename = std::string(TempPath.str());
