@@ -9,7 +9,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/TargetParser/Triple.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
@@ -18,6 +17,7 @@
 namespace llvm {
 class Instruction;
 class BasicBlock;
+class CallInst;
 class Function;
 class Module;
 class Type;
