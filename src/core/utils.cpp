@@ -4,6 +4,7 @@
 //
 
 #include <optional>
+#include <unistd.h>
 
 #include "llvm/ADT/Hashing.h"
 #include "llvm/IR/BasicBlock.h"
@@ -116,6 +117,7 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
   Expected<std::string> ClangPath = getAppleClangPath();
   if (!ClangPath)
     return ClangPath.takeError();
+
   SmallVector<StringRef, 16> Args = {*ClangPath, "-S", "-emit-llvm"};
 
   // Always add the target triple.
@@ -139,13 +141,32 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
     Args.push_back(Arg);
 
   // Create the input C file and choose macthing output file name.
-  int InFileFD;
-  SmallString<128> InFileName;
-  std::string Prefix = "omvll-" + Triple.getTriple();
+  SmallString<256> WorkDir;
+  if (!omvll::Config.OutputFolder.empty()) {
+    WorkDir = omvll::Config.OutputFolder;
+  } else {
+    sys::fs::current_path(WorkDir);
+    sys::path::append(WorkDir, "omvll-tmp");
+  }
+  sys::path::append(WorkDir, "cache");
+  sys::fs::create_directories(WorkDir);
+
+  // Create input file.
+  int InFileFD = -1;
+  SmallString<256> InFileName;
+  std::string Prefix = "omvll-cache-" + Triple.getTriple();
+
+  // Generate Template with the expected name.
+  SmallString<256> Template(WorkDir);
+  sys::path::append(Template, Prefix + "-%%%%%%." + Dashx.str());
+
   if (std::error_code EC =
-          sys::fs::createTemporaryFile(Prefix, Dashx, InFileFD, InFileName))
+          sys::fs::createUniqueFile(Template, InFileFD, InFileName))
     return errorCodeToError(EC);
-  std::string OutFileName = InFileName.str().str() + ".ll";
+
+  // Output file next to it.
+  SmallString<256> OutFileName(InFileName);
+  sys::path::replace_extension(OutFileName, "ll");
 
   Args.push_back("-o");
   Args.push_back(OutFileName);
@@ -153,10 +174,7 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
 
   // Write the given C code to the input file.
   {
-    std::error_code EC;
-    raw_fd_ostream OS(InFileName, EC);
-    if (EC)
-      return errorCodeToError(EC);
+    raw_fd_ostream OS(InFileFD, /*shouldClose=*/true);
     OS << Code;
   }
 
@@ -164,7 +182,7 @@ runClangExecutable(StringRef Code, StringRef Dashx, const Triple &Triple,
     return createStringError(inconvertibleErrorCode(),
                              Twine("exit code ") + std::to_string(EC));
 
-  return OutFileName;
+  return OutFileName.str().str();
 }
 
 static Error createSMDiagnosticError(SMDiagnostic &Diag) {
@@ -188,6 +206,8 @@ static Expected<std::unique_ptr<Module>> loadModule(StringRef Path,
 } // end namespace detail
 
 namespace omvll {
+
+unsigned getPid() { return ::getpid(); }
 
 std::string ToString(const Module &M) {
   std::error_code EC;
@@ -472,7 +492,8 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
   sys::path::append(TempPath, "cache");
   llvm::sys::fs::create_directories(TempPath);
   sys::path::append(TempPath, "omvll-cache-" + Triple.getTriple() + "-" +
-                                  std::to_string(HashValue) + ".ll");
+                                  std::to_string(HashValue) + "-" +
+                                  std::to_string(getPid()) + ".ll");
   std::string IRModuleFilename = std::string(TempPath.str());
 
   if (sys::fs::exists(IRModuleFilename)) {

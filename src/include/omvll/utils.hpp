@@ -17,6 +17,7 @@
 namespace llvm {
 class Instruction;
 class BasicBlock;
+class CallInst;
 class Function;
 class Module;
 class Type;
@@ -59,6 +60,8 @@ llvm::Expected<std::unique_ptr<llvm::Module>>
 generateModule(llvm::StringRef Routine, const llvm::Triple &Triple,
                llvm::StringRef Extension, llvm::LLVMContext &Ctx,
                llvm::ArrayRef<std::string> ExtraArgs);
+
+unsigned getPid();
 
 struct ObfuscationConfig;
 
