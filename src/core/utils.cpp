@@ -35,6 +35,7 @@
 using namespace llvm;
 
 namespace detail {
+static std::mutex ModuleCompilation;
 
 static int runExecutable(SmallVectorImpl<StringRef> &Args,
                          std::optional<ArrayRef<StringRef>> Envs = std::nullopt,
@@ -455,6 +456,7 @@ generateModule(StringRef Routine, const Triple &Triple, StringRef Extension,
                LLVMContext &Ctx, ArrayRef<std::string> ExtraArgs) {
   using namespace ::detail;
 
+  std::lock_guard<std::mutex> Lock(ModuleCompilation);
   hash_code HashValue = hash_combine(Routine, Triple.getTriple());
 
   // TempPath depends on Output folder availability. If it is not present
