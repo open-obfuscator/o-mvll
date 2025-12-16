@@ -16,6 +16,7 @@
 
 #include "omvll/log.hpp"
 #include "omvll/omvll_config.hpp"
+#include "omvll/utils.hpp"
 
 namespace omvll {
 
@@ -26,8 +27,6 @@ static constexpr auto LogsRootDir = "omvll-logs";
 static constexpr auto ModuleLogsDir = "omvll-module-logs";
 static constexpr auto InitLogFileName = "omvll-init.log";
 static constexpr auto DefaultLoggerKey = "omvll-default-shared";
-
-static inline unsigned getPid() { return ::getpid(); }
 
 static inline bool shouldTruncate() {
   static constexpr auto LogEnvVar = "OMVLL_TRUNCATE_LOG";

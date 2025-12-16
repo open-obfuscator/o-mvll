@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/TargetParser/Triple.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
@@ -59,6 +60,8 @@ llvm::Expected<std::unique_ptr<llvm::Module>>
 generateModule(llvm::StringRef Routine, const llvm::Triple &Triple,
                llvm::StringRef Extension, llvm::LLVMContext &Ctx,
                llvm::ArrayRef<std::string> ExtraArgs);
+
+unsigned getPid();
 
 struct ObfuscationConfig;
 
