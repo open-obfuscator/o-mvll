@@ -66,12 +66,10 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
                              const EncodingInfo &Info);
   bool process(llvm::Instruction &I, llvm::Use &Op, llvm::GlobalVariable &G,
                llvm::ConstantDataSequential &Data, StringEncodingOpt &Opt);
-  bool processReplace(llvm::Instruction &I, llvm::Use &Op,
-                      llvm::GlobalVariable &G,
+  bool processReplace(llvm::Use &Op, llvm::GlobalVariable &G,
                       llvm::ConstantDataSequential &Data,
                       StringEncOptReplace &Rep);
-  bool processGlobal(llvm::Instruction &I, llvm::Use &Op,
-                     llvm::GlobalVariable &G,
+  bool processGlobal(llvm::Use &Op, llvm::GlobalVariable &G,
                      llvm::ConstantDataSequential &Data);
   bool processLocal(llvm::Instruction &I, llvm::Use &Op,
                     llvm::GlobalVariable &G,

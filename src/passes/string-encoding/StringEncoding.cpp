@@ -105,6 +105,9 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
                          uint64_t KeyValI64, uint64_t Size,
                          const StringEncoding::EncodingInfo &EI,
                          bool IsLocalToFunction = false) {
+  Module *M = NewPt->getModule();
+  LLVMContext &Ctx = NewPt->getContext();
+
   // Allocas first.
   auto It = NewPt->getFunction()->getEntryBlock().begin();
   while (It->getOpcode() == Instruction::Alloca)
@@ -112,7 +115,6 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
 
   IRBuilder<NoFolder> IRB(&*It);
   auto *BufferTy = ArrayType::get(IRB.getInt8Ty(), Size);
-  auto *M = NewPt->getModule();
   GlobalVariable *ClearBuffer =
       new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
                          Constant::getNullValue(BufferTy));
@@ -154,7 +156,7 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
 
   auto *NewF =
       Function::Create(FDecode->getFunctionType(), GlobalValue::PrivateLinkage,
-                       DecodeFunctionName, NewPt->getModule());
+                       DecodeFunctionName, M);
 
   ValueToValueMapTy VMap;
   auto NewFArgsIt = NewF->arg_begin();
@@ -197,16 +199,16 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
                          IRB.getInt64Ty(), IRB.getInt32Ty()},
                         false);
   auto *Wrapper = Function::Create(WrapperType, GlobalValue::PrivateLinkage,
-                                   "__omvll_decode_wrap", NewPt->getModule());
+                                   "__omvll_decode_wrap", M);
 
   // Decode wrapper to check whether the global variable has already been
   // decoded.
-  BasicBlock *Entry = BasicBlock::Create(NewPt->getContext(), "entry", Wrapper);
+  BasicBlock *Entry = BasicBlock::Create(Ctx, "entry", Wrapper);
   IRB.SetInsertPoint(Entry);
   auto *ICmp = IRB.CreateICmpEQ(IRB.CreateLoad(BoolType, Wrapper->getArg(0)),
                                 ConstantInt::getFalse(BoolType));
-  auto *NewBB = BasicBlock::Create(NewPt->getContext(), "", Wrapper);
-  auto *ContinuationBB = BasicBlock::Create(NewPt->getContext(), "", Wrapper);
+  auto *NewBB = BasicBlock::Create(Ctx, "", Wrapper);
+  auto *ContinuationBB = BasicBlock::Create(Ctx, "", Wrapper);
   IRB.CreateCondBr(ICmp, NewBB, ContinuationBB);
   IRB.SetInsertPoint(NewBB);
   auto *CI = IRB.CreateCall(NewF->getFunctionType(), NewF,
@@ -403,9 +405,9 @@ bool StringEncoding::process(Instruction &I, Use &Op, GlobalVariable &G,
       overloaded{
           [&](StringEncOptSkip &) { return false; },
           [&](StringEncOptLocal &) { return processLocal(I, Op, G, Data); },
-          [&](StringEncOptGlobal &) { return processGlobal(I, Op, G, Data); },
+          [&](StringEncOptGlobal &) { return processGlobal(Op, G, Data); },
           [&](StringEncOptReplace &Rep) {
-            return processReplace(I, Op, G, Data, Rep);
+            return processReplace(Op, G, Data, Rep);
           },
           [&](StringEncOptDefault &) {
             // Default to local, if no option is specified.
@@ -416,7 +418,7 @@ bool StringEncoding::process(Instruction &I, Use &Op, GlobalVariable &G,
   return Changed;
 }
 
-bool StringEncoding::processReplace(Instruction &I, Use &Op, GlobalVariable &G,
+bool StringEncoding::processReplace(Use &Op, GlobalVariable &G,
                                     ConstantDataSequential &Data,
                                     StringEncOptReplace &Rep) {
   auto &New = Rep.NewString;
@@ -434,16 +436,16 @@ bool StringEncoding::processReplace(Instruction &I, Use &Op, GlobalVariable &G,
     New = New.substr(0, Data.getNumElements() - 1);
   }
 
-  Constant *NewVal = ConstantDataArray::getString(I.getContext(), New);
+  Constant *NewVal = ConstantDataArray::getString(G.getContext(), New);
   G.setInitializer(NewVal);
   GVarEncInfo.insert({&G, EncodingInfo(EncodingTy::Replace)});
   return true;
 }
 
-bool StringEncoding::processGlobal(Instruction &I, Use &Op, GlobalVariable &G,
+bool StringEncoding::processGlobal(Use &Op, GlobalVariable &G,
                                    ConstantDataSequential &Data) {
-  Module *M = I.getModule();
-  LLVMContext &Ctx = I.getContext();
+  Module *M = G.getParent();
+  LLVMContext &Ctx = G.getContext();
   StringRef Str = Data.getRawDataValues();
   uint64_t StrSz = Str.size();
   size_t Max = std::numeric_limits<KeyIntTy>::max();
