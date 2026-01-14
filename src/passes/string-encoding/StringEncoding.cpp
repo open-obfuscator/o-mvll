@@ -246,6 +246,42 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   return CI;
 }
 
+bool StringEncoding::processArrayOfStrings(Instruction &CurrentI, Use &Op,
+                                           ConstantArray *CA,
+                                           ObfuscationConfig &UserConfig) {
+  SmallVector<GlobalVariable *, 8> EmbeddedStrings;
+  for (unsigned I = 0, E = CA->getNumOperands(); I != E; ++I) {
+    if (auto *GV = dyn_cast<GlobalVariable>(CA->getOperand(I))) {
+      if (isEligible(*GV))
+        if (auto *Data = dyn_cast<ConstantDataSequential>(GV->getInitializer()))
+          if (isEligible(*Data))
+            EmbeddedStrings.emplace_back(GV);
+    }
+  }
+
+  if (EmbeddedStrings.empty())
+    return false;
+
+  bool Changed = false;
+  for (GlobalVariable *S : EmbeddedStrings) {
+    auto *Data = cast<ConstantDataSequential>(S->getInitializer());
+    if (getEncoding(*S))
+      continue;
+    auto EncInfoOpt = std::make_unique<StringEncodingOpt>(
+        UserConfig.obfuscateString(CurrentI.getModule(), CurrentI.getFunction(),
+                                   Data->getAsCString().str()));
+
+    // StringEncOptGlobal only for strings in constant aggregates.
+    if (isSkip(*EncInfoOpt) || std::get_if<StringEncOptLocal>(EncInfoOpt.get()))
+      continue;
+
+    SINFO("[{}] Processing string {}", name(), Data->getAsCString());
+    Changed |= process(CurrentI, Op, *S, *Data, *EncInfoOpt);
+  }
+
+  return Changed;
+}
+
 bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
   bool Changed = false;
   llvm::Module *M = F.getParent();
@@ -263,6 +299,14 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
 
       if (!G || !G->hasInitializer())
         continue;
+
+      // Process array of strings pointer.
+      // TODO: Should properly refactor `encodeStrings` instead of having a
+      // dedicated helper here.
+      if (auto *CA = dyn_cast<ConstantArray>(G->getInitializer())) {
+        Changed |= processArrayOfStrings(I, Op, CA, UserConfig);
+        continue;
+      }
 
       // Is the global initializer part of a constant expression?
       auto IsInitializerConstantExpr = [](const GlobalVariable &G) {

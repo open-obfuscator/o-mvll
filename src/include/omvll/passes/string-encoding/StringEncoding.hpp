@@ -74,6 +74,8 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
   bool processLocal(llvm::Instruction &I, llvm::Use &Op,
                     llvm::GlobalVariable &G,
                     llvm::ConstantDataSequential &Data);
+  bool processArrayOfStrings(llvm::Instruction &CurrentI, llvm::Use &Op,
+                             llvm::ConstantArray *CA, ObfuscationConfig &);
 
   inline EncodingInfo *getEncoding(const llvm::GlobalVariable &GV) {
     if (auto It = GVarEncInfo.find(&GV); It != GVarEncInfo.end())
