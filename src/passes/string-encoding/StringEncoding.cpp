@@ -19,6 +19,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -131,7 +132,10 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   LoadInst *LoadKey = IRB.CreateLoad(IRB.getInt64Ty(), Key);
   addMetadata(*LoadKey, MetaObf(OpaqueCst));
 
-  auto *KeyVal = IRB.CreateBitCast(LoadKey, IRB.getInt64Ty());
+  FunctionType *AsmFTy =
+      FunctionType::get(IRB.getInt64Ty(), {IRB.getInt64Ty()}, false);
+  InlineAsm *IA = InlineAsm::get(AsmFTy, "", "=r,0", true);
+  CallInst *OpaqueKey = IRB.CreateCall(IA, {IRB.getInt64(KeyValI64)});
 
   LoadInst *LStrSize = IRB.CreateLoad(IRB.getInt32Ty(), StrSize);
   addMetadata(*LStrSize, MetaObf(OpaqueCst));
@@ -170,7 +174,7 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
                     CloneFunctionChangeType::DifferentModule, Returns);
   NewF->setDSOLocal(true);
 
-  std::vector<Value *> Args = {Output, Input, KeyVal, VStrSize};
+  std::vector<Value *> Args = {Output, Input, OpaqueKey, VStrSize};
 
   if (NewF->arg_size() != 4)
     fatalError(
@@ -222,7 +226,7 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   // Insert decode wrapper call site in the caller.
   IRB.SetInsertPoint(NewPt->getParent(), It);
   CI = IRB.CreateCall(Wrapper->getFunctionType(), Wrapper,
-                      {NeedDecode, Output, Input, KeyVal, VStrSize});
+                      {NeedDecode, Output, Input, OpaqueKey, VStrSize});
 
   if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
     auto [First, Last] = materializeConstantExpression(NewPt, CE);

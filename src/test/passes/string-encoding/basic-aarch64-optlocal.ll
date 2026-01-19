@@ -16,16 +16,16 @@
 
 define void @test() {
 ; CHECK-LABEL: @test(
-; CHECK:         %5 = getelementptr inbounds [13 x i8], ptr @0, i64 0, i64 0
-; CHECK-NEXT:    %6 = load i1, ptr @1, align 1
-; CHECK-NEXT:    %7 = icmp eq i1 %6, false
-; CHECK-NEXT:    br i1 %7, label %8, label %__omvll_decode_wrap.exit
-; CHECK:       8:
-; CHECK-NEXT:    call void @__omvll_decode(ptr %5, ptr @__const.main.Hello, i64 %3, i32 %4)
+; CHECK:         %6 = getelementptr inbounds [13 x i8], ptr @0, i64 0, i64 0
+; CHECK-NEXT:    %7 = load i1, ptr @1, align 1
+; CHECK-NEXT:    %8 = icmp eq i1 %7, false
+; CHECK-NEXT:    br i1 %8, label %9, label %__omvll_decode_wrap.exit
+; CHECK:       9:
+; CHECK-NEXT:    call void @__omvll_decode(ptr %6, ptr @__const.main.Hello, i64 %4, i32 %5)
 ; CHECK-NEXT:    store i1 true, ptr @1, align 1
 ; CHECK-NEXT:    br label %__omvll_decode_wrap.exit
 ; CHECK:       __omvll_decode_wrap.exit:
-; CHECK-NEXT:    %puts = call i32 @puts(ptr %5)
+; CHECK-NEXT:    %puts = call i32 @puts(ptr %6)
   %puts = call i32 @puts(ptr @__const.main.Hello)
   ret void
 }
