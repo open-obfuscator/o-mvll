@@ -155,8 +155,7 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   Value *Output = Input;
 
   if (IsLocalToFunction)
-    Output = IRB.CreateInBoundsGEP(BufferTy, ClearBuffer,
-                                   {IRB.getInt64(0), IRB.getInt64(0)});
+    Output = ClearBuffer;
 
   auto *NewF =
       Function::Create(FDecode->getFunctionType(), GlobalValue::PrivateLinkage,
@@ -243,6 +242,11 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
       Last->setOperand(0, Output);
       NewPt->setOperand(EncPtr.getOperandNo(), First);
     }
+  } else if (EncPtr.get() != &G) {
+    assert(isa<GlobalVariable>(EncPtr.get()) &&
+           "Expecting a GlobalVariable as use of NewPt?");
+    auto *ActualGV = cast<GlobalVariable>(EncPtr.get());
+    ActualGV->setInitializer(ClearBuffer);
   } else {
     NewPt->setOperand(EncPtr.getOperandNo(), Output);
   }
