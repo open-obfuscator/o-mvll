@@ -67,6 +67,18 @@ inline bool isSkip(const StringEncodingOpt &EncInfo) {
   return std::get_if<StringEncOptSkip>(&EncInfo) != nullptr;
 }
 
+static bool isObjCMethodName(const GlobalVariable &G) {
+  if (!G.hasSection())
+    return false;
+  static constexpr auto SectionNames = {"__objc_classrefs", "__objc_methname",
+                                        "__objc_selrefs"};
+  StringRef SectionName = G.getSection();
+  for (auto &Name : SectionNames)
+    if (SectionName.contains(Name))
+      return true;
+  return false;
+}
+
 GlobalVariable *extractGlobalVariable(ConstantExpr *Expr) {
   while (Expr) {
     if (Expr->getOpcode() == Instruction::IntToPtr ||
@@ -366,6 +378,11 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
       if (isSkip(*EncInfoOpt) ||
           (MaybeStringInCEInitializer &&
            std::get_if<StringEncOptGlobal>(EncInfoOpt.get()) == nullptr))
+        continue;
+
+      // Skip Objective-C method names/selectors with local encoding.
+      if (isObjCMethodName(*G) &&
+          std::get_if<StringEncOptLocal>(EncInfoOpt.get()))
         continue;
 
       SINFO("[{}] Processing string {}", name(), Data->getAsCString());
