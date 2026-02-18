@@ -77,6 +77,10 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   if (F.getInstructionCount() == 0)
     return false;
 
+  if (F.hasFnAttribute(llvm::Attribute::AlwaysInline) ||
+      F.hasFnAttribute(llvm::Attribute::InlineHint))
+    return false;
+
   if (F.isVarArg())
     return false;
 
@@ -264,17 +268,20 @@ PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
   if (ToVisit.empty())
     return PreservedAnalyses::all();
 
-  bool Changed = false;
   RNG = M.createRNG(name());
   JIT = std::make_unique<Jitter>(M.getTargetTriple());
 
+  unsigned int NumVisits = 0;
   for (Function *F : ToVisit)
-    Changed |= runOnFunction(*F);
+    NumVisits += runOnFunction(*F);
 
-  SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",
+  SINFO("[{}] Total of {} functions were modified on module {}", name(), NumVisits,
         M.getName());
 
-  return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
+  SINFO("[{}] Changes {} applied on module {}", name(), (NumVisits > 0) ? "" : "not",
+        M.getName());
+
+  return (NumVisits > 0) ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
 } // end namespace omvll
