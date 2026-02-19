@@ -141,7 +141,7 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
   size_t Counter = 0;
 
   SmallVector<Instruction *> ToErase;
-  DenseMap<Function *, size_t> ToObfuscate;
+  MapVector<Function *, size_t> ToObfuscate;
   for (Instruction &I : BB) {
     // First, check if there is O-MVLL metadata associated with the current
     // instruction. If it is the case, access the number of iterations.
