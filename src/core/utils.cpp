@@ -404,7 +404,7 @@ size_t reg2mem(Function &F) {
   auto AllocaInsertionPoint = BCI->getIterator();
 #else
   auto AllocaInsertionPoint = BCI;
-#endif  
+#endif
 
   // Find the escaped instructions. But don't create stack slots for
   // allocas in entry block.
@@ -589,14 +589,18 @@ bool isEHBlock(const BasicBlock &BB) {
 // Default value is false.
 bool RandomGenerator::Seeded = false;
 
-int RandomGenerator::generate() {
+int RandomGenerator::generateFullRand() {
   if (!RandomGenerator::Seeded) {
     std::srand(Config.ProbabilitySeed);
     RandomGenerator::Seeded = true;
   }
 
+  return std::rand();
+}
+
+int RandomGenerator::generate() {
   // Generate number between 0 and 99.
-  return std::rand() % 100;
+  return generateFullRand() % 100;
 }
 
 int RandomGenerator::checkProbability(int Target) {
