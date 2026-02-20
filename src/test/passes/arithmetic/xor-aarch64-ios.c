@@ -13,77 +13,77 @@
 
 // R0-LABEL: _memcpy_xor:
 // R0:       LBB0_2:
-// R0:           ldrb	w11, [x1], #1
-// R0:           eor	w11, w11, w9
-// R0:           strb	w11, [x10], #1
-// R0:           subs	x8, x8, #1
-// R0:           b.ne	LBB0_2
+// R0-NEXT:      ldrb    w11, [x1], #1
+// R0-NEXT:      eor     w11, w11, w9
+// R0-NEXT:      strb    w11, [x10], #1
+// R0-NEXT:      subs    x8, x8, #1
+// R0-NEXT:      b.ne    LBB0_2
 
-// FIXME: It seems like rounds=1 doesn't actually do anything!
 // R1-LABEL: _memcpy_xor:
 // R1:       LBB0_2:
-// R1:           ldrb	w11, [x1], #1
-// R1:           eor	w11, w11, w9
-// R1:           strb	w11, [x10], #1
-// R1:           subs	x8, x8, #1
-// R1:           b.ne	LBB0_2
+// R1-NEXT:      ldrb    w11, [x1], #1
+// R1-NEXT:      bic     w12, w9, w11, lsl #1
+// R1-NEXT:      add     w11, w11, w12
+// R1-NEXT:      sub     w11, w11, #35
+// R1-NEXT:      strb    w11, [x10], #1
+// R1-NEXT:      subs    x8, x8, #1
+// R1-NEXT:      b.ne    LBB0_2
 
 // R2-LABEL: _memcpy_xor:
 // R2:       LBB0_2:
-// R2:       	ldrsb	w11, [x1, w8, uxtw]
-// R2:       	orn	w12, w9, w11
-// R2:       	add	w12, w11, w12
-// R2:       	add	w12, w12, #36
-// R2:       	and	w11, w11, w10
-// R2:       	neg	w11, w11
-// R2:       	eor	w13, w12, w11
-// R2:       	and	w11, w12, w11
-// R2:       	add	w11, w13, w11, lsl #1
-// R2:       	strb	w11, [x0, w8, uxtw]
-// R2:       	and	w11, w8, #0x1
-// R2:       	mvn	w12, w8
-// R2:       	orr	w12, w12, #0xfffffffe
-// R2-DAG:      add	w8, w8, w12
-// R2-DAG:      add	w8, w8, w11
-// R2:       	add	w8, w8, #2
-// R2:       	cmp	w8, w2
-// R2:       	b.lo	LBB0_2
+// R2-NEXT:      ldrsb   w11, [x1], #1
+// R2-NEXT:      mvn     w12, w11
+// R2-NEXT:      add     w12, w11, w12, lsl #1
+// R2-NEXT:      add     w12, w12, #1
+// R2-NEXT:      orn     w13, w9, w12
+// R2-NEXT:      add     w12, w12, w13
+// R2-NEXT:      eor     w13, w11, #0xdddddddd
+// R2-NEXT:      lsl     w11, w11, #1
+// R2-NEXT:      and     w11, w11, #0xbbbbbbbb
+// R2-NEXT:      add     w11, w11, w13
+// R2-NEXT:      add     w11, w11, w12, lsl #1
+// R2-NEXT:      add     w11, w11, #2
+// R2-NEXT:      strb    w11, [x10], #1
+// R2-NEXT:      subs    x8, x8, #1
+// R2-NEXT:      b.ne    LBB0_2
 
 // R3-LABEL: _memcpy_xor:
 // R3:       LBB0_2:
-// R3:       	ldrb	w10, [x1, w9, uxtw]
-// R3:       	orn	w11, w8, w10
-// R3:       	add	w11, w10, w11
-// R3:       	add	w12, w11, #36
-// R3:       	add	w10, w10, #35
-// R3:       	sub	w11, w8, w11
-// R3:       	eor	w13, w10, w11
-// R3:       	and	w10, w10, w11
-// R3:       	add	w10, w13, w10, lsl #1
-// R3:       	neg	w10, w10
-// R3:       	eor	w11, w10, w12
-// R3:       	and	w10, w10, w12
-// R3:       	add	w10, w11, w10, lsl #1
-// R3:       	strb	w10, [x0, w9, uxtw]
-// R3:       	add	w10, w9, #1
-// R3:       	add	w11, w9, #2
-// R3:       	mvn	w9, w9
-// R3:       	orr	w9, w9, #0xfffffffe
-// R3:       	neg	w12, w11
-// R3:       	sub	w12, w12, w9
-// R3:       	eor	w13, w10, w12
-// R3:       	and	w10, w10, w12
-// R3:       	add	w10, w13, w10, lsl #1
-// R3:       	and	w9, w11, w9
-// R3:       	sub	w11, w9, #1
-// R3:       	and	w11, w10, w11
-// R3:       	add	w12, w10, w9
-// R3:       	neg	w9, w9
-// R3:       	orn	w9, w9, w10
-// R3:       	add	w9, w12, w9
-// R3:       	add	w9, w9, w11
-// R3:       	cmp	w9, w2
-// R3:       	b.lo	LBB0_2
+// R3-NEXT:      ldrsb   w12, [x1, w8, uxtw]
+// R3-NEXT:      mvn     w13, w12
+// R3-NEXT:      add     w13, w12, w13, lsl #1
+// R3-NEXT:      add     w13, w13, #1
+// R3-NEXT:      mvn     w14, w13
+// R3-NEXT:      add     w14, w13, w14, lsl #1
+// R3-NEXT:      add     w14, w14, #1
+// R3-NEXT:      orn     w15, w9, w14
+// R3-NEXT:      add     w13, w13, w14
+// R3-NEXT:      add     w13, w13, w15
+// R3-NEXT:      lsl     w13, w13, #1
+// R3-NEXT:      and     w14, w10, w12, lsl #1
+// R3-NEXT:      eor     w15, w14, w10
+// R3-NEXT:      add     w12, w12, w14
+// R3-NEXT:      add     w12, w12, w15
+// R3-NEXT:      add     w14, w12, #35
+// R3-NEXT:      add     w13, w13, #74
+// R3-NEXT:      orn     w15, w13, w14
+// R3-NEXT:      add     w12, w12, w15
+// R3-NEXT:      orr     w13, w13, w14
+// R3-NEXT:      add     w12, w12, w13
+// R3-NEXT:      add     w12, w12, #36
+// R3-NEXT:      strb    w12, [x0, w8, uxtw]
+// R3-NEXT:      bic     w12, w11, w8, lsl #1
+// R3-NEXT:      add     w12, w8, w12
+// R3-NEXT:      mvn     w13, w8
+// R3-NEXT:      orr     w13, w13, #0x2
+// R3-NEXT:      add     w13, w8, w13
+// R3-NEXT:      add     w12, w12, w13, lsl #1
+// R3-NEXT:      and     w12, w12, #0xfffffffe
+// R3-NEXT:      orr     w8, w8, #0xfffffffe
+// R3-NEXT:      add     w8, w8, w12
+// R3-NEXT:      add     w8, w8, #1
+// R3-NEXT:      cmp     w8, w2
+// R3-NEXT:      b.lo    LBB0_2
 
 void memcpy_xor(char *dst, const char *src, unsigned len) {
   for (unsigned i = 0; i < len; i += 1) {
