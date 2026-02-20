@@ -96,6 +96,7 @@ private:
   static bool Seeded;
 
 public:
+  static int generateFullRand();
   static int generate();
   static int checkProbability(int Target);
 };
