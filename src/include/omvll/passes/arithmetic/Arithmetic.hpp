@@ -8,7 +8,6 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 
 #include "omvll/passes/arithmetic/ArithmeticOpt.hpp"
 
@@ -35,7 +34,6 @@ struct Arithmetic : llvm::PassInfoMixin<Arithmetic> {
 
 private:
   llvm::DenseMap<llvm::Function *, ArithmeticOpt> Opts;
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
 };
 
 } // end namespace omvll
