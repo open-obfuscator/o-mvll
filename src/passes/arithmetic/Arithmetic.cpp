@@ -53,10 +53,13 @@ struct ArithmeticVisitor
 
     case 1:
       // (X - Y) + (2 * (~X & Y))
-      SINFO("[{}] XOR choosing option (X - Y) + (2 * (~X & Y))", Arithmetic::name());
+      SINFO("[{}] XOR choosing option (X - Y) + (2 * (~X & Y))",
+            Arithmetic::name());
       Value *InnerAnd = Builder.CreateAnd(Builder.CreateNot(X), Y);
       return BinaryOperator::CreateAdd(
-          Builder.CreateSub(X, Y), Builder.CreateShl(InnerAnd, 1), "mba_xor2");
+          Builder.CreateSub(X, Y),
+          Builder.CreateMul(InnerAnd, ConstantInt::get(X->getType(), 2)),
+          "mba_xor2");
     }
 
     return nullptr;
@@ -160,7 +163,8 @@ struct ArithmeticVisitor
             Arithmetic::name());
       return BinaryOperator::CreateAdd(
           Builder.CreateXor(X, Builder.CreateNeg(Y)),
-          Builder.CreateShl(Builder.CreateAnd(X, Builder.CreateNeg(Y)), 1),
+          Builder.CreateMul(Builder.CreateAnd(X, Builder.CreateNeg(Y)),
+                            ConstantInt::get(X->getType(), 2)),
           "mba_sub1");
 
     case 1:
