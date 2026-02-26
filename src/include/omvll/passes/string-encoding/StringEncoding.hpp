@@ -64,6 +64,10 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
                              llvm::GlobalVariable &G,
                              llvm::ConstantDataSequential &Data,
                              const EncodingInfo &Info);
+  llvm::CallInst *createDecodingTrampoline(
+      llvm::GlobalVariable &G, llvm::Use &EncPtr, llvm::Instruction *NewPt,
+      uint64_t KeyValI64, uint64_t Size, const StringEncoding::EncodingInfo &EI,
+      bool IsLocalToFunction = false);
   bool process(llvm::Instruction &I, llvm::Use &Op, llvm::GlobalVariable &G,
                llvm::ConstantDataSequential &Data, StringEncodingOpt &Opt);
   bool processReplace(llvm::Use &Op, llvm::GlobalVariable &G,
@@ -75,7 +79,8 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
                     llvm::GlobalVariable &G,
                     llvm::ConstantDataSequential &Data);
   bool processArrayOfStrings(llvm::Instruction &CurrentI, llvm::Use &Op,
-                             llvm::ConstantArray *CA, ObfuscationConfig &);
+                             llvm::ConstantArray *CA, llvm::GlobalVariable *GV,
+                             ObfuscationConfig &);
 
   inline EncodingInfo *getEncoding(const llvm::GlobalVariable &GV) {
     if (auto It = GVarEncInfo.find(&GV); It != GVarEncInfo.end())
@@ -87,6 +92,7 @@ private:
   void genRoutines(const llvm::Triple &Triple, EncodingInfo &EI,
                    llvm::LLVMContext &Ctx);
   void annotateRoutine(llvm::Module &M);
+  llvm::Constant *reconstructConstantArray(llvm::ConstantArray *CA);
 
   std::vector<llvm::CallInst *> ToInline;
   std::vector<llvm::Function *> Ctors;
@@ -94,6 +100,8 @@ private:
   llvm::SmallSet<llvm::GlobalVariable *, 10> Obf;
   llvm::DenseMap<llvm::ConstantDataSequential *, std::vector<uint8_t>> KeyMap;
   llvm::DenseMap<llvm::GlobalVariable *, EncodingInfo> GVarEncInfo;
+  llvm::DenseMap<llvm::GlobalVariable *, llvm::GlobalVariable *>
+      OriginalToDecoded;
 };
 
 } // end namespace omvll

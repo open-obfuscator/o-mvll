@@ -113,11 +113,10 @@ materializeConstantExpression(Instruction *Point, ConstantExpr *CE) {
   return {Inst, Prev};
 }
 
-static CallInst *
-createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
-                         uint64_t KeyValI64, uint64_t Size,
-                         const StringEncoding::EncodingInfo &EI,
-                         bool IsLocalToFunction = false) {
+CallInst *StringEncoding::createDecodingTrampoline(
+    GlobalVariable &G, Use &EncPtr, Instruction *NewPt, uint64_t KeyValI64,
+    uint64_t Size, const StringEncoding::EncodingInfo &EI,
+    bool IsLocalToFunction) {
   Module *M = NewPt->getModule();
   LLVMContext &Ctx = NewPt->getContext();
 
@@ -131,6 +130,8 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   GlobalVariable *ClearBuffer =
       new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
                          Constant::getNullValue(BufferTy));
+  // For this global variable, use the most recent buffer for decoding.
+  OriginalToDecoded[&G] = ClearBuffer;
 
   AllocaInst *Key = IRB.CreateAlloca(IRB.getInt64Ty());
   AllocaInst *StrSize = IRB.CreateAlloca(IRB.getInt32Ty());
@@ -266,37 +267,100 @@ createDecodingTrampoline(GlobalVariable &G, Use &EncPtr, Instruction *NewPt,
   return CI;
 }
 
-bool StringEncoding::processArrayOfStrings(Instruction &CurrentI, Use &Op,
-                                           ConstantArray *CA,
-                                           ObfuscationConfig &UserConfig) {
-  SmallVector<GlobalVariable *, 8> EmbeddedStrings;
+static void collectEligibleStrings(ConstantArray *CA,
+                                   SmallVectorImpl<GlobalVariable *> &Out) {
   for (unsigned I = 0, E = CA->getNumOperands(); I != E; ++I) {
-    if (auto *GV = dyn_cast<GlobalVariable>(CA->getOperand(I))) {
+    Constant *Op = CA->getOperand(I);
+    if (auto *NestedCA = dyn_cast<ConstantArray>(Op)) {
+      collectEligibleStrings(NestedCA, Out);
+    } else if (auto *GV = dyn_cast<GlobalVariable>(Op)) {
+      auto *Data = dyn_cast<ConstantDataSequential>(GV->getInitializer());
+      if (!Data)
+        continue;
+
       if (isEligible(*GV))
-        if (auto *Data = dyn_cast<ConstantDataSequential>(GV->getInitializer()))
-          if (isEligible(*Data))
-            EmbeddedStrings.emplace_back(GV);
+        Out.emplace_back(GV);
+    }
+  }
+}
+
+Constant *StringEncoding::reconstructConstantArray(ConstantArray *CA) {
+  SmallVector<Constant *, 16> NewOps;
+  bool Changed = false;
+
+  for (unsigned I = 0, E = CA->getNumOperands(); I != E; ++I) {
+    Constant *Op = CA->getOperand(I);
+    if (auto *NestedCA = dyn_cast<ConstantArray>(Op)) {
+      Constant *NewNestedCA = reconstructConstantArray(NestedCA);
+      NewOps.emplace_back(NewNestedCA);
+      Changed = (NewNestedCA != NestedCA);
+    } else if (auto *GV = dyn_cast<GlobalVariable>(Op)) {
+      auto It = OriginalToDecoded.find(GV);
+      if (It != OriginalToDecoded.end()) {
+        NewOps.emplace_back(It->second);
+        Changed = true;
+      } else {
+        NewOps.emplace_back(GV);
+      }
+    } else {
+      NewOps.emplace_back(Op);
     }
   }
 
-  if (EmbeddedStrings.empty())
-    return false;
+  if (!Changed)
+    return CA;
+  return ConstantArray::get(CA->getType(), NewOps);
+}
 
+bool StringEncoding::processArrayOfStrings(Instruction &CurrentI, Use &Op,
+                                           ConstantArray *CA,
+                                           GlobalVariable *GV,
+                                           ObfuscationConfig &UserConfig) {
   bool Changed = false;
+
+  // Collect all eligible strings. We visit the array operands recursively in
+  // order to support array of arrays as well.
+  SmallVector<GlobalVariable *, 16> EmbeddedStrings;
+  collectEligibleStrings(CA, EmbeddedStrings);
+  if (EmbeddedStrings.empty())
+    return Changed;
+
+  // Process each string found, by only injecting the decoding routine if
+  // already been encoded. This is only needed when employing local encoding.
+  bool IsLocal = false;
   for (GlobalVariable *S : EmbeddedStrings) {
     auto *Data = cast<ConstantDataSequential>(S->getInitializer());
-    if (getEncoding(*S))
+    if (EncodingInfo *EI = getEncoding(*S);
+        EI && EI->Type == EncodingTy::Local) {
+      IsLocal = true;
+      Changed |= injectDecoding(CurrentI, Op, *S, *Data, *EI);
       continue;
+    }
+
     auto EncInfoOpt = std::make_unique<StringEncodingOpt>(
         UserConfig.obfuscateString(CurrentI.getModule(), CurrentI.getFunction(),
                                    Data->getAsCString().str()));
-
-    // StringEncOptGlobal only for strings in constant aggregates.
-    if (isSkip(*EncInfoOpt) || std::get_if<StringEncOptLocal>(EncInfoOpt.get()))
+    if (isSkip(*EncInfoOpt))
       continue;
+    if (std::get_if<StringEncOptLocal>(EncInfoOpt.get()))
+      IsLocal = true;
 
     SINFO("[{}] Processing string {}", name(), Data->getAsCString());
     Changed |= process(CurrentI, Op, *S, *Data, *EncInfoOpt);
+  }
+
+  // If local, create a global variable w/ a new constant array initializer.
+  if (Changed && IsLocal) {
+    Constant *NewCA = reconstructConstantArray(CA);
+    if (NewCA != CA) {
+      GlobalVariable *NewGV =
+          new GlobalVariable(*CurrentI.getModule(), CA->getType(), false,
+                             GlobalValue::InternalLinkage, NewCA);
+      CurrentI.setOperand(Op.getOperandNo(), NewGV);
+    }
+
+    if (GV->use_empty())
+      GV->eraseFromParent();
   }
 
   return Changed;
@@ -323,8 +387,9 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
       // Process array of strings pointer.
       // TODO: Should properly refactor `encodeStrings` instead of having a
       // dedicated helper here.
-      if (auto *CA = dyn_cast<ConstantArray>(G->getInitializer())) {
-        Changed |= processArrayOfStrings(I, Op, CA, UserConfig);
+      if (auto *CA = dyn_cast<ConstantArray>(G->getInitializer());
+          CA && G->hasOneUse()) {
+        Changed |= processArrayOfStrings(I, Op, CA, G, UserConfig);
         continue;
       }
 

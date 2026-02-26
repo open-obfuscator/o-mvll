@@ -15,6 +15,9 @@
 
 @.str.1 = private constant [7 x i8] c"1Hello\00", align 1
 @.str.2 = private constant [7 x i8] c"2Hello\00", align 1
+
+; CHECK: @__const.array = private unnamed_addr constant [2 x ptr] [ptr @[[STR1:.*]], ptr @[[STR2:.*]]], align 8
+; CHECK: @llvm.global_ctors = appending global [2 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr  @[[__OMVLL_CTOR0:.*]], ptr null }, { i32, ptr, ptr } { i32 0, ptr @[[__OMVLL_CTOR1:.*]], ptr null }]
 @__const.array = private constant [2 x ptr] [ptr @.str.1, ptr @.str.2], align 8
 
 define void @copy(ptr %p) {
