@@ -124,7 +124,6 @@ bool FunctionOutline::process(Function &F, LLVMContext &Ctx,
   if (ToOutline.empty())
     return false;
 
-  CodeExtractorAnalysisCache CEAC(F);
   unsigned Outlined = 0;
   for (BasicBlock *BB : ToOutline) {
     SmallVector<BasicBlock *, 1> Region{BB};
@@ -141,6 +140,7 @@ bool FunctionOutline::process(Function &F, LLVMContext &Ctx,
 
     // Outline region and replace the original block with a call-site to the
     // newly-created function.
+    CodeExtractorAnalysisCache CEAC(F);
     if (auto *OutlinedFn = CE.extractCodeRegion(CEAC)) {
       SDEBUG("[{}] New outlined function {}", name(), OutlinedFn->getName());
       eraseLifetimeMarkers(OutlinedFn);
