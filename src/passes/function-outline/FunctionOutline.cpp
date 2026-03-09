@@ -41,9 +41,16 @@ static bool isStackFrameDependentIntrinsic(Intrinsic::ID ID) {
 
 static bool outliningMayBeUnfavorable(const BasicBlock &BB) {
   for (const Instruction &I : BB) {
-    if (auto *II = dyn_cast<IntrinsicInst>(&I))
+    if (auto *II = dyn_cast<IntrinsicInst>(&I)) {
       if (isStackFrameDependentIntrinsic(II->getIntrinsicID()))
         return true;
+
+      StringRef Name = II->getCalledFunction()->getName();
+      if (Name.starts_with("llvm.va_start") ||
+          Name.starts_with("llvm.va_copy") || Name.starts_with("llvm.va_end")) {
+        return true;
+      }
+    }
 
     if (auto *CB = dyn_cast<CallBase>(&I)) {
       if (CB->isMustTailCall())
