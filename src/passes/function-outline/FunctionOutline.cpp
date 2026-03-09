@@ -64,6 +64,18 @@ static bool outliningMayBeUnfavorable(const BasicBlock &BB) {
   return false;
 }
 
+static bool hasAllocaInputWithLifetime(const SetVector<Value *> &Inputs) {
+  for (Value *V : Inputs) {
+    auto *AI = dyn_cast<AllocaInst>(V);
+    if (!AI)
+      continue;
+    for (const User *U : AI->users())
+      if (isa<LifetimeIntrinsic>(U))
+        return true;
+  }
+  return false;
+}
+
 static bool isOutlineCandidate(const BasicBlock &BB) {
   if (BB.size() < 3)
     return false;
@@ -144,6 +156,12 @@ bool FunctionOutline::process(Function &F, LLVMContext &Ctx,
     SetVector<Value *> Inputs, Outputs, SinkCands;
     CE.findInputsOutputs(Inputs, Outputs, SinkCands);
     if (hasSwiftErrorOrSwiftSelfAttribute(Inputs))
+      continue;
+
+    // Skip blocks whose alloca inputs already have lifetime markers. CodeExtractor
+    // always injects a lifetime.start for every alloca crossing the boundary,
+    // which would create a duplicate and allow DSE to treat prior stores as dead.
+    if (hasAllocaInputWithLifetime(Inputs))
       continue;
 
     // Outline region and replace the original block with a call-site to the
