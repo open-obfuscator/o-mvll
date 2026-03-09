@@ -589,18 +589,44 @@ bool isEHBlock(const BasicBlock &BB) {
 // Default value is false.
 bool RandomGenerator::Seeded = false;
 
-int RandomGenerator::generateFullRand() {
+uint64_t RandomGenerator::generateFullRand() {
   if (!RandomGenerator::Seeded) {
     std::srand(Config.ProbabilitySeed);
     RandomGenerator::Seeded = true;
   }
 
-  return std::rand();
+  uint64_t r = 0;
+  for (int i = 0; i < 5; ++i) {
+    r = (r << 15) ^ static_cast<uint64_t>(std::rand() & 0x7FFF);
+  }
+
+  return r;
+}
+
+// Generate a random number: a <= rnd <= b
+uint64_t RandomGenerator::generateRange(uint64_t a, uint64_t b) {
+  if (a > b)
+    report_fatal_error("The range for a random must be a <= b.");
+
+  uint64_t range = b - a + 1;
+
+  if (range == 0)
+    return generateFullRand();
+
+  uint64_t limit = std::numeric_limits<uint64_t>::max() -
+                   (std::numeric_limits<uint64_t>::max() % range);
+
+  uint64_t rnd;
+  do {
+    rnd = generateFullRand();
+  } while (rnd > limit);
+
+  return a + (rnd % range);
 }
 
 int RandomGenerator::generate() {
   // Generate number between 0 and 99.
-  return generateFullRand() % 100;
+  return generateRange(0, 99);
 }
 
 int RandomGenerator::checkProbability(int Target) {

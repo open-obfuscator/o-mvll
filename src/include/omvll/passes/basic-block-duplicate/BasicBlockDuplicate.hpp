@@ -18,7 +18,6 @@ struct BasicBlockDuplicate : llvm::PassInfoMixin<BasicBlockDuplicate> {
 private:
   void initializeCoinflipRoutine(llvm::Module &M);
   llvm::FunctionCallee CoinflipCallee;
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
 };
 
 } // end namespace omvll

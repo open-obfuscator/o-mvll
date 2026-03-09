@@ -15,9 +15,6 @@ struct IndirectCall : llvm::PassInfoMixin<IndirectCall> {
 
   bool process(llvm::Function &F, const llvm::DataLayout &DL,
                llvm::LLVMContext &Ctx);
-
-private:
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
 };
 
 } // end namespace omvll

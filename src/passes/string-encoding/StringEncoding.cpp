@@ -468,7 +468,6 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
   SINFO("[{}] Executing on module {}", name(), M.getName());
   auto &Config = PyConfig::instance();
   ObfuscationConfig *UserConfig = Config.getUserConfig();
-  RNG = M.createRNG(name());
 
   std::vector<Function *> ToVisit;
   for (Function &F : M) {
@@ -583,8 +582,7 @@ bool StringEncoding::processGlobal(Use &Op, GlobalVariable &G,
   StringRef Str = Data.getRawDataValues();
   uint64_t StrSz = Str.size();
   size_t Max = std::numeric_limits<KeyIntTy>::max();
-  std::uniform_int_distribution<KeyIntTy> Dist(1, Max);
-  uint64_t Key = Dist(*RNG);
+  uint64_t Key = RandomGenerator::generateRange(1, Max);
 
   SDEBUG("Key for {}: 0x{:010x}", Str.str(), Key);
 
@@ -629,8 +627,7 @@ bool StringEncoding::processGlobal(Use &Op, GlobalVariable &G,
 void StringEncoding::genRoutines(const Triple &TargetTriple, EncodingInfo &EI,
                                  LLVMContext &Ctx) {
   unsigned NumBuiltinRoutines = getNumEncodeDecodeRoutines();
-  std::uniform_int_distribution<size_t> Dist(0, NumBuiltinRoutines - 1);
-  size_t Idx = Dist(*RNG);
+  size_t Idx = RandomGenerator::generateRange(0, NumBuiltinRoutines - 1);
 
   EI.EncodeFn = getEncodeRoutine(Idx);
 
@@ -669,8 +666,7 @@ bool StringEncoding::processLocal(Instruction &I, Use &Op, GlobalVariable &G,
   StringRef Str = Data.getRawDataValues();
   uint64_t StrSz = Str.size();
   size_t Max = std::numeric_limits<KeyIntTy>::max();
-  std::uniform_int_distribution<KeyIntTy> Dist(1, Max);
-  uint64_t Key = Dist(*RNG);
+  uint64_t Key = RandomGenerator::generateRange(1, Max);
 
   SDEBUG("Key for {}: 0x{:010x}", Str.str(), Key);
 

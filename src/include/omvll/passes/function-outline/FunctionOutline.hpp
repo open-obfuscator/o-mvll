@@ -14,9 +14,6 @@ struct FunctionOutline : llvm::PassInfoMixin<FunctionOutline> {
                               llvm::ModuleAnalysisManager &MAM);
 
   bool process(llvm::Function &F, llvm::LLVMContext &Ctx, unsigned);
-
-private:
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
 };
 
 } // end namespace omvll

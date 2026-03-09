@@ -9,9 +9,8 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/TargetParser/Triple.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/RandomNumberGenerator.h"
+#include "llvm/TargetParser/Triple.h"
 
 #include "omvll/passes/string-encoding/Routines.h"
 #include "omvll/passes/string-encoding/StringEncodingOpt.hpp"
@@ -96,7 +95,6 @@ private:
 
   std::vector<llvm::CallInst *> ToInline;
   std::vector<llvm::Function *> Ctors;
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
   llvm::SmallSet<llvm::GlobalVariable *, 10> Obf;
   llvm::DenseMap<llvm::ConstantDataSequential *, std::vector<uint8_t>> KeyMap;
   llvm::DenseMap<llvm::GlobalVariable *, EncodingInfo> GVarEncInfo;

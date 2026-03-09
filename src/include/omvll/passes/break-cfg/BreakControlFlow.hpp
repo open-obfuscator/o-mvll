@@ -26,7 +26,6 @@ struct BreakControlFlow : llvm::PassInfoMixin<BreakControlFlow> {
   bool runOnFunction(llvm::Function &F);
 
   std::unique_ptr<Jitter> JIT;
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
 };
 
 } // end namespace omvll
