@@ -10,7 +10,6 @@
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/NoFolder.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "omvll/ObfuscationConfig.hpp"
@@ -100,16 +99,13 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
 }
 
 template <typename CasesT, typename... ArgsT>
-static Value *
-getOpaqueRandomRoutine(std::unique_ptr<llvm::RandomNumberGenerator> &RNG,
-                       const CasesT &Cases, ArgsT &&...Args) {
+static Value *getOpaqueRandomRoutine(const CasesT &Cases, ArgsT &&...Args) {
   static constexpr auto MaxCases = 3;
-  static_assert(RandomNumberGenerator::max() >= MaxCases);
-  std::uniform_int_distribution<size_t> Dist(0, MaxCases - 1);
-  const auto Idx = Dist(*RNG);
+  static_assert(std::numeric_limits<uint64_t>::max() >= MaxCases);
+  const auto Idx = RandomGenerator::generateRange(0, MaxCases - 1);
   assert(Idx < Cases.size() && "Shouldn't have Idx out of bounds?");
 
-  if (Value *V = (*Cases[Idx])(std::forward<ArgsT>(Args)..., *RNG))
+  if (Value *V = (*Cases[Idx])(std::forward<ArgsT>(Args)...))
     return V;
   return nullptr;
 }
@@ -118,21 +114,21 @@ Value *OpaqueConstants::getOpaqueZero(Instruction &I, OpaqueContext &Ctx,
                                       Type *Ty) {
   static constexpr std::array Cases{&getOpaqueZero1, &getOpaqueZero2,
                                     &getOpaqueZero3};
-  return getOpaqueRandomRoutine(RNG, Cases, I, Ctx, Ty);
+  return getOpaqueRandomRoutine(Cases, I, Ctx, Ty);
 }
 
 Value *OpaqueConstants::getOpaqueOne(Instruction &I, OpaqueContext &Ctx,
                                      Type *Ty) {
   static constexpr std::array Cases{&getOpaqueOne1, &getOpaqueOne2,
                                     &getOpaqueOne3};
-  return getOpaqueRandomRoutine(RNG, Cases, I, Ctx, Ty);
+  return getOpaqueRandomRoutine(Cases, I, Ctx, Ty);
 }
 
 Value *OpaqueConstants::getOpaqueCst(Instruction &I, OpaqueContext &Ctx,
                                      const ConstantInt &CI) {
   static constexpr std::array Cases{&getOpaqueConst1, &getOpaqueConst2,
                                     &getOpaqueConst3};
-  return getOpaqueRandomRoutine(RNG, Cases, I, Ctx, CI);
+  return getOpaqueRandomRoutine(Cases, I, Ctx, CI);
 }
 
 bool OpaqueConstants::process(Instruction &I, OpaqueConstantsOpt *Opt) {
@@ -206,7 +202,6 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
 
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
-  RNG = M.createRNG(name());
 
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F) || F.isDeclaration() ||

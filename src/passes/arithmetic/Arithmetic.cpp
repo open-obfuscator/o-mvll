@@ -47,13 +47,14 @@ struct ArithmeticVisitor
     switch (RandomGenerator::generateFullRand() % 2) {
     case 0:
       // (X | Y) - (X & Y)
-      SINFO("[{}] XOR choosing option (X | Y) - (X & Y)", Arithmetic::name());
+      SINFO("[{}][Case 0] XOR choosing option (X | Y) - (X & Y)",
+            Arithmetic::name());
       return BinaryOperator::CreateSub(Builder.CreateOr(X, Y),
                                        Builder.CreateAnd(X, Y), "mba_xor1");
 
     case 1:
       // (X - Y) + (2 * (~X & Y))
-      SINFO("[{}] XOR choosing option (X - Y) + (2 * (~X & Y))",
+      SINFO("[{}][Case 1] XOR choosing option (X - Y) + (2 * (~X & Y))",
             Arithmetic::name());
       Value *InnerAnd = Builder.CreateAnd(Builder.CreateNot(X), Y);
       return BinaryOperator::CreateAdd(
@@ -75,13 +76,15 @@ struct ArithmeticVisitor
     switch (RandomGenerator::generateFullRand() % 2) {
     case 0:
       // (X & Y) + (X | Y)
-      SINFO("[{}] ADD choosing option (X & Y) + (X | Y)", Arithmetic::name());
+      SINFO("[{}][Case 0] ADD choosing option (X & Y) + (X | Y)",
+            Arithmetic::name());
       return BinaryOperator::CreateAdd(Builder.CreateAnd(X, Y),
                                        Builder.CreateOr(X, Y), "mba_add1");
 
     case 1:
       // (X - ~Y) - 1
-      SINFO("[{}] ADD choosing option (X - ~Y) - 1", Arithmetic::name());
+      SINFO("[{}][Case 1] ADD choosing option (X - ~Y) - 1",
+            Arithmetic::name());
       Value *InnerSub = Builder.CreateSub(X, Builder.CreateNot(Y));
       return BinaryOperator::CreateSub(
           InnerSub, ConstantInt::get(X->getType(), 1), "mba_add2");
@@ -100,13 +103,15 @@ struct ArithmeticVisitor
     switch (RandomGenerator::generateFullRand() % 2) {
     case 0:
       // (X + Y) - (X | Y)
-      SINFO("[{}] AND choosing option (X + Y) - (X | Y)", Arithmetic::name());
+      SINFO("[{}][Case 0] AND choosing option (X + Y) - (X | Y)",
+            Arithmetic::name());
       return BinaryOperator::CreateSub(Builder.CreateAdd(X, Y),
                                        Builder.CreateOr(X, Y), "mba_and1");
 
     case 1:
       // (~X | Y) - ~X
-      SINFO("[{}] AND choosing option (~X | Y) - ~X", Arithmetic::name());
+      SINFO("[{}][Case 1] AND choosing option (~X | Y) - ~X",
+            Arithmetic::name());
       Value *InnerOr = Builder.CreateOr(Builder.CreateNot(X), Y);
       return BinaryOperator::CreateSub(InnerOr, Builder.CreateNot(X),
                                        "mba_and2");
@@ -125,7 +130,7 @@ struct ArithmeticVisitor
     switch (RandomGenerator::generateFullRand() % 3) {
     case 0:
       // X + Y + 1 + (~X | ~Y)
-      SINFO("[{}] OR choosing option X + Y + 1 + (~X | ~Y)",
+      SINFO("[{}][Case 0] OR choosing option X + Y + 1 + (~X | ~Y)",
             Arithmetic::name());
       return BinaryOperator::CreateAdd(
           Builder.CreateAdd(Builder.CreateAdd(X, Y),
@@ -135,13 +140,14 @@ struct ArithmeticVisitor
 
     case 1:
       // (X & ~Y) + Y
-      SINFO("[{}] OR choosing option (X & ~Y) + Y", Arithmetic::name());
+      SINFO("[{}][Case 1] OR choosing option (X & ~Y) + Y", Arithmetic::name());
       return BinaryOperator::CreateAdd(
           Builder.CreateAnd(X, Builder.CreateNot(Y)), Y, "mba_or2");
 
     case 2:
       // (X ^ Y) + (X & Y)
-      SINFO("[{}] OR choosing option (X ^ Y) + (X & Y)", Arithmetic::name());
+      SINFO("[{}][Case 2] OR choosing option (X ^ Y) + (X & Y)",
+            Arithmetic::name());
       return BinaryOperator::CreateAdd(Builder.CreateXor(X, Y),
                                        Builder.CreateAnd(X, Y), "mba_or3");
     }
@@ -159,7 +165,7 @@ struct ArithmeticVisitor
     switch (RandomGenerator::generateFullRand() % 2) {
     case 0:
       // (X ^ -Y) + (2 * (X & -Y))
-      SINFO("[{}] SUB choosing option (X ^ -Y) + (2 * (X & -Y))",
+      SINFO("[{}][Case 0] SUB choosing option (X ^ -Y) + (2 * (X & -Y))",
             Arithmetic::name());
       return BinaryOperator::CreateAdd(
           Builder.CreateXor(X, Builder.CreateNeg(Y)),
@@ -169,7 +175,7 @@ struct ArithmeticVisitor
 
     case 1:
       // X + ~Y + 1
-      SINFO("[{}] SUB choosing option X + ~Y + 1", Arithmetic::name());
+      SINFO("[{}][Case 1] SUB choosing option X + ~Y + 1", Arithmetic::name());
       return BinaryOperator::CreateAdd(
           Builder.CreateAdd(X, Builder.CreateNot(Y)),
           ConstantInt::get(X->getType(), 1), "mba_sub2");

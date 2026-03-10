@@ -25,70 +25,86 @@
 
 // CHECK-LABEL: memcpy_xor:
 // CHECK:       .LBB0_2:
-// CHECK-NEXT:      movl	%eax, %ecx
-// CHECK-NEXT:      movzbl	(%rsi,%rcx), %r8d
-// CHECK-NEXT:      movl	%r8d, %r9d
-// CHECK-NEXT:      notb	%r9b
-// CHECK-NEXT:      addb	%r9b, %r9b
-// CHECK-NEXT:      andb	$70, %r9b
-// CHECK-NEXT:      addb	%r8b, %r9b
-// CHECK-NEXT:      addb	$-35, %r9b
-// CHECK-NEXT:      movb	%r9b, (%rdi,%rcx)
-// CHECK-NEXT:      movl	%eax, %ecx
-// CHECK-NEXT:      notl	%ecx
-// CHECK-NEXT:      orl	$-2, %ecx
-// CHECK-NEXT:      addl	%eax, %ecx
-// CHECK-NEXT:      andl	$1, %eax
-// CHECK-NEXT:      addl	%ecx, %eax
-// CHECK-NEXT:      addl	$2, %eax
-// CHECK-NEXT:      cmpl	%edx, %eax
-// CHECK-NEXT:      jb	.LBB0_2
+// CHECK-NEXT:      movl    %eax, %ecx
+// CHECK-NEXT:      movsbl  (%rsi,%rcx), %r8d
+// CHECK-NEXT:      movl    %r8d, %r9d
+// CHECK-NEXT:      notl    %r9d
+// CHECK-NEXT:      leal    (%r8,%r9,2), %r10d
+// CHECK-NEXT:      leal    (%r8,%r9,2), %r9d
+// CHECK-NEXT:      incl    %r9d
+// CHECK-NEXT:      notl    %r9d
+// CHECK-NEXT:      orl     $35, %r9d
+// CHECK-NEXT:      addl    %r10d, %r9d
+// CHECK-NEXT:      incl    %r9d
+// CHECK-NEXT:      movl    %r8d, %r10d
+// CHECK-NEXT:      xorl    $221, %r10d
+// CHECK-NEXT:      andl    $93, %r8d
+// CHECK-NEXT:      leal    (%r10,%r8,2), %r8d
+// CHECK-NEXT:      leal    (%r8,%r9,2), %r8d
+// CHECK-NEXT:      addb    $2, %r8b
+// CHECK-NEXT:      movb    %r8b, (%rdi,%rcx)
+// CHECK-NEXT:      movl    %eax, %ecx
+// CHECK-NEXT:      xorl    $2, %ecx
+// CHECK-NEXT:      andl    $2, %eax
+// CHECK-NEXT:      leal    (%rcx,%rax,2), %eax
+// CHECK-NEXT:      movl    %eax, %ecx
+// CHECK-NEXT:      notl    %ecx
+// CHECK-NEXT:      leal    (%rcx,%rax,2), %eax
+// CHECK-NEXT:      cmpl    %edx, %eax
+// CHECK-NEXT:      jb      .LBB0_2
 
 // This is the exact same config as CHECK (include_function) but with
 // a different probability seed, thus the instruction changes
 // NEWSEED-LABEL: memcpy_xor:
 // NEWSEED:     .LBB0_2:
-// NEWSEED-NEXT:  	movl	%eax, %ecx
-// NEWSEED-NEXT:  	movsbl	(%rsi,%rcx), %r8d
-// NEWSEED-NEXT:  	movl	%r8d, %r9d
-// NEWSEED-NEXT:  	orl	$35, %r9d
-// NEWSEED-NEXT:  	notl	%r8d
-// NEWSEED-NEXT:  	movl	%r8d, %r10d
-// NEWSEED-NEXT:  	orl	$35, %r10d
-// NEWSEED-NEXT:  	subl	%r10d, %r8d
-// NEWSEED-NEXT:  	movl	%r8d, %r10d
-// NEWSEED-NEXT:  	xorl	%r9d, %r10d
-// NEWSEED-NEXT:  	andl	%r9d, %r8d
-// NEWSEED-NEXT:  	leal	(%r10,%r8,2), %r8d
-// NEWSEED-NEXT:  	movb	%r8b, (%rdi,%rcx)
-// NEWSEED-NEXT:  	movl	%eax, %ecx
-// NEWSEED-NEXT:  	xorl	$2, %ecx
-// NEWSEED-NEXT:  	andl	$2, %eax
-// NEWSEED-NEXT:  	leal	(%rcx,%rax,2), %eax
-// NEWSEED-NEXT:  	decl	%eax
-// NEWSEED-NEXT:  	cmpl	%edx, %eax
-// NEWSEED-NEXT:  	jb	.LBB0_2
+// NEWSEED-NEXT:  	movl    %eax, %ecx
+// NEWSEED-NEXT:  	movsbl  (%rsi,%rcx), %r8d
+// NEWSEED-NEXT:  	movl    %r8d, %r9d
+// NEWSEED-NEXT:  	notl    %r9d
+// NEWSEED-NEXT:  	leal    (%r8,%r9,2), %r10d
+// NEWSEED-NEXT:  	leal    (%r8,%r9,2), %r9d
+// NEWSEED-NEXT:  	incl    %r9d
+// NEWSEED-NEXT:  	notl    %r9d
+// NEWSEED-NEXT:  	orl     $35, %r9d
+// NEWSEED-NEXT:  	addl    %r10d, %r9d
+// NEWSEED-NEXT:  	incl    %r9d
+// NEWSEED-NEXT:  	movl    %r8d, %r10d
+// NEWSEED-NEXT:  	xorl    $221, %r10d
+// NEWSEED-NEXT:  	andl    $93, %r8d
+// NEWSEED-NEXT:  	leal    (%r10,%r8,2), %r8d
+// NEWSEED-NEXT:  	leal    (%r8,%r9,2), %r8d
+// NEWSEED-NEXT:  	addb    $2, %r8b
+// NEWSEED-NEXT:  	movb    %r8b, (%rdi,%rcx)
+// NEWSEED-NEXT:  	movl    %eax, %ecx
+// NEWSEED-NEXT:  	xorl    $2, %ecx
+// NEWSEED-NEXT:  	andl    $2, %eax
+// NEWSEED-NEXT:  	leal    (%rcx,%rax,2), %eax
+// NEWSEED-NEXT:  	movl    %eax, %ecx
+// NEWSEED-NEXT:  	notl    %ecx
+// NEWSEED-NEXT:  	leal    (%rcx,%rax,2), %eax
+// NEWSEED-NEXT:  	cmpl    %edx, %eax
+// NEWSEED-NEXT:  	jb      .LBB0_2
 
 // CHECKV2-LABEL: memcpy_xor:
 // CHECKV2:     .LBB0_2:
-// CHECKV2-NEXT:   	movl	%eax, %ecx
-// CHECKV2-NEXT:   	movzbl	(%rsi,%rcx), %r8d
-// CHECKV2-NEXT:   	notb	%r8b
-// CHECKV2-NEXT:   	movl	%r8d, %r9d
-// CHECKV2-NEXT:   	orb	$-36, %r9b
-// CHECKV2-NEXT:   	orb	$35, %r8b
-// CHECKV2-NEXT:   	subb	%r8b, %r9b
-// CHECKV2-NEXT:   	addb	$35, %r9b
-// CHECKV2-NEXT:   	movb	%r9b, (%rdi,%rcx)
-// CHECKV2-NEXT:   	movl	%eax, %ecx
-// CHECKV2-NEXT:   	notl	%ecx
-// CHECKV2-NEXT:   	orl	$-2, %ecx
-// CHECKV2-NEXT:   	addl	%eax, %ecx
-// CHECKV2-NEXT:   	andl	$1, %eax
-// CHECKV2-NEXT:   	addl	%ecx, %eax
-// CHECKV2-NEXT:   	addl	$2, %eax
-// CHECKV2-NEXT:   	cmpl	%edx, %eax
-// CHECKV2-NEXT:   	jb	.LBB0_2
+// CHECKV2-NEXT:   	movzbl  (%rsi,%rcx), %edx
+// CHECKV2-NEXT:   	movl    %edx, %r8d
+// CHECKV2-NEXT:   	notb    %r8b
+// CHECKV2-NEXT:   	addb    %r8b, %r8b
+// CHECKV2-NEXT:   	addb    %dl, %r8b
+// CHECKV2-NEXT:   	addb    %r8b, %r8b
+// CHECKV2-NEXT:   	movl    %edx, %r9d
+// CHECKV2-NEXT:   	xorb    $-35, %r9b
+// CHECKV2-NEXT:   	addb    %dl, %dl
+// CHECKV2-NEXT:   	andb    $-70, %dl
+// CHECKV2-NEXT:   	addb    %r9b, %dl
+// CHECKV2-NEXT:   	addb    $2, %r8b
+// CHECKV2-NEXT:   	andb    $70, %r8b
+// CHECKV2-NEXT:   	addb    %dl, %r8b
+// CHECKV2-NEXT:   	movb    %r8b, (%rdi,%rcx)
+// CHECKV2-NEXT:   	incq    %rcx
+// CHECKV2-NEXT:   	cmpq    %rcx, %rax
+// CHECKV2-NEXT:   	jne     .LBB0_2
 
 void memcpy_xor(char *dst, const char *src, unsigned len) {
   for (unsigned i = 0; i < len; i += 1) {

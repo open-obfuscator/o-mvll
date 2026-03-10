@@ -6,7 +6,6 @@
 //
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 
 // Forward declarations
 namespace llvm {
@@ -26,7 +25,6 @@ struct AntiHook : llvm::PassInfoMixin<AntiHook> {
   bool runOnFunction(llvm::Function &F);
 
 private:
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
   std::unique_ptr<Jitter> JIT;
 };
 

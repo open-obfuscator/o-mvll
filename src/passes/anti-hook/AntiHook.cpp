@@ -57,8 +57,7 @@ bool AntiHook::runOnFunction(Function &F) {
 
   SDEBUG("[{}] Injecting Anti-Frida prologue in {}", name(), F.getName());
 
-  std::uniform_int_distribution<size_t> Dist(0, AntiFridaPrologues.size() - 1);
-  size_t Idx = Dist(*RNG);
+  size_t Idx = RandomGenerator::generateFullRand() % AntiFridaPrologues.size();
   const PrologueInfoTy &P = AntiFridaPrologues[Idx];
 
   std::unique_ptr<MemoryBuffer> Insts = JIT->jitAsm(P.Asm, P.Size);
@@ -83,7 +82,6 @@ PreservedAnalyses AntiHook::run(Module &M, ModuleAnalysisManager &FAM) {
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
   JIT = std::make_unique<Jitter>(M.getTargetTriple());
-  RNG = M.createRNG(name());
 
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F) ||

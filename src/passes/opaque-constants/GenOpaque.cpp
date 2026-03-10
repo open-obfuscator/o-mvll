@@ -24,8 +24,7 @@ static Value *attachMDOpaqueCst(Value *I) {
 }
 
 /* ========= Zero Value Gen ========= */
-Value *getOpaqueZero1(Instruction &I, OpaqueContext &Ctx, Type *Ty,
-                      RandomNumberGenerator &RNG) {
+Value *getOpaqueZero1(Instruction &I, OpaqueContext &Ctx, Type *Ty) {
   IRBuilder<NoFolder> IRB(&I);
 
   Value *Seed1 = IRB.CreateLoad(Ty, Ctx.T1, true);
@@ -43,23 +42,19 @@ Value *getOpaqueZero1(Instruction &I, OpaqueContext &Ctx, Type *Ty,
   return Zero; // Equals zero
 }
 
-Value *getOpaqueZero2(Instruction &I, OpaqueContext &Ctx, Type *Ty,
-                      RandomNumberGenerator &RNG) {
-  return getOpaqueZero1(I, Ctx, Ty, RNG);
+Value *getOpaqueZero2(Instruction &I, OpaqueContext &Ctx, Type *Ty) {
+  return getOpaqueZero1(I, Ctx, Ty);
 }
 
-Value *getOpaqueZero3(Instruction &I, OpaqueContext &Ctx, Type *Ty,
-                      RandomNumberGenerator &RNG) {
-  return getOpaqueZero1(I, Ctx, Ty, RNG);
+Value *getOpaqueZero3(Instruction &I, OpaqueContext &Ctx, Type *Ty) {
+  return getOpaqueZero1(I, Ctx, Ty);
 }
 
 /* ========= One Value Gen ========= */
-Value *getOpaqueOne1(Instruction &I, OpaqueContext &Ctx, Type *Ty,
-                     RandomNumberGenerator &RNG) {
+Value *getOpaqueOne1(Instruction &I, OpaqueContext &Ctx, Type *Ty) {
   IRBuilder<NoFolder> IRB(&I);
 
-  std::uniform_int_distribution<uint64_t> Dist(3, 101);
-  uint64_t N = Dist(RNG);
+  uint64_t N = RandomGenerator::generateRange(3, 101);
   if (N % 2 == 0)
     N++; // Ensure odd
 
@@ -75,25 +70,22 @@ Value *getOpaqueOne1(Instruction &I, OpaqueContext &Ctx, Type *Ty,
   return OpaqueOne;
 }
 
-Value *getOpaqueOne2(Instruction &I, OpaqueContext &Ctx, Type *Ty,
-                     RandomNumberGenerator &RNG) {
-  return getOpaqueOne1(I, Ctx, Ty, RNG);
+Value *getOpaqueOne2(Instruction &I, OpaqueContext &Ctx, Type *Ty) {
+  return getOpaqueOne1(I, Ctx, Ty);
 }
 
-Value *getOpaqueOne3(Instruction &I, OpaqueContext &Ctx, Type *Ty,
-                     RandomNumberGenerator &RNG) {
-  return getOpaqueOne1(I, Ctx, Ty, RNG);
+Value *getOpaqueOne3(Instruction &I, OpaqueContext &Ctx, Type *Ty) {
+  return getOpaqueOne1(I, Ctx, Ty);
 }
 
 /* ========= Value != {0, 1} Gen ========= */
 Value *getOpaqueConst1(Instruction &I, OpaqueContext &Ctx,
-                       const ConstantInt &CI, RandomNumberGenerator &RNG) {
+                       const ConstantInt &CI) {
   uint64_t Val = CI.getLimitedValue();
   if (Val <= 1 || Val == std::numeric_limits<uint64_t>::max())
     return nullptr;
 
-  std::uniform_int_distribution<uint64_t> Dist(1, Val - 1);
-  uint64_t RHS = Dist(RNG);
+  uint64_t RHS = RandomGenerator::generateRange(1, Val - 1);
   uint64_t LHS = Val - RHS;
 
   Type *Ty = CI.getType();
@@ -120,13 +112,13 @@ Value *getOpaqueConst1(Instruction &I, OpaqueContext &Ctx,
 }
 
 Value *getOpaqueConst2(Instruction &I, OpaqueContext &Ctx,
-                       const ConstantInt &CI, RandomNumberGenerator &RNG) {
-  return getOpaqueConst1(I, Ctx, CI, RNG);
+                       const ConstantInt &CI) {
+  return getOpaqueConst1(I, Ctx, CI);
 }
 
 Value *getOpaqueConst3(Instruction &I, OpaqueContext &Ctx,
-                       const ConstantInt &CI, RandomNumberGenerator &RNG) {
-  return getOpaqueConst1(I, Ctx, CI, RNG);
+                       const ConstantInt &CI) {
+  return getOpaqueConst1(I, Ctx, CI);
 }
 
 } // end namespace omvll

@@ -6,7 +6,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 
 #include "omvll/ObfuscationConfig.hpp"
 #include "omvll/PyConfig.hpp"
@@ -20,11 +19,9 @@ using namespace omvll;
 
 namespace omvll {
 
-static uint32_t
-getRandomShareAligned(std::unique_ptr<RandomNumberGenerator> &RNG) {
+static uint32_t getRandomShareAligned() {
   size_t Max = std::numeric_limits<uint32_t>::max();
-  std::uniform_int_distribution<uint32_t> Dist(1, Max);
-  return Dist(*RNG) & 0xFFFFFF00ULL;
+  return RandomGenerator::generateRange(1, Max) & 0xFFFFFF00ULL;
 }
 
 /// This pass rewrites direct calls into an indirect call through an address
@@ -53,7 +50,7 @@ bool IndirectCall::process(Function &F, const DataLayout &DL,
       continue;
 
     Constant *TargetAddr = ConstantExpr::getPtrToInt(Callee, IntPtrTy);
-    APInt RandomVal(IntPtrTy->getBitWidth(), getRandomShareAligned(RNG));
+    APInt RandomVal(IntPtrTy->getBitWidth(), getRandomShareAligned());
     Constant *Share1 = ConstantInt::get(IntPtrTy, RandomVal);
     Constant *Share2 = ConstantExpr::getAdd(TargetAddr, Share1);
 
@@ -113,7 +110,6 @@ PreservedAnalyses IndirectCall::run(Module &M, ModuleAnalysisManager &MAM) {
   PyConfig &Config = PyConfig::instance();
   LLVMContext &Ctx = M.getContext();
   const auto &DL = M.getDataLayout();
-  RNG = M.createRNG(name());
   SINFO("[{}] Executing on module {}", name(), M.getName());
 
   for (Function &F : M) {

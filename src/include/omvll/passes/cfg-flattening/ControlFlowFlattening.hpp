@@ -14,7 +14,7 @@ namespace omvll {
 struct ControlFlowFlattening : llvm::PassInfoMixin<ControlFlowFlattening> {
   llvm::PreservedAnalyses run(llvm::Module &M,
                               llvm::ModuleAnalysisManager &FAM);
-  bool runOnFunction(llvm::Function &F, llvm::RandomNumberGenerator &RNG);
+  bool runOnFunction(llvm::Function &F);
 };
 
 } // end namespace omvll

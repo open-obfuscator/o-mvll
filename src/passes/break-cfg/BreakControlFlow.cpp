@@ -11,7 +11,6 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/NoFolder.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
@@ -136,10 +135,10 @@ bool BreakControlFlow::runOnFunction(Function &F) {
           fatalError("Bad alignment");
 
         const size_t Num = Delta / InstSize;
-        std::uniform_int_distribution<uint32_t> Dist(0, NopInsts.size() - 1);
 
         for (size_t Idx = 0; Idx < Num; ++Idx) {
-          const auto &NopInst = NopInsts[Dist(*RNG)];
+          const auto &NopInst =
+              NopInsts[RandomGenerator::generateFullRand() % NopInsts.size()];
           NewPrologue.append(NopInst.begin(), NopInst.end());
         }
       }
@@ -268,7 +267,6 @@ PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
   if (ToVisit.empty())
     return PreservedAnalyses::all();
 
-  RNG = M.createRNG(name());
   JIT = std::make_unique<Jitter>(M.getTargetTriple());
 
   unsigned int NumVisits = 0;

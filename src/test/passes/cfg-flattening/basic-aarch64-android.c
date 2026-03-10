@@ -10,20 +10,20 @@
 // Check for jump table targets setup at the beginning of the function.
 
 // FLAT-ANDROID-LABEL:    check_password:
-// FLAT-ANDROID:            movk	w4, #54611, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w5, #56095, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w6, #34774, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w7, #22523, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w19, #6598, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w20, #54611, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w21, #56095, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w22, #58518, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w23, #22523, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w24, #48579, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w25, #30854, lsl #16
-// FLAT-ANDROID-NEXT:       movk	w26, #22523, lsl #16
-// FLAT-ANDROID-NEXT:       stur	w11, [x29, #-4]
-// FLAT-ANDROID-NEXT:       b	.LBB0_4
+// FLAT-ANDROID:            movk    w4, #50251, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w5, #17606, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w6, #17961, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w7, #22555, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w19, #17606, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w20, #17961, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w21, #47252, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w22, #22555, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w23, #49424, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w24, #26706, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w25, #32064, lsl #16
+// FLAT-ANDROID-NEXT:       movk    w26, #50251, lsl #16
+// FLAT-ANDROID-NEXT:       stur    w11, [x29, #-4]
+// FLAT-ANDROID-NEXT:       b       .LBB0_2
 
 int check_password(const char *passwd, unsigned len) {
   if (len != 5) {

@@ -7,7 +7,6 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Transforms/Utils/CodeExtractor.h"
 
 #include "omvll/ObfuscationConfig.hpp"
@@ -109,7 +108,9 @@ bool FunctionOutline::process(Function &F, LLVMContext &Ctx,
   ToOutline.reserve(F.size());
 
   // Collect basic blocks to outline.
-  auto ShouldOutline = [&]() { return (*RNG)() % 100U < Probability; };
+  auto ShouldOutline = [&]() {
+    return RandomGenerator::generate() < Probability;
+  };
   for (BasicBlock &BB : F) {
     if (&BB == &F.getEntryBlock())
       continue;
@@ -184,7 +185,6 @@ PreservedAnalyses FunctionOutline::run(Module &M, ModuleAnalysisManager &MAM) {
 
   bool Changed = false;
   LLVMContext &Ctx = M.getContext();
-  RNG = M.createRNG(name());
 
   for (const auto &[F, P] : ToVisit)
     Changed |= process(*F, Ctx, P);

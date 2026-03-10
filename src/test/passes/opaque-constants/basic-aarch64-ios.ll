@@ -32,7 +32,7 @@ define i32 @opaque_constants() {
 ; CHECK-O0-NEXT:  %9 = sub i32 %7, %8, !obf !0
 ; CHECK-O0-NEXT:  store i32 %9, ptr %stack.0, align 4
 ; CHECK-O0-NEXT:  %10 = load volatile i32, ptr %opaque.t2, align 4
-; CHECK-O0-NEXT:  %11 = xor i32 67, %10, !obf !0
+; CHECK-O0-NEXT:  %11 = xor i32 49, %10, !obf !0
 ; CHECK-O0-NEXT:  %12 = xor i32 %11, %10, !obf !0
 ; CHECK-O0-NEXT:  %13 = or i32 %12, 1, !obf !0
 ; CHECK-O0-NEXT:  %14 = and i32 %13, 1, !obf !0
@@ -63,8 +63,8 @@ define i32 @opaque_constants() {
 ; CHECK-O1-NEXT:  store i64 %1, ptr %opaque.t2, align 8
 ; CHECK-O1-NEXT:  %2 = load volatile i32, ptr %opaque.t1, align 8
 ; CHECK-O1-NEXT:  %3 = load volatile i32, ptr %opaque.t2, align 8
-; CHECK-O1-NEXT:  store volatile i32 2, ptr %opaque.t2, align 8
-; CHECK-O1-NEXT:  store volatile i32 2, ptr %opaque.t1, align 8
+; CHECK-O1-NEXT:  store volatile i32 1, ptr %opaque.t2, align 8
+; CHECK-O1-NEXT:  store volatile i32 3, ptr %opaque.t1, align 8
 ; CHECK-O1-NEXT:  %4 = load volatile i32, ptr %opaque.t2, align 8
 ; CHECK-O1-NEXT:  %5 = load volatile i32, ptr %opaque.t1, align 8
 ; CHECK-O1-NEXT:  %6 = add i32 %5, %4, !obf !0

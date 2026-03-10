@@ -8,7 +8,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
@@ -35,7 +34,9 @@ bool BasicBlockDuplicate::process(Function &F, LLVMContext &Ctx,
   ToDup.reserve(F.size());
 
   // Collect basic blocks to be duplicated.
-  auto ShouldDuplicate = [&]() { return (*RNG)() % 100U < Probability; };
+  auto ShouldDuplicate = [&]() {
+    return RandomGenerator::generate() < Probability;
+  };
   for (BasicBlock &BB : F) {
     if (&BB == &F.getEntryBlock())
       continue;
@@ -172,7 +173,6 @@ PreservedAnalyses BasicBlockDuplicate::run(Module &M,
   bool Changed = false;
   PyConfig &Config = PyConfig::instance();
   LLVMContext &Ctx = M.getContext();
-  RNG = M.createRNG(name());
   SINFO("[{}] Executing on module {}", name(), M.getName());
 
   BasicBlockDuplicateOpt Opt =

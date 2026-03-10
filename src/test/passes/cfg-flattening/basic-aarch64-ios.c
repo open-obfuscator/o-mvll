@@ -11,23 +11,23 @@
 // Check for jump table targets setup at the beginning of the function.
 
 // FLAT-IOS-LABEL:        check_password:
-// FLAT-IOS:                mov	w19, #19350
-// FLAT-IOS-NEXT:           movk	w19, #38589, lsl #16
-// FLAT-IOS-NEXT:           mov	w20, #22813
-// FLAT-IOS-NEXT:           movk	w20, #1156, lsl #16
-// FLAT-IOS-NEXT:           mov	w21, #30177
-// FLAT-IOS-NEXT:           movk	w21, #39846, lsl #16
-// FLAT-IOS-NEXT:           mov	w22, #47812
-// FLAT-IOS-NEXT:           movk	w22, #26529, lsl #16
-// FLAT-IOS-NEXT:           mov	w23, #10194
-// FLAT-IOS-NEXT:           movk	w23, #61753, lsl #16
-// FLAT-IOS-NEXT:           mov	w24, #6121
-// FLAT-IOS-NEXT:           movk	w24, #18322, lsl #16
-// FLAT-IOS-NEXT:           mov	w25, #22795
-// FLAT-IOS-NEXT:           movk	w25, #1156, lsl #16
-// FLAT-IOS-NEXT:           mov	w26, #47852
-// FLAT-IOS-NEXT:           movk	w26, #26529, lsl #16
-// FLAT-IOS-NEXT:           b	LBB0_4
+// FLAT-IOS:                mov     w19, #53399
+// FLAT-IOS-NEXT:           movk    w19, #26689, lsl #16
+// FLAT-IOS-NEXT:           mov     w20, #41365
+// FLAT-IOS-NEXT:           movk    w20, #6014, lsl #16
+// FLAT-IOS-NEXT:           mov     w21, #52826
+// FLAT-IOS-NEXT:           movk    w21, #7648, lsl #16
+// FLAT-IOS-NEXT:           mov     w22, #35197
+// FLAT-IOS-NEXT:           movk    w22, #63120, lsl #16
+// FLAT-IOS-NEXT:           mov     w23, #53606
+// FLAT-IOS-NEXT:           movk    w23, #26689, lsl #16
+// FLAT-IOS-NEXT:           mov     w24, #52579
+// FLAT-IOS-NEXT:           movk    w24, #7648, lsl #16
+// FLAT-IOS-NEXT:           mov     w25, #44088
+// FLAT-IOS-NEXT:           movk    w25, #2345, lsl #16
+// FLAT-IOS-NEXT:           mov     w26, #10794
+// FLAT-IOS-NEXT:           movk    w26, #56152, lsl #16
+// FLAT-IOS-NEXT:           b       LBB0_4
 
 int check_password(const char *passwd, unsigned len) {
   if (len != 5) {

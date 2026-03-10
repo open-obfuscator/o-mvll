@@ -47,7 +47,6 @@ struct OpaqueConstants : llvm::PassInfoMixin<OpaqueConstants> {
                             const llvm::ConstantInt &Val);
 
 private:
-  std::unique_ptr<llvm::RandomNumberGenerator> RNG;
   llvm::DenseMap<llvm::Function *, OpaqueContext> OpaqueCtx;
   llvm::DenseMap<llvm::Function *, OpaqueConstantsOpt> Opts;
 };

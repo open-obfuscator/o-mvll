@@ -12,7 +12,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/Passes/PassBuilder.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 
@@ -117,17 +116,14 @@ template <class IRBTy> void EmitDefaultCaseAssembly(IRBTy &IRB, Triple TT) {
   // clang-format on
 }
 
-bool ControlFlowFlattening::runOnFunction(Function &F,
-                                          RandomNumberGenerator &RNG) {
+bool ControlFlowFlattening::runOnFunction(Function &F) {
   if (F.getInstructionCount() == 0)
     return false;
 
   bool Changed = false;
   std::string DemangledName = demangle(F.getName().str());
-  std::uniform_int_distribution<uint32_t> Dist(10);
-  std::uniform_int_distribution<uint8_t> Dist8(10, 254);
-  const uint8_t X = Dist8(RNG);
-  const uint8_t Y = Dist8(RNG);
+  const uint8_t X = RandomGenerator::generateRange(10, 254);
+  const uint8_t Y = RandomGenerator::generateRange(10, 254);
 
   SINFO("[{}] Visiting function {}", ControlFlowFlattening::name(),
         DemangledName);
@@ -269,7 +265,7 @@ bool ControlFlowFlattening::runOnFunction(Function &F,
 
     uint32_t Rnd = 0;
     do {
-      Rnd = Dist(RNG);
+      Rnd = RandomGenerator::generateRange(10, UINT32_MAX);
       uint32_t Enc = Encode(Rnd, X, Y);
       if (!SwitchRnd.contains(Rnd) && !SwitchRnd.contains(Enc)) {
         SwitchRnd.insert(Rnd);
@@ -477,7 +473,6 @@ PreservedAnalyses ControlFlowFlattening::run(Module &M,
 
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
-  std::unique_ptr<RandomNumberGenerator> RNG = M.createRNG(name());
 
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F) ||
@@ -489,7 +484,7 @@ PreservedAnalyses ControlFlowFlattening::run(Module &M,
     if (isCoroutine(&F))
       continue;
 
-    bool MadeChange = runOnFunction(F, *RNG);
+    bool MadeChange = runOnFunction(F);
     if (MadeChange)
       reg2mem(F);
 
