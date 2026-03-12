@@ -200,32 +200,20 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   Value *FuncPtr = IRB.CreateIntToPtr(FAddr, FTyPtrTy);
   CallInst *Call = IRB.CreateCall(FTy, FuncPtr, Args);
 
-  // Copy ABI parameter attributes from the cloned function to its call-site.
-  auto IsABIAttribute = [](Attribute::AttrKind K) {
-    switch (K) {
-    case Attribute::ByRef:
-    case Attribute::ByVal:
-    case Attribute::InAlloca:
-    case Attribute::InReg:
-    case Attribute::Preallocated:
-    case Attribute::Returned:
-    case Attribute::SExt:
-    case Attribute::StackAlignment:
-    case Attribute::StructRet:
-    case Attribute::SwiftAsync:
-    case Attribute::SwiftError:
-    case Attribute::SwiftSelf:
-    case Attribute::ZExt:
-      return true;
-    default:
-      return false;
-    }
-  };
+  CallingConv::ID CallConv = ClonedF->getCallingConv();
+  Call->setCallingConv(CallConv);
 
+  // Only force musttail for swiftcc. This is the only convention
+  // that uses x8 as an implicit sret register on AArch64, which
+  // the trampoline's jump target overwrites.
+  if (CallConv == CallingConv::Swift) {
+    Call->setTailCallKind(CallInst::TCK_MustTail);
+  }
+
+  // Copy parameter attributes from the cloned function to its call-site
   for (unsigned ArgNo = 0; ArgNo < ClonedF->arg_size(); ++ArgNo)
     for (const Attribute &Attr : ClonedF->getAttributes().getParamAttrs(ArgNo))
-      if (IsABIAttribute(Attr.getKindAsEnum()))
-        Call->addParamAttr(ArgNo, Attr);
+      Call->addParamAttr(ArgNo, Attr);
 
   if (FTy->getReturnType()->isVoidTy()) {
     IRB.CreateRetVoid();
@@ -239,7 +227,7 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   Trampoline.removeFnAttr(Attribute::OptimizeNone);
 
   // Add required attributes.
-  Trampoline.addFnAttr(Attribute::OptimizeForSize);
+  Trampoline.setAttributes(ClonedF->getAttributes());
   Trampoline.addFnAttr(Attribute::NoInline);
 
   return true;
@@ -273,11 +261,11 @@ PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
   for (Function *F : ToVisit)
     NumVisits += runOnFunction(*F);
 
-  SINFO("[{}] Total of {} functions were modified on module {}", name(), NumVisits,
-        M.getName());
+  SINFO("[{}] Total of {} functions were modified on module {}", name(),
+        NumVisits, M.getName());
 
-  SINFO("[{}] Changes {} applied on module {}", name(), (NumVisits > 0) ? "" : "not",
-        M.getName());
+  SINFO("[{}] Changes {} applied on module {}", name(),
+        (NumVisits > 0) ? "" : "not", M.getName());
 
   return (NumVisits > 0) ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
