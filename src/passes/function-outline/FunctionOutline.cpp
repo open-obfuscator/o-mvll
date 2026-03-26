@@ -50,6 +50,9 @@ static bool outliningMayBeUnfavorable(const BasicBlock &BB) {
           Name.starts_with("llvm.va_copy") || Name.starts_with("llvm.va_end")) {
         return true;
       }
+
+      if (Name.contains("with.overflow"))
+        return true;
     }
 
     if (auto *CB = dyn_cast<CallBase>(&I)) {
