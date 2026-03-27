@@ -42,12 +42,14 @@
 // R2-NEXT:      ldr     x8, [sp, #16]
 // R2-NEXT:      ldr     w9, [sp, #8]
 // R2-NEXT:      ldrsb   w10, [x8, x9]
-// R2-NEXT:      mov     w8, #35
-// R2-NEXT:      eor     w9, w10, w8
-// R2-NEXT:      and     w11, w10, w8
-// R2-NEXT:      add     w9, w9, w11
-// R2-NEXT:      orn     w8, w8, w10
-// R2-NEXT:      mvn     w10, w10
+// R2-NEXT:      mov     w11, #35
+// R2-NEXT:      add     w8, w10, #35
+// R2-NEXT:      add     w8, w8, #1
+// R2-NEXT:      mov     w9, #-36
+// R2-NEXT:      orn     w9, w9, w10
+// R2-NEXT:      add     w9, w8, w9
+// R2-NEXT:      add     w8, w10, #35
+// R2-NEXT:      orr     w10, w10, w11
 // R2-NEXT:      subs    w11, w8, w10
 // R2-NEXT:      mov     w10, #0
 // R2-NEXT:      subs    w8, w10, w11
@@ -64,44 +66,46 @@
 // R3:       LBB0_2:
 // R3-NEXT:      ldr     x8, [sp, #16]
 // R3-NEXT:      ldr     w9, [sp, #8]
-// R3-NEXT:      ldrsb   w9, [x8, x9]
-// R3-NEXT:      str     w9, [sp, #4]
-// R3-NEXT:      mov     w11, #35
-// R3-NEXT:      bic     w10, w11, w9
-// R3-NEXT:      subs    w8, w9, #35
-// R3-NEXT:      add     w8, w8, w10, lsl #1
-// R3-NEXT:      add     w10, w9, #35
-// R3-NEXT:      orr     w11, w9, w11
-// R3-NEXT:      subs    w10, w10, w11
-// R3-NEXT:      mvn     w10, w10
-// R3-NEXT:      subs    w8, w8, w10
-// R3-NEXT:      subs    w10, w8, #1
-// R3-NEXT:      mvn     w11, w9
-// R3-NEXT:      add     w8, w9, #1
+// R3-NEXT:      ldrsb   w12, [x8, x9]
+// R3-NEXT:      add     w8, w12, #36
+// R3-NEXT:      subs    w9, w8, #1
+// R3-NEXT:      and     w8, w9, #0x1
+// R3-NEXT:      orr     w9, w9, #0x1
+// R3-NEXT:      add     w10, w8, w9
+// R3-NEXT:      mov     w9, #-1
+// R3-NEXT:      mvn     w11, w12
+// R3-NEXT:      add     w8, w12, #1
 // R3-NEXT:      add     w8, w8, w11, lsl #1
-// R3-NEXT:      mov     w11, #-36
-// R3-NEXT:      and     w8, w8, w11
-// R3-NEXT:      add     w8, w8, #35
-// R3-NEXT:      mvn     w11, w9
-// R3-NEXT:      add     w9, w9, #1
-// R3-NEXT:      add     w9, w9, w11, lsl #1
-// R3-NEXT:      mvn     w9, w9
-// R3-NEXT:      add     w8, w8, w9
-// R3-NEXT:      add     w8, w8, #1
-// R3-NEXT:      mvn     w9, w8
-// R3-NEXT:      add     w9, w9, #1
-// R3-NEXT:      bic     w11, w9, w10
-// R3-NEXT:      subs    w9, w10, w9
-// R3-NEXT:      add     w9, w9, w11, lsl #1
-// R3-NEXT:      mvn     w8, w8
-// R3-NEXT:      add     w11, w8, #1
-// R3-NEXT:      add     w8, w10, w11
+// R3-NEXT:      mov     w13, #35
+// R3-NEXT:      and     w8, w8, w13
+// R3-NEXT:      subs    w11, w8, #36
+// R3-NEXT:      and     w8, w10, w11
 // R3-NEXT:      orr     w10, w10, w11
-// R3-NEXT:      subs    w8, w8, w10
-// R3-NEXT:      lsl     w10, w8, #1
-// R3-NEXT:      and     w8, w9, w10
-// R3-NEXT:      orr     w9, w9, w10
-// R3-NEXT:      add     w8, w8, w9
+// R3-NEXT:      add     w11, w8, w10
+// R3-NEXT:      add     w8, w12, #36
+// R3-NEXT:      subs    w10, w8, #1
+// R3-NEXT:      eor     w8, w12, w13
+// R3-NEXT:      and     w12, w12, w13
+// R3-NEXT:      add     w13, w8, w12
+// R3-NEXT:      mov     w12, #0
+// R3-NEXT:      subs    w8, w12, w13
+// R3-NEXT:      eor     w8, w10, w8
+// R3-NEXT:      subs    w12, w12, w13
+// R3-NEXT:      and     w10, w10, w12
+// R3-NEXT:      add     w10, w8, w10, lsl #1
+// R3-NEXT:      mvn     w8, w10
+// R3-NEXT:      add     w12, w8, #1
+// R3-NEXT:      orr     w8, w11, w12
+// R3-NEXT:      and     w12, w11, w12
+// R3-NEXT:      subs    w8, w8, w12
+// R3-NEXT:      mvn     w10, w10
+// R3-NEXT:      add     w12, w10, #1
+// R3-NEXT:      add     w10, w11, w12
+// R3-NEXT:      orr     w11, w11, w12
+// R3-NEXT:      subs    w10, w10, w11
+// R3-NEXT:      eor     w9, w9, w10, lsl #1
+// R3-NEXT:      subs    w8, w8, w9
+// R3-NEXT:      subs    w8, w8, #1
 // R3-NEXT:      ldr     x9, [sp, #24]
 // R3-NEXT:      ldr     w10, [sp, #8]
 // R3-NEXT:      strb    w8, [x9, x10]

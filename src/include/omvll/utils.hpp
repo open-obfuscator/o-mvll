@@ -5,13 +5,14 @@
 // details.
 //
 
+#include <random>
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/TargetParser/Triple.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
+#include "llvm/TargetParser/Triple.h"
 
 // Forward declarations
 namespace llvm {
@@ -94,6 +95,7 @@ private:
 class RandomGenerator {
 private:
   static bool Seeded;
+  static std::mt19937_64 MtEngine;
 
 public:
   static uint64_t generateFullRand();
