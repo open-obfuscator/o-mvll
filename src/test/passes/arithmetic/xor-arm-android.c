@@ -18,26 +18,19 @@
 
 // R2-LABEL: memcpy_xor:
 // R2:       .LBB0_2:
-// R2-NEXT:      ldrb    r12, [r1, lr]
-// R2-NEXT:      mvn     r3, r12
-// R2-NEXT:      add     r3, r12, r3, lsl #1
-// R2-NEXT:      add     r3, r3, #1
-// R2-NEXT:      mvn     r4, r3
-// R2-NEXT:      orr     r4, r4, #35
-// R2-NEXT:      add     r5, r3, r4
-// R2-NEXT:      and     r4, r12, #93
-// R2-NEXT:      eor     r3, r12, #221
-// R2-NEXT:      add     r3, r3, r4, lsl #1
-// R2-NEXT:      add     r3, r3, r5, lsl #1
-// R2-NEXT:      add     r3, r3, #2
-// R2-NEXT:      strb    r3, [r0, lr]
-// R2-NEXT:      and     r3, lr, #2
-// R2-NEXT:      eor     r5, lr, #2
-// R2-NEXT:      add     r3, r5, r3, lsl #1
-// R2-NEXT:      mvn     r5, r3
-// R2-NEXT:      add     lr, r5, r3, lsl #1
-// R2-NEXT:      cmp     lr, r2
-// R2-NEXT:      blo     .LBB0_2
+// R2-NEXT:      ldrb	r4, [r1], #1
+// R2-NEXT:      mvn	r5, r4
+// R2-NEXT:      orr	r5, r5, r12
+// R2-NEXT:      add	r5, r4, r5
+// R2-NEXT:      add	r5, r5, #36
+// R2-NEXT:      and	r4, r4, #35
+// R2-NEXT:      rsb	r4, r4, #0
+// R2-NEXT:      and	r6, r5, r4
+// R2-NEXT:      eor	r4, r5, r4
+// R2-NEXT:      add	r4, r4, r6, lsl #1
+// R2-NEXT:      strb	r4, [r3], #1
+// R2-NEXT:      subs	lr, lr, #1
+// R2-NEXT:      bne	.LBB0_2
 
 void memcpy_xor(char *dst, const char *src, unsigned len) {
   for (unsigned i = 0; i < len; i += 1) {

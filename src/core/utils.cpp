@@ -588,19 +588,15 @@ bool isEHBlock(const BasicBlock &BB) {
 
 // Default value is false.
 bool RandomGenerator::Seeded = false;
+std::mt19937_64 RandomGenerator::MtEngine;
 
 uint64_t RandomGenerator::generateFullRand() {
   if (!RandomGenerator::Seeded) {
-    std::srand(Config.ProbabilitySeed);
+    RandomGenerator::MtEngine.seed(Config.ProbabilitySeed);
     RandomGenerator::Seeded = true;
   }
 
-  uint64_t r = 0;
-  for (int i = 0; i < 5; ++i) {
-    r = (r << 15) ^ static_cast<uint64_t>(std::rand() & 0x7FFF);
-  }
-
-  return r;
+  return static_cast<uint64_t>(RandomGenerator::MtEngine());
 }
 
 // Generate a random number: a <= rnd <= b
@@ -608,20 +604,14 @@ uint64_t RandomGenerator::generateRange(uint64_t a, uint64_t b) {
   if (a > b)
     report_fatal_error("The range for a random must be a <= b.");
 
-  uint64_t range = b - a + 1;
+  if (!RandomGenerator::Seeded) {
+    RandomGenerator::MtEngine.seed(Config.ProbabilitySeed);
+    RandomGenerator::Seeded = true;
+  }
 
-  if (range == 0)
-    return generateFullRand();
+  std::uniform_int_distribution<uint64_t> Distrib(a, b);
 
-  uint64_t limit = std::numeric_limits<uint64_t>::max() -
-                   (std::numeric_limits<uint64_t>::max() % range);
-
-  uint64_t rnd;
-  do {
-    rnd = generateFullRand();
-  } while (rnd > limit);
-
-  return a + (rnd % range);
+  return Distrib(RandomGenerator::MtEngine);
 }
 
 int RandomGenerator::generate() {
