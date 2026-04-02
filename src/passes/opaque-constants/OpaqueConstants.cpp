@@ -28,7 +28,7 @@ namespace omvll {
 
 inline bool isEligible(const Instruction &I) {
   return isa<LoadInst>(I) || isa<StoreInst>(I) || isa<BinaryOperator>(I) ||
-         isa<ReturnInst>(I);
+         isa<ICmpInst>(I) || isa<ReturnInst>(I);
 }
 
 inline bool isSkip(const OpaqueConstantsOpt &Opt) {
