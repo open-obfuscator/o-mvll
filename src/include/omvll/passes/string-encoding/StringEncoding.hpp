@@ -58,25 +58,27 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
   bool injectDecoding(llvm::Instruction &I, llvm::Use &Op,
                       llvm::GlobalVariable &G,
                       llvm::ConstantDataSequential &Data,
-                      const EncodingInfo &Info);
+                      const EncodingInfo &Info, bool IsCFStringBacking = false);
   bool injectDecodingLocally(llvm::Instruction &I, llvm::Use &Op,
                              llvm::GlobalVariable &G,
                              llvm::ConstantDataSequential &Data,
-                             const EncodingInfo &Info);
+                             const EncodingInfo &Info,
+                             bool IsCFStringBacking = false);
   llvm::CallInst *createDecodingTrampoline(
       llvm::GlobalVariable &G, llvm::Use &EncPtr, llvm::Instruction *NewPt,
       uint64_t KeyValI64, uint64_t Size, const StringEncoding::EncodingInfo &EI,
-      bool IsLocalToFunction = false);
+      bool IsLocalToFunction = false, bool IsCFStringBacking = false);
   bool process(llvm::Instruction &I, llvm::Use &Op, llvm::GlobalVariable &G,
-               llvm::ConstantDataSequential &Data, StringEncodingOpt &Opt);
+               llvm::ConstantDataSequential &Data, StringEncodingOpt &Opt,
+               bool IsCFStringBacking = false);
   bool processReplace(llvm::Use &Op, llvm::GlobalVariable &G,
                       llvm::ConstantDataSequential &Data,
                       StringEncOptReplace &Rep);
   bool processGlobal(llvm::Use &Op, llvm::GlobalVariable &G,
                      llvm::ConstantDataSequential &Data);
   bool processLocal(llvm::Instruction &I, llvm::Use &Op,
-                    llvm::GlobalVariable &G,
-                    llvm::ConstantDataSequential &Data);
+                    llvm::GlobalVariable &G, llvm::ConstantDataSequential &Data,
+                    bool IsCFStringBacking = false);
   bool processArrayOfStrings(llvm::Instruction &CurrentI, llvm::Use &Op,
                              llvm::ConstantArray *CA, llvm::GlobalVariable *GV,
                              ObfuscationConfig &);
