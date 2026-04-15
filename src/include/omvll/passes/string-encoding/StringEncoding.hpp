@@ -20,6 +20,8 @@ namespace llvm {
 class ConstantDataSequential;
 class GlobalVariable;
 class CallInst;
+class Constant;
+template <typename T> class SmallVectorImpl;
 } // end namespace llvm
 
 namespace omvll {
@@ -82,6 +84,9 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
   bool processArrayOfStrings(llvm::Instruction &CurrentI, llvm::Use &Op,
                              llvm::ConstantArray *CA, llvm::GlobalVariable *GV,
                              ObfuscationConfig &);
+  void collectEligibleStrings(
+      llvm::Constant *C,
+      llvm::SmallVectorImpl<llvm::GlobalVariable *> &Out);
 
   inline EncodingInfo *getEncoding(const llvm::GlobalVariable &GV) {
     if (auto It = GVarEncInfo.find(&GV); It != GVarEncInfo.end())
