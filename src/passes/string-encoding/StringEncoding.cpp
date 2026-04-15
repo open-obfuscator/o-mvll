@@ -60,7 +60,14 @@ inline bool isEligible(const GlobalVariable &G) {
 }
 
 inline bool isEligible(const ConstantDataSequential &CDS) {
-  return CDS.isCString() && CDS.getAsCString().size() > 1;
+  if (!CDS.getElementType()->isIntegerTy(8) || CDS.getNumElements() <= 1)
+    return false;
+  return CDS.getElementAsInteger(CDS.getNumElements() - 1) == 0;
+}
+
+static StringRef safeGetString(const ConstantDataSequential &CDS) {
+  return CDS.isCString() ? CDS.getAsCString()
+                         : CDS.getRawDataValues().drop_back();
 }
 
 inline bool isSkip(const StringEncodingOpt &EncInfo) {
@@ -269,19 +276,22 @@ CallInst *StringEncoding::createDecodingTrampoline(
   return CI;
 }
 
-static void collectEligibleStrings(ConstantArray *CA,
-                                   SmallVectorImpl<GlobalVariable *> &Out) {
-  for (unsigned I = 0, E = CA->getNumOperands(); I != E; ++I) {
-    Constant *Op = CA->getOperand(I);
-    if (auto *NestedCA = dyn_cast<ConstantArray>(Op)) {
-      collectEligibleStrings(NestedCA, Out);
-    } else if (auto *GV = dyn_cast<GlobalVariable>(Op)) {
-      auto *Data = dyn_cast<ConstantDataSequential>(GV->getInitializer());
-      if (!Data)
-        continue;
-
-      if (isEligible(*GV))
-        Out.emplace_back(GV);
+void StringEncoding::collectEligibleStrings(
+    Constant *C, SmallVectorImpl<GlobalVariable *> &Out) {
+  if (auto *CA = dyn_cast<ConstantArray>(C)) {
+    for (unsigned I = 0, E = CA->getNumOperands(); I != E; ++I)
+      collectEligibleStrings(CA->getOperand(I), Out);
+  } else if (auto *CS = dyn_cast<ConstantStruct>(C)) {
+    for (unsigned I = 0, E = CS->getNumOperands(); I != E; ++I)
+      collectEligibleStrings(CS->getOperand(I), Out);
+  } else if (auto *GV = dyn_cast<GlobalVariable>(C)) {
+    if (isEligible(*GV)) {
+      if (auto *CDS = dyn_cast<ConstantDataSequential>(GV->getInitializer())) {
+        if (isEligible(*CDS) || getEncoding(*GV) != nullptr)
+          Out.emplace_back(GV);
+      }
+      else if (auto *Init = GV->getInitializer())
+        collectEligibleStrings(Init, Out);
     }
   }
 }
@@ -340,15 +350,18 @@ bool StringEncoding::processArrayOfStrings(Instruction &CurrentI, Use &Op,
       continue;
     }
 
+    if (!isEligible(*Data))
+      continue;
+
     auto EncInfoOpt = std::make_unique<StringEncodingOpt>(
         UserConfig.obfuscateString(CurrentI.getModule(), CurrentI.getFunction(),
-                                   Data->getAsCString().str()));
+                                   safeGetString(*Data).str()));
     if (isSkip(*EncInfoOpt))
       continue;
     if (std::get_if<StringEncOptLocal>(EncInfoOpt.get()))
       IsLocal = true;
 
-    SINFO("[{}] Processing string {}", name(), Data->getAsCString());
+    SINFO("[{}] Processing string {}", name(), safeGetString(*Data));
     Changed |= process(CurrentI, Op, *S, *Data, *EncInfoOpt);
   }
 
@@ -451,11 +464,11 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
         continue;
       }
 
-      if (isEligible(*Data)) {
-        // Get the encoding type from the user.
-        EncInfoOpt = std::make_unique<StringEncodingOpt>(
-            UserConfig.obfuscateString(M, &F, Data->getAsCString().str()));
-      }
+      if (!isEligible(*Data))
+        continue;
+
+      EncInfoOpt = std::make_unique<StringEncodingOpt>(
+          UserConfig.obfuscateString(M, &F, safeGetString(*Data).str()));
 
       if (isSkip(*EncInfoOpt) ||
           (MaybeStringInCEInitializer &&
@@ -467,7 +480,7 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
           std::get_if<StringEncOptLocal>(EncInfoOpt.get()))
         continue;
 
-      SINFO("[{}] Processing string {}", name(), Data->getAsCString());
+      SINFO("[{}] Processing string {}", name(), safeGetString(*Data));
       Changed |=
           process(I, *ActualOp, *G, *Data, *EncInfoOpt, IsCFStringBacking);
     }
