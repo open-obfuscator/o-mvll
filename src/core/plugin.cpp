@@ -122,7 +122,8 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "OMVLL", "1.4.1", [](PassBuilder &PB) {
             try {
               PB.registerPipelineEarlySimplificationEPCallback(
-                  [&](ModulePassManager &MPM, OptimizationLevel Opt) {
+                  [&](ModulePassManager &MPM, OptimizationLevel Opt,
+                      ThinOrFullLTOPhase) {
                     MPM.addPass(omvll::LoggerBind());
                     MPM.addPass(omvll::AntiHook());
                     MPM.addPass(omvll::FunctionOutline());

@@ -255,7 +255,7 @@ PreservedAnalyses BreakControlFlow::run(Module &M, ModuleAnalysisManager &FAM) {
   if (ToVisit.empty())
     return PreservedAnalyses::all();
 
-  JIT = std::make_unique<Jitter>(M.getTargetTriple());
+  JIT = std::make_unique<Jitter>(M.getTargetTriple().str());
 
   unsigned int NumVisits = 0;
   for (Function *F : ToVisit)
