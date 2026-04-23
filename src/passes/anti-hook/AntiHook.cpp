@@ -81,7 +81,7 @@ PreservedAnalyses AntiHook::run(Module &M, ModuleAnalysisManager &FAM) {
   bool Changed = false;
   PyConfig &Config = PyConfig::instance();
   SINFO("[{}] Executing on module {}", name(), M.getName());
-  JIT = std::make_unique<Jitter>(M.getTargetTriple());
+  JIT = std::make_unique<Jitter>(M.getTargetTriple().str());
 
   for (Function &F : M) {
     if (isFunctionGloballyExcluded(&F) ||
