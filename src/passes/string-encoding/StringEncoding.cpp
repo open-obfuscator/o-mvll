@@ -123,7 +123,7 @@ materializeConstantExpression(Instruction *Point, ConstantExpr *CE) {
 CallInst *StringEncoding::createDecodingTrampoline(
     GlobalVariable &G, Use &EncPtr, Instruction *NewPt, uint64_t KeyValI64,
     uint64_t Size, const StringEncoding::EncodingInfo &EI,
-    bool IsLocalToFunction, bool IsCFStringBacking) {
+    bool IsLocalToFunction) {
   Module *M = NewPt->getModule();
   LLVMContext &Ctx = NewPt->getContext();
 
@@ -174,7 +174,7 @@ CallInst *StringEncoding::createDecodingTrampoline(
   Value *Input = IRB.CreateBitCast(&G, IRB.getPtrTy());
   Value *Output = Input;
 
-  if (IsLocalToFunction && !IsCFStringBacking)
+  if (IsLocalToFunction)
     Output = ClearBuffer;
 
   auto *NewF =
@@ -247,9 +247,7 @@ CallInst *StringEncoding::createDecodingTrampoline(
   CI = IRB.CreateCall(Wrapper->getFunctionType(), Wrapper,
                       {NeedDecode, Output, Input, OpaqueKey, VStrSize});
 
-  if (IsCFStringBacking) {
-    // Do not patch Op -- it points to unnamed_cfstring struct
-  } else if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
+  if (auto *CE = dyn_cast<ConstantExpr>(EncPtr)) {
     auto [First, Last] = materializeConstantExpression(NewPt, CE);
     assert(((First != Last) ||
             (isa<GetElementPtrInst>(First) || isa<PtrToIntInst>(First))) &&
@@ -400,20 +398,6 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
       if (!G || !G->hasInitializer())
         continue;
 
-      bool IsCFStringBacking = false;
-      if (auto *CS = dyn_cast<ConstantStruct>(G->getInitializer())) {
-        if (CS->getNumOperands() == 4) {
-          Value *StringPtr = CS->getOperand(2);
-          if (auto *NestedGV =
-                  dyn_cast<GlobalVariable>(StringPtr->stripPointerCasts())) {
-            G = NestedGV;
-            IsCFStringBacking = true;
-            // Op still points at the cfstring struct
-            // we must not rewrite it in the trampoline
-          }
-        }
-      }
-
       // Process array of strings pointer.
       // TODO: Should properly refactor `encodeStrings` instead of having a
       // dedicated helper here.
@@ -460,7 +444,7 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
       if (EncodingInfo *EI = getEncoding(*G)) {
         // The global variable is already encoded.
         // Let's check if we should insert a decoding stub.
-        Changed |= injectDecoding(I, Op, *G, *Data, *EI, IsCFStringBacking);
+        Changed |= injectDecoding(I, Op, *G, *Data, *EI);
         continue;
       }
 
@@ -481,8 +465,7 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
         continue;
 
       SINFO("[{}] Processing string {}", name(), safeGetString(*Data));
-      Changed |=
-          process(I, *ActualOp, *G, *Data, *EncInfoOpt, IsCFStringBacking);
+      Changed |= process(I, *ActualOp, *G, *Data, *EncInfoOpt);
     }
   }
 
@@ -535,22 +518,21 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
 
 bool StringEncoding::injectDecoding(Instruction &I, Use &Op, GlobalVariable &G,
                                     ConstantDataSequential &Data,
-                                    const StringEncoding::EncodingInfo &Info,
-                                    bool IsCFStringBacking) {
+                                    const StringEncoding::EncodingInfo &Info) {
   switch (Info.Type) {
   case EncodingTy::None:
   case EncodingTy::Replace:
   case EncodingTy::Global:
     return false;
   case EncodingTy::Local:
-    return injectDecodingLocally(I, Op, G, Data, Info, IsCFStringBacking);
+    return injectDecodingLocally(I, Op, G, Data, Info);
   }
   llvm_unreachable("Unhandled case");
 }
 
 bool StringEncoding::injectDecodingLocally(
     Instruction &I, Use &Op, GlobalVariable &G, ConstantDataSequential &Data,
-    const StringEncoding::EncodingInfo &Info, bool IsCFStringBacking) {
+    const StringEncoding::EncodingInfo &Info) {
   auto *Key = std::get_if<KeyIntTy>(&Info.Key);
   if (!Key)
     fatalError("String stack decoding loop is expecting a buffer as a key! ");
@@ -558,21 +540,18 @@ bool StringEncoding::injectDecodingLocally(
   uint64_t StrSz = Data.getRawDataValues().size();
   SDEBUG("Key for 0x{:010x}", *Key);
 
-  auto *Callee = createDecodingTrampoline(G, Op, &I, *Key, StrSz, Info, true,
-                                          IsCFStringBacking);
+  auto *Callee = createDecodingTrampoline(G, Op, &I, *Key, StrSz, Info, true);
   ToInline.push_back(Callee);
   return true;
 }
 
 bool StringEncoding::process(Instruction &I, Use &Op, GlobalVariable &G,
                              ConstantDataSequential &Data,
-                             StringEncodingOpt &Opt, bool IsCFStringBacking) {
+                             StringEncodingOpt &Opt) {
   bool Changed = std::visit(
       overloaded{
           [&](StringEncOptSkip &) { return false; },
-          [&](StringEncOptLocal &) {
-            return processLocal(I, Op, G, Data, IsCFStringBacking);
-          },
+          [&](StringEncOptLocal &) { return processLocal(I, Op, G, Data); },
           [&](StringEncOptGlobal &) { return processGlobal(Op, G, Data); },
           [&](StringEncOptReplace &Rep) {
             return processReplace(Op, G, Data, Rep);
@@ -639,8 +618,7 @@ bool StringEncoding::processGlobal(Use &Op, GlobalVariable &G,
 #if LLVM_VERSION_MAJOR > 18
   unsigned GlobalIDHashVal = xxh3_64bits(G.getGlobalIdentifier());
 #else
-  unsigned GlobalIDHashVal =
-      stable_hash_combine_string(G.getGlobalIdentifier());
+  unsigned GlobalIDHashVal = stable_hash_combine_string(G.getGlobalIdentifier());
 #endif
   unsigned HashCombinedVal = stable_hash_combine(GlobalIDHashVal, StrSz, Key);
   std::string Name = CtorPrefixName + utostr(HashCombinedVal);
@@ -697,8 +675,7 @@ void StringEncoding::annotateRoutine(Module &M) {
 }
 
 bool StringEncoding::processLocal(Instruction &I, Use &Op, GlobalVariable &G,
-                                  ConstantDataSequential &Data,
-                                  bool IsCFStringBacking) {
+                                  ConstantDataSequential &Data) {
   LLVMContext &Ctx = I.getContext();
   StringRef Str = Data.getRawDataValues();
   uint64_t StrSz = Str.size();
@@ -719,7 +696,7 @@ bool StringEncoding::processLocal(Instruction &I, Use &Op, GlobalVariable &G,
 
   auto It = GVarEncInfo.insert({&G, std::move(EI)}).first;
   return injectDecodingLocally(I, Op, G, *cast<ConstantDataSequential>(StrEnc),
-                               It->getSecond(), IsCFStringBacking);
+                               It->getSecond());
 }
 
 } // end namespace omvll
