@@ -16,12 +16,60 @@
 #include "omvll/PyConfig.hpp"
 #include "omvll/jitter.hpp"
 #include "omvll/log.hpp"
+#include "omvll/omvll_config.hpp"
 #include "omvll/passes.hpp"
 #include "omvll/utils.hpp"
 
 using namespace llvm;
 
 static llvm::once_flag InitializePluginFlag;
+
+using PassFactory = std::function<void(ModulePassManager &)>;
+
+// Ordered list of all configurable passes. The position within this list
+// determines the relative execution order within each phase.
+static const std::vector<std::pair<std::string, PassFactory>> &getPassRegistry() {
+  static const std::vector<std::pair<std::string, PassFactory>> Registry = {
+      {omvll::AntiHook::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::AntiHook()); }},
+      {omvll::FunctionOutline::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::FunctionOutline()); }},
+      {omvll::StringEncoding::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::StringEncoding()); }},
+      {omvll::OpaqueFieldAccess::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::OpaqueFieldAccess()); }},
+      {omvll::BasicBlockDuplicate::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::BasicBlockDuplicate()); }},
+      {omvll::ControlFlowFlattening::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::ControlFlowFlattening()); }},
+      {omvll::BreakControlFlow::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::BreakControlFlow()); }},
+      {omvll::OpaqueConstants::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::OpaqueConstants()); }},
+      {omvll::Arithmetic::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::Arithmetic()); }},
+#ifdef OMVLL_EXPERIMENTAL
+      // ObjCleaner must be the last pass as function's name
+      // could be changed, which can be confusing for the user.
+      {omvll::ObjCleaner::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::ObjCleaner()); }},
+#endif
+      {omvll::IndirectCall::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::IndirectCall()); }},
+      {omvll::IndirectBranch::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::IndirectBranch()); }},
+      {omvll::Cleaning::name().str(),
+       [](ModulePassManager &M) { M.addPass(omvll::Cleaning()); }},
+  };
+  return Registry;
+}
+
+static void addPassesForPhase(ModulePassManager &MPM, omvll::Phase P) {
+  for (const auto &[Name, Factory] : getPassRegistry()) {
+    if (omvll::hasPhase(Name, P))
+      Factory(MPM);
+  }
+}
 
 template <> struct yaml::MappingTraits<omvll::YamlConfig> {
   static void mapping(IO &IO, omvll::YamlConfig &Config) {
@@ -122,25 +170,14 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "OMVLL", "1.4.1", [](PassBuilder &PB) {
             try {
               PB.registerPipelineEarlySimplificationEPCallback(
-                  [&](ModulePassManager &MPM, OptimizationLevel Opt) {
+                  [](ModulePassManager &MPM, OptimizationLevel Opt) {
                     MPM.addPass(omvll::LoggerBind());
-                    MPM.addPass(omvll::AntiHook());
-                    MPM.addPass(omvll::FunctionOutline());
-                    MPM.addPass(omvll::StringEncoding());
-                    MPM.addPass(omvll::OpaqueFieldAccess());
-                    MPM.addPass(omvll::BasicBlockDuplicate());
-                    MPM.addPass(omvll::ControlFlowFlattening());
-                    MPM.addPass(omvll::BreakControlFlow());
-                    MPM.addPass(omvll::OpaqueConstants());
-                    MPM.addPass(omvll::Arithmetic());
-#ifdef OMVLL_EXPERIMENTAL
-                    // ObjCleaner must be the last pass as function's name
-                    // could be changed, which can be confusing for the user.
-                    MPM.addPass(omvll::ObjCleaner());
-#endif
-                    MPM.addPass(omvll::IndirectCall());
-                    MPM.addPass(omvll::IndirectBranch());
-                    MPM.addPass(omvll::Cleaning());
+                    addPassesForPhase(MPM, omvll::Phase::Early);
+                    return true;
+                  });
+              PB.registerOptimizerLastEPCallback(
+                  [](ModulePassManager &MPM, OptimizationLevel Opt) {
+                    addPassesForPhase(MPM, omvll::Phase::Last);
                     return true;
                   });
             } catch (const std::exception &Exc) {

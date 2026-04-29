@@ -5,13 +5,20 @@
 // details.
 //
 
+#include <map>
 #include <string>
 #include <vector>
 
 namespace omvll {
 
+enum class Phase {
+  Early,
+  Last,
+};
+
 struct OMVLLConfig {
   std::vector<std::string> Passes;
+  std::map<std::string, std::vector<Phase>> PassPhases;
   std::vector<std::string> GlobalModuleExclude;
   std::vector<std::string> GlobalFunctionExclude;
   std::string OutputFolder;
@@ -24,5 +31,6 @@ struct OMVLLConfig {
 // Defined in omvll_config.cpp.
 extern OMVLLConfig Config;
 void initDefaultConfig();
+bool hasPhase(const std::string &PassName, Phase P);
 
 } // end namespace omvll
