@@ -78,6 +78,25 @@ void OMVLLCtor(py::module_ &m) {
       .value("Early", Phase::Early)
       .value("Last", Phase::Last);
 
+  py::enum_<Pass>(m, "Pass",
+                  R"delim(
+    Enum representing all available obfuscation passes.
+
+    Use values of this enum as keys in :attr:`omvll.config.pass_phases`.
+    )delim")
+      .value("AntiHook",              Pass::AntiHook)
+      .value("StringEncoding",        Pass::StringEncoding)
+      .value("OpaqueFieldAccess",     Pass::OpaqueFieldAccess)
+      .value("ControlFlowFlattening", Pass::ControlFlowFlattening)
+      .value("BreakControlFlow",      Pass::BreakControlFlow)
+      .value("OpaqueConstants",       Pass::OpaqueConstants)
+      .value("Arithmetic",            Pass::Arithmetic)
+      .value("IndirectBranch",        Pass::IndirectBranch)
+      .value("IndirectCall",          Pass::IndirectCall)
+      .value("BasicBlockDuplicate",   Pass::BasicBlockDuplicate)
+      .value("FunctionOutline",       Pass::FunctionOutline)
+      .value("Cleaning",              Pass::Cleaning);
+
   py::class_<OMVLLConfig>(m, "OMVLLConfig",
                           R"delim(
     This class is used to configure the global behavior of O-MVLL.
@@ -171,9 +190,9 @@ void OMVLLCtor(py::module_ &m) {
 
       .def_readwrite("pass_phases", &OMVLLConfig::PassPhases,
                      R"delim(
-                    Dictionary mapping pass names to the pipeline phase(s) they run in.
+                    Dictionary mapping passes to the pipeline phase(s) they run in.
 
-                    Keys are pass name strings (e.g. ``"Arithmetic"``).
+                    Keys are :class:`~omvll.Pass` enum values.
                     Values are lists of :class:`~omvll.Phase` values.
                     A pass may appear in one or both phases.
 
@@ -184,11 +203,11 @@ void OMVLLCtor(py::module_ &m) {
                     .. code-block:: python
 
                         omvll.config.pass_phases = {
-                            "Arithmetic":        [omvll.Phase.Early],
-                            "BreakControlFlow":  [omvll.Phase.Last],
-                            "StringEncoding":    [omvll.Phase.Early, omvll.Phase.Last],
+                            omvll.Pass.Arithmetic:        [omvll.Phase.Early],
+                            omvll.Pass.BreakControlFlow:  [omvll.Phase.Last],
+                            omvll.Pass.StringEncoding:    [omvll.Phase.Early, omvll.Phase.Last],
                         }
-                      
+
                     )delim");
 
   m.attr("config") = &Config;

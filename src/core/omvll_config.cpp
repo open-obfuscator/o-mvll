@@ -3,6 +3,9 @@
 // details.
 //
 
+#include <optional>
+#include <unordered_map>
+
 #include "omvll/omvll_config.hpp"
 #include "omvll/passes.hpp"
 
@@ -41,8 +44,32 @@ void initDefaultConfig() {
   Config.OutputFolder = "";
 }
 
+static std::optional<Pass> nameToPass(const std::string &InternalName) {
+  static const std::unordered_map<std::string, Pass> Table = {
+      {"omvll::AntiHook",              Pass::AntiHook},
+      {"omvll::StringEncoding",        Pass::StringEncoding},
+      {"omvll::OpaqueFieldAccess",     Pass::OpaqueFieldAccess},
+      {"omvll::ControlFlowFlattening", Pass::ControlFlowFlattening},
+      {"omvll::BreakControlFlow",      Pass::BreakControlFlow},
+      {"omvll::OpaqueConstants",       Pass::OpaqueConstants},
+      {"omvll::Arithmetic",            Pass::Arithmetic},
+      {"omvll::IndirectBranch",        Pass::IndirectBranch},
+      {"omvll::IndirectCall",          Pass::IndirectCall},
+      {"omvll::BasicBlockDuplicate",   Pass::BasicBlockDuplicate},
+      {"omvll::FunctionOutline",       Pass::FunctionOutline},
+      {"omvll::Cleaning",              Pass::Cleaning},
+  };
+  auto It = Table.find(InternalName);
+  if (It == Table.end())
+    return std::nullopt;
+  return It->second;
+}
+
 bool hasPhase(const std::string &PassName, Phase P) {
-  auto It = Config.PassPhases.find(PassName);
+  auto MaybePass = nameToPass(PassName);
+  if (!MaybePass)
+    return P == Phase::Early;
+  auto It = Config.PassPhases.find(*MaybePass);
   if (It == Config.PassPhases.end())
     return P == Phase::Early;
   for (Phase Ph : It->second)

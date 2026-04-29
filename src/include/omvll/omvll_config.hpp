@@ -16,9 +16,24 @@ enum class Phase {
   Last,
 };
 
+enum class Pass {
+  AntiHook,
+  StringEncoding,
+  OpaqueFieldAccess,
+  ControlFlowFlattening,
+  BreakControlFlow,
+  OpaqueConstants,
+  Arithmetic,
+  IndirectBranch,
+  IndirectCall,
+  BasicBlockDuplicate,
+  FunctionOutline,
+  Cleaning,
+};
+
 struct OMVLLConfig {
   std::vector<std::string> Passes;
-  std::map<std::string, std::vector<Phase>> PassPhases;
+  std::map<Pass, std::vector<Phase>> PassPhases;
   std::vector<std::string> GlobalModuleExclude;
   std::vector<std::string> GlobalFunctionExclude;
   std::string OutputFolder;
