@@ -30,6 +30,8 @@ void initDefaultConfig() {
       Cleaning::name().str(),
   };
 
+  Config.PassPhases.clear();
+
   Config.Cleaning = true;
   Config.InlineJniWrappers = true;
   Config.ShuffleFunctions = true;
@@ -37,6 +39,16 @@ void initDefaultConfig() {
   Config.GlobalFunctionExclude.clear();
   Config.ProbabilitySeed = 1;
   Config.OutputFolder = "";
+}
+
+bool hasPhase(const std::string &PassName, Phase P) {
+  auto It = Config.PassPhases.find(PassName);
+  if (It == Config.PassPhases.end())
+    return P == Phase::Early;
+  for (Phase Ph : It->second)
+    if (Ph == P)
+      return true;
+  return false;
 }
 
 } // end namespace omvll
