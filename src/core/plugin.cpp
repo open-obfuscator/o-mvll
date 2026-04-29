@@ -30,8 +30,6 @@ using PassFactory = std::function<void(ModulePassManager &)>;
 // determines the relative execution order within each phase.
 static const std::vector<std::pair<std::string, PassFactory>> &getPassRegistry() {
   static const std::vector<std::pair<std::string, PassFactory>> Registry = {
-      {omvll::LoggerBind::name().str(),
-       [](ModulePassManager &M) { M.addPass(omvll::LoggerBind()); }},
       {omvll::AntiHook::name().str(),
        [](ModulePassManager &M) { M.addPass(omvll::AntiHook()); }},
       {omvll::FunctionOutline::name().str(),
@@ -173,6 +171,7 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
             try {
               PB.registerPipelineEarlySimplificationEPCallback(
                   [](ModulePassManager &MPM, OptimizationLevel Opt) {
+                    MPM.addPass(omvll::LoggerBind());
                     addPassesForPhase(MPM, omvll::Phase::Early);
                     return true;
                   });
