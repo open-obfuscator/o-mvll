@@ -83,18 +83,25 @@ void OMVLLCtor(py::module_ &m) {
     Enum representing all available obfuscation passes.
 
     Use values of this enum as keys in :attr:`omvll.config.pass_phases`.
+
+    To obtain the full list of passes in their execution order, use:
+
+    .. code-block:: python
+
+        list(omvll.Pass)
+
     )delim")
       .value("AntiHook",              Pass::AntiHook)
+      .value("FunctionOutline",       Pass::FunctionOutline)
       .value("StringEncoding",        Pass::StringEncoding)
       .value("OpaqueFieldAccess",     Pass::OpaqueFieldAccess)
+      .value("BasicBlockDuplicate",   Pass::BasicBlockDuplicate)
       .value("ControlFlowFlattening", Pass::ControlFlowFlattening)
       .value("BreakControlFlow",      Pass::BreakControlFlow)
       .value("OpaqueConstants",       Pass::OpaqueConstants)
       .value("Arithmetic",            Pass::Arithmetic)
-      .value("IndirectBranch",        Pass::IndirectBranch)
       .value("IndirectCall",          Pass::IndirectCall)
-      .value("BasicBlockDuplicate",   Pass::BasicBlockDuplicate)
-      .value("FunctionOutline",       Pass::FunctionOutline)
+      .value("IndirectBranch",        Pass::IndirectBranch)
       .value("Cleaning",              Pass::Cleaning);
 
   py::class_<OMVLLConfig>(m, "OMVLLConfig",
@@ -103,18 +110,6 @@ void OMVLLCtor(py::module_ &m) {
 
     It can be accessed through the global :attr:`omvll.config` attribute
     )delim")
-      .def_readwrite("passes", &OMVLLConfig::Passes,
-                     R"delim(
-                   This **ordered** list contains the sequence of the obfuscation passes
-                   that must be used.
-                   It should not be modified unless you know what you do.
-
-                   This attribute is set by default to these values:
-
-                   |omvll-passes|
-
-                   )delim")
-
       .def_readwrite("inline_jni_wrappers", &OMVLLConfig::InlineJniWrappers,
                      R"delim(
                    This boolean attribute is used to force inlining JNI C++ wrapper.
@@ -203,9 +198,9 @@ void OMVLLCtor(py::module_ &m) {
                     .. code-block:: python
 
                         omvll.config.pass_phases = {
-                            omvll.Pass.Arithmetic:        [omvll.Phase.Early],
-                            omvll.Pass.BreakControlFlow:  [omvll.Phase.Last],
-                            omvll.Pass.StringEncoding:    [omvll.Phase.Early, omvll.Phase.Last],
+                            omvll.Pass.Arithmetic:        {omvll.Phase.Early},
+                            omvll.Pass.BreakControlFlow:  {omvll.Phase.Last},
+                            omvll.Pass.StringEncoding:    {omvll.Phase.Early, omvll.Phase.Last},
                         }
 
                     )delim");

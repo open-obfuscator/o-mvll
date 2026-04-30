@@ -6,6 +6,7 @@
 //
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -32,8 +33,7 @@ enum class Pass {
 };
 
 struct OMVLLConfig {
-  std::vector<std::string> Passes;
-  std::map<Pass, std::vector<Phase>> PassPhases;
+  std::map<Pass, std::set<Phase>> PassPhases;
   std::vector<std::string> GlobalModuleExclude;
   std::vector<std::string> GlobalFunctionExclude;
   std::string OutputFolder;
