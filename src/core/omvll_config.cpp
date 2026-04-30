@@ -7,32 +7,12 @@
 #include <unordered_map>
 
 #include "omvll/omvll_config.hpp"
-#include "omvll/passes.hpp"
 
 namespace omvll {
 
 OMVLLConfig Config;
 
 void initDefaultConfig() {
-  Config.Passes = {
-      AntiHook::name().str(),
-      StringEncoding::name().str(),
-
-      OpaqueFieldAccess::name().str(),
-      ControlFlowFlattening::name().str(),
-      BreakControlFlow::name().str(),
-
-      OpaqueConstants::name().str(),
-      Arithmetic::name().str(),
-      IndirectBranch::name().str(),
-      IndirectCall::name().str(),
-      BasicBlockDuplicate::name().str(),
-      FunctionOutline::name().str(),
-
-      // Last pass.
-      Cleaning::name().str(),
-  };
-
   Config.PassPhases.clear();
 
   Config.Cleaning = true;
@@ -72,10 +52,7 @@ bool hasPhase(const std::string &PassName, Phase P) {
   auto It = Config.PassPhases.find(*MaybePass);
   if (It == Config.PassPhases.end())
     return P == Phase::Early;
-  for (Phase Ph : It->second)
-    if (Ph == P)
-      return true;
-  return false;
+  return It->second.count(P) > 0;
 }
 
 } // end namespace omvll
