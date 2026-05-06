@@ -380,9 +380,36 @@ bool StringEncoding::processArrayOfStrings(Instruction &CurrentI, Use &Op,
   return Changed;
 }
 
+static bool hasEligibleGlobal(const Instruction &I) {
+  for (const Use &Op : I.operands()) {
+    auto *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts());
+    if (!G)
+      if (auto *CE = dyn_cast<ConstantExpr>(Op.get()))
+        G = extractGlobalVariable(CE);
+    if (!G || !G->hasInitializer())
+      continue;
+    if (isEligible(*G))
+      return true;
+    const Constant *Init = G->getInitializer();
+    if (const auto *StrippedGV = dyn_cast<GlobalVariable>(Init->stripPointerCasts()))
+      if (isEligible(*StrippedGV))
+        return true;
+    if (const auto *CE = dyn_cast<ConstantExpr>(Init))
+      if (auto *Nested = extractGlobalVariable(const_cast<ConstantExpr *>(CE)))
+        if (isEligible(*Nested))
+          return true;
+  }
+  return false;
+}
+
 bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
   bool Changed = false;
   llvm::Module *M = F.getParent();
+
+  if (!llvm::any_of(instructions(F), hasEligibleGlobal))
+    return false;
+
+  demotePHINode(F);
 
   for (Instruction &I : make_early_inc_range(instructions(F))) {
     assert(!isa<PHINode>(I) && "Found phi previously demoted?");
@@ -488,7 +515,6 @@ PreservedAnalyses StringEncoding::run(Module &M, ModuleAnalysisManager &MAM) {
     if (isFunctionGloballyExcluded(&F) || F.empty() || F.isDeclaration())
       continue;
 
-    demotePHINode(F);
     ToVisit.emplace_back(&F);
   }
 
