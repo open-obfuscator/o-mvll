@@ -276,12 +276,9 @@ CallInst *StringEncoding::createDecodingTrampoline(
 
 void StringEncoding::collectEligibleStrings(
     Constant *C, SmallVectorImpl<GlobalVariable *> &Out) {
-  if (auto *CA = dyn_cast<ConstantArray>(C)) {
-    for (unsigned I = 0, E = CA->getNumOperands(); I != E; ++I)
-      collectEligibleStrings(CA->getOperand(I), Out);
-  } else if (auto *CS = dyn_cast<ConstantStruct>(C)) {
-    for (unsigned I = 0, E = CS->getNumOperands(); I != E; ++I)
-      collectEligibleStrings(CS->getOperand(I), Out);
+  if (auto *Agg = dyn_cast<ConstantAggregate>(C)) {
+    for (unsigned I = 0, E = Agg->getNumOperands(); I != E; ++I)
+      collectEligibleStrings(Agg->getOperand(I), Out);
   } else if (auto *GV = dyn_cast<GlobalVariable>(C)) {
     if (isEligible(*GV)) {
       if (auto *CDS = dyn_cast<ConstantDataSequential>(GV->getInitializer())) {
@@ -294,16 +291,16 @@ void StringEncoding::collectEligibleStrings(
   }
 }
 
-Constant *StringEncoding::reconstructConstantArray(ConstantArray *CA) {
+Constant *StringEncoding::reconstructConstantAggregate(ConstantAggregate *CA) {
   SmallVector<Constant *, 16> NewOps;
   bool Changed = false;
 
   for (unsigned I = 0, E = CA->getNumOperands(); I != E; ++I) {
     Constant *Op = CA->getOperand(I);
-    if (auto *NestedCA = dyn_cast<ConstantArray>(Op)) {
-      Constant *NewNestedCA = reconstructConstantArray(NestedCA);
-      NewOps.emplace_back(NewNestedCA);
-      Changed = (NewNestedCA != NestedCA);
+    if (auto *Nested = dyn_cast<ConstantAggregate>(Op)) {
+      Constant *NewNested = reconstructConstantAggregate(Nested);
+      NewOps.emplace_back(NewNested);
+      Changed |= (NewNested != Nested);
     } else if (auto *GV = dyn_cast<GlobalVariable>(Op)) {
       auto It = OriginalToDecoded.find(GV);
       if (It != OriginalToDecoded.end()) {
@@ -319,11 +316,17 @@ Constant *StringEncoding::reconstructConstantArray(ConstantArray *CA) {
 
   if (!Changed)
     return CA;
-  return ConstantArray::get(CA->getType(), NewOps);
+  if (auto *CS = dyn_cast<ConstantStruct>(CA))
+    return ConstantStruct::get(CS->getType(), NewOps);
+  if (auto *Arr = dyn_cast<ConstantArray>(CA))
+    return ConstantArray::get(Arr->getType(), NewOps);
+  if (isa<ConstantVector>(CA))
+    return ConstantVector::get(NewOps);
+  llvm_unreachable("unhandled ConstantAggregate subclass");
 }
 
-bool StringEncoding::processArrayOfStrings(Instruction &CurrentI, Use &Op,
-                                           ConstantArray *CA,
+bool StringEncoding::processAggregateOfStrings(Instruction &CurrentI, Use &Op,
+                                           ConstantAggregate *CA,
                                            GlobalVariable *GV,
                                            ObfuscationConfig &UserConfig) {
   bool Changed = false;
@@ -365,7 +368,7 @@ bool StringEncoding::processArrayOfStrings(Instruction &CurrentI, Use &Op,
 
   // If local, create a global variable w/ a new constant array initializer.
   if (Changed && IsLocal) {
-    Constant *NewCA = reconstructConstantArray(CA);
+    Constant *NewCA = reconstructConstantAggregate(CA);
     if (NewCA != CA) {
       GlobalVariable *NewGV =
           new GlobalVariable(*CurrentI.getModule(), CA->getType(), false,
@@ -425,12 +428,12 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
       if (!G || !G->hasInitializer())
         continue;
 
-      // Process array of strings pointer.
+      // Process array of strings, structs and vector  pointer.
       // TODO: Should properly refactor `encodeStrings` instead of having a
       // dedicated helper here.
-      if (auto *CA = dyn_cast<ConstantArray>(G->getInitializer());
+      if (auto *CA = dyn_cast<ConstantAggregate>(G->getInitializer());
           CA && G->hasOneUse()) {
-        Changed |= processArrayOfStrings(I, Op, CA, G, UserConfig);
+        Changed |= processAggregateOfStrings(I, Op, CA, G, UserConfig);
         continue;
       }
 

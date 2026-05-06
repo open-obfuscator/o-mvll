@@ -17,6 +17,7 @@
 
 // Forward declarations
 namespace llvm {
+class ConstantAggregate;
 class ConstantDataSequential;
 class GlobalVariable;
 class CallInst;
@@ -79,9 +80,9 @@ struct StringEncoding : llvm::PassInfoMixin<StringEncoding> {
   bool processLocal(llvm::Instruction &I, llvm::Use &Op,
                     llvm::GlobalVariable &G,
                     llvm::ConstantDataSequential &Data);
-  bool processArrayOfStrings(llvm::Instruction &CurrentI, llvm::Use &Op,
-                             llvm::ConstantArray *CA, llvm::GlobalVariable *GV,
-                             ObfuscationConfig &);
+  bool processAggregateOfStrings(llvm::Instruction &CurrentI, llvm::Use &Op,
+                             llvm::ConstantAggregate *CA,
+                             llvm::GlobalVariable *GV, ObfuscationConfig &);
   void collectEligibleStrings(
       llvm::Constant *C,
       llvm::SmallVectorImpl<llvm::GlobalVariable *> &Out);
@@ -96,7 +97,7 @@ private:
   void genRoutines(const llvm::Triple &Triple, EncodingInfo &EI,
                    llvm::LLVMContext &Ctx);
   void annotateRoutine(llvm::Module &M);
-  llvm::Constant *reconstructConstantArray(llvm::ConstantArray *CA);
+  llvm::Constant *reconstructConstantAggregate(llvm::ConstantAggregate *CA);
 
   std::vector<llvm::CallInst *> ToInline;
   std::vector<llvm::Function *> Ctors;
