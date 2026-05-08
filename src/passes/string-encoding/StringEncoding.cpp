@@ -284,8 +284,7 @@ void StringEncoding::collectEligibleStrings(
       if (auto *CDS = dyn_cast<ConstantDataSequential>(GV->getInitializer())) {
         if (isEligible(*CDS) || getEncoding(*GV) != nullptr)
           Out.emplace_back(GV);
-      }
-      else if (auto *Init = GV->getInitializer())
+      } else if (auto *Init = GV->getInitializer())
         collectEligibleStrings(Init, Out);
     }
   }
@@ -304,8 +303,20 @@ Constant *StringEncoding::reconstructConstantAggregate(ConstantAggregate *CA) {
     } else if (auto *GV = dyn_cast<GlobalVariable>(Op)) {
       auto It = OriginalToDecoded.find(GV);
       if (It != OriginalToDecoded.end()) {
-        NewOps.emplace_back(It->second);
-        Changed = true;
+        GlobalVariable *Replacement = It->second;
+        // Only substitute if replacement's type matches the
+        // original operand's type.
+        Type *ExpectedTy =
+            CA->getType()->isStructTy()
+                ? cast<StructType>(CA->getType())->getElementType(I)
+                : Op->getType();
+
+        if (Replacement->getType() == ExpectedTy) {
+          NewOps.emplace_back(It->second);
+          Changed = true;
+        } else {
+          NewOps.emplace_back(GV);
+        }
       } else {
         NewOps.emplace_back(GV);
       }
@@ -325,10 +336,31 @@ Constant *StringEncoding::reconstructConstantAggregate(ConstantAggregate *CA) {
   llvm_unreachable("unhandled ConstantAggregate subclass");
 }
 
+static bool isABICriticalGlobal(const GlobalVariable &G) {
+  StringRef N = G.getName();
+  if (N.starts_with("__block_literal_global") ||
+      N.starts_with("__block_descriptor") || N.starts_with("__NSConcrete") ||
+      N.starts_with("OBJC_") || N.starts_with("__objc_") ||
+      N.starts_with("_OBJC_"))
+    return true;
+
+  if (G.hasSection()) {
+    StringRef S = G.getSection();
+    if (S.contains("__objc_") || S.contains("__cfstring") ||
+        S.contains("__const") && S.contains("objc"))
+      return true;
+  }
+  return false;
+}
+
 bool StringEncoding::processAggregateOfStrings(Instruction &CurrentI, Use &Op,
-                                           ConstantAggregate *CA,
-                                           GlobalVariable *GV,
-                                           ObfuscationConfig &UserConfig) {
+                                               ConstantAggregate *CA,
+                                               GlobalVariable *GV,
+                                               ObfuscationConfig &UserConfig) {
+
+  if (isABICriticalGlobal(*GV))
+    return false;
+
   bool Changed = false;
 
   // Collect all eligible strings. We visit the array operands recursively in
@@ -394,7 +426,8 @@ static bool hasEligibleGlobal(const Instruction &I) {
     if (isEligible(*G))
       return true;
     const Constant *Init = G->getInitializer();
-    if (const auto *StrippedGV = dyn_cast<GlobalVariable>(Init->stripPointerCasts()))
+    if (const auto *StrippedGV =
+            dyn_cast<GlobalVariable>(Init->stripPointerCasts()))
       if (isEligible(*StrippedGV))
         return true;
     if (const auto *CE = dyn_cast<ConstantExpr>(Init))
@@ -647,7 +680,8 @@ bool StringEncoding::processGlobal(Use &Op, GlobalVariable &G,
 #if LLVM_VERSION_MAJOR > 18
   unsigned GlobalIDHashVal = xxh3_64bits(G.getGlobalIdentifier());
 #else
-  unsigned GlobalIDHashVal = stable_hash_combine_string(G.getGlobalIdentifier());
+  unsigned GlobalIDHashVal =
+      stable_hash_combine_string(G.getGlobalIdentifier());
 #endif
   unsigned HashCombinedVal = stable_hash_combine(GlobalIDHashVal, StrSz, Key);
   std::string Name = CtorPrefixName + utostr(HashCombinedVal);
