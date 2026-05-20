@@ -7,8 +7,8 @@
 set -ex
 
 cd /deps
-tar xzvf LLVM-19.1.4git-arm64-Darwin.tar.gz
-tar xzvf LLVM-19.1.4git-x86_64-Darwin.tar.gz
+tar xzvf LLVM-21.1.6-arm64-Darwin.tar.gz
+tar xzvf LLVM-21.1.6-x86_64-Darwin.tar.gz
 tar xzvf LLVM17-NDK26-Darwin.tar.gz
 tar xzvf Python-slim.tar.gz
 tar xzvf pybind11.tar.gz
@@ -20,11 +20,11 @@ cd /o-mvll/src
 mkdir -p build_xcode && cd build_xcode
 
 export OSXCROSS_TARGET_DIR=/osxcross
-export OSXCROSS_SDK=${OSXCROSS_TARGET_DIR}/SDK/MacOSX15.4.sdk
+export OSXCROSS_SDK=${OSXCROSS_TARGET_DIR}/SDK/MacOSX26.4.sdk
 export OMVLL_PYTHONPATH=/omvll/ci/distribution/Python-3.10.7/Lib
 
-export OSXCROSS_HOST="arm64-apple-darwin24.4"
-export OSXCROSS_TARGET="arm64-apple-darwin24.4"
+export OSXCROSS_HOST="arm64-apple-darwin25.4"
+export OSXCROSS_TARGET="arm64-apple-darwin25.4"
 
 cmake -GNinja -Bxcode-arm64 -S.. \
       -DCMAKE_TOOLCHAIN_FILE=${OSXCROSS_TARGET_DIR}/toolchain.cmake \
@@ -40,7 +40,7 @@ cmake -GNinja -Bxcode-arm64 -S.. \
       -DPython3_INCLUDE_DIR=/deps/include/python3.10 \
       -Dpybind11_DIR=/deps/share/cmake/pybind11 \
       -Dspdlog_DIR=/deps/lib/cmake/spdlog \
-      -DLLVM_DIR=/deps/LLVM-19.1.4git-arm64-Darwin/lib/cmake/llvm \
+      -DLLVM_DIR=/deps/LLVM-21.1.6-arm64-Darwin/lib/cmake/llvm \
       -DOMVLL_ABI=Apple
 ninja -C xcode-arm64
 
@@ -62,8 +62,8 @@ cmake -GNinja -Bndk-arm64 -S.. \
       -DOMVLL_ABI=Android
 ninja -C ndk-arm64
 
-export OSXCROSS_HOST="x86_64-apple-darwin24.4"
-export OSXCROSS_TARGET="x86_64-apple-darwin24.4"
+export OSXCROSS_HOST="x86_64-apple-darwin25.4"
+export OSXCROSS_TARGET="x86_64-apple-darwin25.4"
 
 cmake -GNinja -Bxcode-x86_64 -S.. \
       -DCMAKE_TOOLCHAIN_FILE=${OSXCROSS_TARGET_DIR}/toolchain.cmake \
@@ -79,7 +79,7 @@ cmake -GNinja -Bxcode-x86_64 -S.. \
       -DPython3_INCLUDE_DIR=/deps/include/python3.10 \
       -Dpybind11_DIR=/deps/share/cmake/pybind11 \
       -Dspdlog_DIR=/deps/lib/cmake/spdlog \
-      -DLLVM_DIR=/deps/LLVM-19.1.4-Darwin/lib/cmake/llvm \
+      -DLLVM_DIR=/deps/LLVM-21.1.6-x86_64-Darwin/lib/cmake/llvm \
       -DOMVLL_ABI=Apple
 ninja -C xcode-x86_64
 
