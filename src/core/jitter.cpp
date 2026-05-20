@@ -19,6 +19,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/TargetParser/Host.h"
+#include "llvm/TargetParser/Triple.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include "omvll/jitter.hpp"
@@ -64,7 +65,8 @@ void Jitter::initializeArchTarget() {
     else if (TT.isX86())
       initializeX86Assembler();
     else
-      fatalError(fmt::format("Unsupported arch type: {}", TT.getArch()));
+      fatalError(fmt::format("Unsupported arch type: {}",
+                             Triple::getArchTypeName(TT.getArch())));
     HasArchTargetInitialized = true;
   }
 }
