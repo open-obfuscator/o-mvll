@@ -219,39 +219,41 @@ Function *Arithmetic::injectFunWrapper(Module &M, BinaryOperator &Op,
   return F;
 }
 
-bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
+bool Arithmetic::runOnBasicBlock(BasicBlock &BB,
+                                 std::optional<size_t> ExplicitRounds) {
   size_t Counter = 0;
 
   SmallVector<Instruction *> ToErase;
   MapVector<Function *, size_t> ToObfuscate;
-  for (Instruction &I : BB) {
-    // First, check if there is O-MVLL metadata associated with the current
-    // instruction. If it is the case, access the number of iterations.
-    size_t Rounds = 0;
-    if (auto MO = getObf(I, MetaObfTy::OpaqueOp)) {
-      if (auto *Val = MO->get<uint64_t>()) {
-        Rounds = *Val;
 
-        if (auto It = Opts.find(BB.getParent()); It != Opts.end()) {
-          SINFO("[{}][{}] Metadata ({}) overrides rounds ({}) for {}", name(),
-                BB.getParent()->getName(), Rounds, It->second.Iterations,
-                I.getOpcodeName());
+  for (Instruction &I : BB) {
+    size_t Rounds = 0;
+
+    if (ExplicitRounds.has_value()) {
+      Rounds = *ExplicitRounds;
+    } else {
+      // Check for per-instruction O-MVLL metadata first, then fall back to the
+      // function-level opt.
+      if (auto MO = getObf(I, MetaObfTy::OpaqueOp)) {
+        if (auto *Val = MO->get<uint64_t>()) {
+          Rounds = *Val;
+
+          if (auto It = Opts.find(BB.getParent()); It != Opts.end()) {
+            SINFO("[{}][{}] Metadata ({}) overrides rounds ({}) for {}", name(),
+                  BB.getParent()->getName(), Rounds, It->second.Iterations,
+                  I.getOpcodeName());
+          }
         }
+      } else if (auto It = Opts.find(BB.getParent()); It != Opts.end()) {
+        Rounds = It->second.Iterations;
       }
-    } else if (auto It = Opts.find(BB.getParent()); It != Opts.end()) {
-      Rounds = It->second.Iterations;
     }
 
-    // No need to continue if there is a 0-round.
     if (Rounds == 0)
       continue;
 
-    // Now check that we are in a BinOp instruction.
     auto *BinOp = dyn_cast<BinaryOperator>(&I);
-    if (!BinOp)
-      continue;
-
-    if (!isSupported(*BinOp))
+    if (!BinOp || !isSupported(*BinOp))
       continue;
 
     Value *Lhs = BinOp->getOperand(0);
@@ -277,9 +279,9 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
   ArithmeticVisitor Visitor(Builder);
 
   for (const auto &[F, Round] : ToObfuscate) {
-    for (BasicBlock &BB : *F) {
+    for (BasicBlock &FBB : *F) {
       for (size_t Idx = 0; Idx < Round; ++Idx) {
-        for (Instruction &I : BB) {
+        for (Instruction &I : FBB) {
           if (getObf(I, MetaObfTy::OpaqueCst))
             continue;
 
@@ -290,7 +292,7 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
             continue;
 
           SDEBUG("[{}][{}] Replacing {} with {}", name(), F->getName(),
-                I.getOpcodeName(), Result->getName());
+                 I.getOpcodeName(), Result->getName());
 
           BasicBlock *InstParent = I.getParent();
           BasicBlock::iterator InsertPos = I.getIterator();
@@ -305,7 +307,14 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB) {
     }
   }
 
-  bool Changed = Counter > 0;
+  return Counter > 0;
+}
+
+bool Arithmetic::runOnFunction(Function &F,
+                                 std::optional<size_t> ExplicitRounds){
+  bool Changed = false;
+  for (BasicBlock &BB : F)
+    Changed |= runOnBasicBlock(BB, ExplicitRounds);
   return Changed;
 }
 
@@ -339,8 +348,7 @@ PreservedAnalyses Arithmetic::run(Module &M, ModuleAnalysisManager &FAM) {
     SINFO("[{}] Visiting function {}", name(), F->getName());
     Opts.insert({F, std::move(Opt)});
 
-    for (BasicBlock &BB : *F)
-      Changed |= runOnBasicBlock(BB);
+    Changed |= runOnFunction(*F);
   }
 
   SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",

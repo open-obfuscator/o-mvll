@@ -16,32 +16,49 @@ namespace omvll {
 struct OpaqueConstantsSkip {};
 
 struct OpaqueConstantsBool  {
-  OpaqueConstantsBool(bool Value) : Value(Value) {}
+  OpaqueConstantsBool(bool Value, uint8_t ArithRounds = 0)
+      : Value(Value), ArithRounds(ArithRounds) {}
   operator bool() const { return Value; }
   bool Value = false;
+  uint8_t ArithRounds = 0;
 };
 
 struct OpaqueConstantsLowerLimit {
-  OpaqueConstantsLowerLimit(uint64_t Value) : Value(Value) {}
+  OpaqueConstantsLowerLimit(uint64_t Value, uint8_t ArithRounds = 0)
+      : Value(Value), ArithRounds(ArithRounds) {}
   operator bool() const { return Value > 0; }
   uint64_t Value = 0;
+  uint8_t ArithRounds = 0;
 };
 
 struct OpaqueConstantsSet {
-  OpaqueConstantsSet(std::vector<uint64_t> Value)
-      : Values(Value.begin(), Value.end()) {}
+  OpaqueConstantsSet(std::vector<uint64_t> Value, uint8_t ArithRounds = 0)
+      : Values(Value.begin(), Value.end()), ArithRounds(ArithRounds) {}
 
   inline bool contains(uint64_t Value) const { return Values.contains(Value); }
   inline bool empty() { return Values.empty(); };
   inline operator bool() const { return !Values.empty(); }
   llvm::DenseSet<uint64_t> Values;
+  uint8_t ArithRounds = 0;
+};
+
+struct OpaqueConstantsExceptSet {
+  OpaqueConstantsExceptSet(std::vector<uint64_t> Value, uint8_t ArithRounds = 0)
+      : Values(Value.begin(), Value.end()), ArithRounds(ArithRounds) {}
+
+  inline bool contains(uint64_t Value) const { return Values.contains(Value); }
+  inline bool empty() { return Values.empty(); };
+  inline operator bool() const { return !Values.empty(); }
+  llvm::DenseSet<uint64_t> Values;
+  uint8_t ArithRounds = 0;
 };
 
 using OpaqueConstantsOpt = std::variant<
   OpaqueConstantsSkip,
   OpaqueConstantsBool,
   OpaqueConstantsLowerLimit,
-  OpaqueConstantsSet
+  OpaqueConstantsSet,
+  OpaqueConstantsExceptSet
 >;
 
 } // end namespace omvll

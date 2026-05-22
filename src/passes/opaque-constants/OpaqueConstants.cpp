@@ -70,6 +70,18 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
                               return true;
                             return !V.empty() && V.contains(LV);
                           },
+                          [&](OpaqueConstantsExceptSet &V) {
+                            if (CI.isZero())
+                              return !V.contains(0);
+                            if (CI.isOne())
+                              return !V.contains(1);
+                            static constexpr uint64_t Magic =
+                                0x4208D8DF2C6415BC;
+                            const uint64_t LV = CI.getLimitedValue(Magic);
+                            if (LV == Magic)
+                              return true;
+                            return V.empty() || !V.contains(LV);
+                          },
                       },
                       *Opt);
   };
@@ -82,11 +94,20 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
   if (CI.isZero()) {
     // Special processing for 0 values.
     NewVal = getOpaqueZero(I, *Ctx, CI.getType());
+    #ifdef OMVLL_DEBUG
+      SDEBUG("[{}][{}] Opaquized", name(), CI.getLimitedValue());
+    #endif
   } else if (CI.isOne()) {
     // Special processing for 1 values.
     NewVal = getOpaqueOne(I, *Ctx, CI.getType());
+    #ifdef OMVLL_DEBUG
+      SDEBUG("[{}][{}] Opaquized", name(), CI.getLimitedValue());
+    #endif
   } else {
     NewVal = getOpaqueCst(I, *Ctx, CI);
+    #ifdef OMVLL_DEBUG
+      SDEBUG("[{}][{}] Opaquized", name(), CI.getLimitedValue());
+    #endif
   }
 
   if (!NewVal) {
@@ -223,6 +244,19 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
         continue;
       Changed |= runOnBasicBlock(BB, Inserted);
     }
+
+    if (Changed && Inserted) {
+      size_t ArithRounds = std::visit(overloaded{
+          [](OpaqueConstantsSkip &)          -> size_t { return 0; },
+          [](OpaqueConstantsBool &V)         -> size_t { return V.ArithRounds; },
+          [](OpaqueConstantsLowerLimit &V)   -> size_t { return V.ArithRounds; },
+          [](OpaqueConstantsSet &V)          -> size_t { return V.ArithRounds; },
+          [](OpaqueConstantsExceptSet &V)    -> size_t { return V.ArithRounds; },
+      }, *Inserted);
+      if (ArithRounds > 0)
+        Arith.runOnFunction(F, ArithRounds);
+    }
+
   }
 
   SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",
