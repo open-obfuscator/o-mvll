@@ -8,6 +8,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/ADT/DenseMap.h"
 
+#include "omvll/passes/arithmetic/Arithmetic.hpp"
 #include "omvll/passes/opaque-constants/OpaqueConstantsOpt.hpp"
 
 // Forward declarations
@@ -47,6 +48,7 @@ struct OpaqueConstants : llvm::PassInfoMixin<OpaqueConstants> {
                             const llvm::ConstantInt &Val);
 
 private:
+  Arithmetic Arith;
   llvm::DenseMap<llvm::Function *, OpaqueContext> OpaqueCtx;
   llvm::DenseMap<llvm::Function *, OpaqueConstantsOpt> Opts;
 };

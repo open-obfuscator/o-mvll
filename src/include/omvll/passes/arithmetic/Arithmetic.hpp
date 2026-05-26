@@ -5,6 +5,9 @@
 // details.
 //
 
+#include <cstddef>
+#include <optional>
+
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/ADT/DenseMap.h"
@@ -25,7 +28,10 @@ namespace omvll {
 struct Arithmetic : llvm::PassInfoMixin<Arithmetic> {
   llvm::PreservedAnalyses run(llvm::Module &M,
                               llvm::ModuleAnalysisManager &FAM);
-  bool runOnBasicBlock(llvm::BasicBlock &BB);
+  bool runOnBasicBlock(llvm::BasicBlock &BB,
+                       std::optional<size_t> Rounds = std::nullopt);
+  bool runOnFunction(llvm::Function &F,
+                     std::optional<size_t> Rounds = std::nullopt);
 
   llvm::Function *injectFunWrapper(llvm::Module &M, llvm::BinaryOperator &Op,
                                    llvm::Value &Lhs, llvm::Value &Rhs);
