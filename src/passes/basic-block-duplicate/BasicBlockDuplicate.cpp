@@ -25,24 +25,37 @@ using namespace omvll;
 
 namespace omvll {
 
-static constexpr auto CoinflipFunctionName = "__omvll_coinflip";
 static constexpr auto LRand48FunctionName = "lrand48";
+static constexpr unsigned MaxDuplicatedBlocksPerFunction = 500;
+
+static Value *buildCoinflip(IRBuilder<> &Builder, Module &M) {
+    LLVMContext &Ctx = M.getContext();
+
+    AttributeList AL;
+    AL = AL.addFnAttribute(Ctx, Attribute::NoUnwind);
+    auto *I64Ty = Builder.getInt64Ty();
+
+    FunctionCallee LRand48 = M.getOrInsertFunction(LRand48FunctionName, AL, I64Ty);
+
+    Value *Rand = Builder.CreateCall(LRand48);
+    Value *LSB  = Builder.CreateAnd(Rand, ConstantInt::get(I64Ty, 1));
+    return Builder.CreateICmpNE(LSB, ConstantInt::get(I64Ty, 0));
+}
 
 bool BasicBlockDuplicate::process(Function &F, LLVMContext &Ctx,
                                   unsigned Probability) {
   SmallVector<BasicBlock *, 64> ToDup;
   ToDup.reserve(F.size());
 
-  // Collect basic blocks to be duplicated.
-  auto ShouldDuplicate = [&]() {
-    return RandomGenerator::generate() < Probability;
-  };
+  // Collect basic blocks to be duplicated, up to MaxDuplicatedBlocksPerFunction.
   for (BasicBlock &BB : F) {
+    if (ToDup.size() >= MaxDuplicatedBlocksPerFunction)
+      break;
     if (&BB == &F.getEntryBlock())
       continue;
     if (isEHBlock(BB) || containsSwiftErrorAlloca(BB))
       continue;
-    if (ShouldDuplicate())
+    if (RandomGenerator::checkProbability(Probability))
       ToDup.push_back(&BB);
   }
 
@@ -65,9 +78,9 @@ bool BasicBlockDuplicate::process(Function &F, LLVMContext &Ctx,
     // Drop original basic block terminator.
     BB->getTerminator()->eraseFromParent();
 
-    // Branch on __omvll_coinflip result.
+    // Branch on coinflip result.
     Builder.SetInsertPoint(BB);
-    Value *Cond = Builder.CreateCall(CoinflipCallee, {});
+    Value *Cond = buildCoinflip(Builder, *F.getParent());
     Builder.CreateCondBr(Cond, NewBB, OldBB);
 
     // Ensure existing PNs have an incoming entry for the newly-cloned basic
@@ -127,42 +140,6 @@ bool BasicBlockDuplicate::process(Function &F, LLVMContext &Ctx,
   return true;
 }
 
-// A per-module routine modeling a toss of a coin, selecting the basic block to
-// jump to.
-void BasicBlockDuplicate::initializeCoinflipRoutine(Module &M) {
-  LLVMContext &Ctx = M.getContext();
-  IRBuilder<> Builder(Ctx);
-
-  // TODO: Should also be marked as speculatable. An alternative here would be
-  // to branch on freeze poison, and let LLVM choose a fixed, arbitrary value.
-  // At the very least, this should restrain some optimizations to occur.
-  {
-    AttributeList AL;
-    AL = AL.addFnAttribute(Ctx, Attribute::NoUnwind);
-    AL = AL.addFnAttribute(Ctx, Attribute::AlwaysInline);
-    CoinflipCallee =
-        M.getOrInsertFunction(CoinflipFunctionName, AL, Builder.getInt1Ty());
-  }
-
-  auto *CoinflipFunction = cast<Function>(CoinflipCallee.getCallee());
-  CoinflipFunction->setLinkage(GlobalValue::LinkOnceODRLinkage);
-  CoinflipFunction->setVisibility(GlobalValue::HiddenVisibility);
-
-  BasicBlock *Entry = BasicBlock::Create(Ctx, "entry", CoinflipFunction);
-  Builder.SetInsertPoint(Entry);
-
-  AttributeList AL;
-  AL = AL.addFnAttribute(Ctx, Attribute::NoUnwind);
-  auto *I64Ty = Builder.getInt64Ty();
-  FunctionCallee LRand48 =
-      M.getOrInsertFunction(LRand48FunctionName, AL, I64Ty);
-
-  auto *LRand64Call = Builder.CreateCall(LRand48);
-  Value *LSB = Builder.CreateAnd(LRand64Call, ConstantInt::get(I64Ty, 1));
-  Value *Cmp = Builder.CreateICmpNE(LSB, ConstantInt::get(I64Ty, 0));
-  Builder.CreateRet(Cmp);
-}
-
 PreservedAnalyses BasicBlockDuplicate::run(Module &M,
                                            ModuleAnalysisManager &MAM) {
   if (isModuleGloballyExcluded(&M)) {
@@ -177,8 +154,6 @@ PreservedAnalyses BasicBlockDuplicate::run(Module &M,
 
   BasicBlockDuplicateOpt Opt =
       Config.getUserConfig()->basicBlockDuplicate(&M, nullptr);
-  if (std::get_if<BasicBlockDuplicateWithProbability>(&Opt))
-    initializeCoinflipRoutine(M);
 
   for (Function &F : M) {
     Opt = Config.getUserConfig()->basicBlockDuplicate(&M, &F);
