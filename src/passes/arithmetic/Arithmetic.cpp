@@ -19,12 +19,6 @@
 using namespace llvm;
 using namespace PatternMatch;
 
-static constexpr auto MBAFunctionName = "__omvll_mba";
-
-// This flag can be used for disabling the inlining of the MBA function wrappers
-// (mostly for debugging).
-static constexpr bool ShouldInline = true;
-
 namespace omvll {
 
 // LLVM's InstVisitor to pattern match and replace arithmetic operations with
@@ -194,38 +188,15 @@ bool Arithmetic::isSupported(const BinaryOperator &Op) {
          Opcode == Instruction::Or;
 }
 
-Function *Arithmetic::injectFunWrapper(Module &M, BinaryOperator &Op,
-                                       Value &Lhs, Value &Rhs) {
-  auto *FTy = FunctionType::get(Op.getType(), {Lhs.getType(), Rhs.getType()},
-                                /*vargs=*/false);
-  auto *F = Function::Create(FTy, llvm::GlobalValue::PrivateLinkage,
-                             MBAFunctionName, M);
-
-  if constexpr (ShouldInline) {
-    F->addFnAttr(Attribute::AlwaysInline);
-  } else {
-    F->addFnAttr(Attribute::NoInline);
-    F->addFnAttr(Attribute::OptimizeNone);
-  }
-
-  F->setCallingConv(CallingConv::C);
-
-  BasicBlock *EntryBB = BasicBlock::Create(F->getContext(), "entry", F);
-  Value *P1 = F->getArg(0);
-  Value *P2 = F->getArg(1);
-  IRBuilder<> EBuild(EntryBB);
-  EBuild.SetInsertPoint(EntryBB);
-  EBuild.CreateRet(EBuild.CreateBinOp(Op.getOpcode(), P1, P2));
-  return F;
-}
-
 bool Arithmetic::runOnBasicBlock(BasicBlock &BB,
                                  std::optional<size_t> ExplicitRounds) {
-  size_t Counter = 0;
+  bool Changed = false;
+  
+  ArithmeticVisitor::BuilderTy Builder(&BB);
+  ArithmeticVisitor Visitor(Builder);
 
-  SmallVector<Instruction *> ToErase;
-  MapVector<Function *, size_t> ToObfuscate;
-
+  // First pass: collect original candidates and their round counts
+  SmallVector<std::pair<Instruction *, size_t>> Candidates;
   for (Instruction &I : BB) {
     size_t Rounds = 0;
 
@@ -256,58 +227,49 @@ bool Arithmetic::runOnBasicBlock(BasicBlock &BB,
     if (!BinOp || !isSupported(*BinOp))
       continue;
 
-    Value *Lhs = BinOp->getOperand(0);
-    Value *Rhs = BinOp->getOperand(1);
-
-    Function *FWrap = injectFunWrapper(*BB.getModule(), *BinOp, *Lhs, *Rhs);
-    ToObfuscate[FWrap] = Rounds;
-
-    IRBuilder<> IRB(&I);
-    Instruction *Result =
-        IRB.CreateCall(FWrap->getFunctionType(), FWrap, {Lhs, Rhs});
-
-    ++Counter;
-
-    I.replaceAllUsesWith(Result);
-    ToErase.emplace_back(&I);
+    Candidates.emplace_back(&I, Rounds);
   }
 
-  for_each(ToErase, [](Instruction *I) { I->eraseFromParent(); });
-  ToErase.clear();
+  // All candidates in the same BB share the same round count.
+  size_t MaxRounds = 0;
+  for (auto &[_, R] : Candidates)
+    MaxRounds = std::max(MaxRounds, R);
 
-  ArithmeticVisitor::BuilderTy Builder(&BB);
-  ArithmeticVisitor Visitor(Builder);
+  // Iterate Rounds times over the full BB
+  for (size_t Idx = 0; Idx < MaxRounds; ++Idx) {
+    SmallVector<Instruction *> ToReplace;
+    for (Instruction &I : BB) {
+      if (getObf(I, MetaObfTy::OpaqueCst))
+        continue;
+      if (auto *BO = dyn_cast<BinaryOperator>(&I))
+        if (isSupported(*BO))
+          ToReplace.push_back(BO);
+    }
 
-  for (const auto &[F, Round] : ToObfuscate) {
-    for (BasicBlock &FBB : *F) {
-      for (size_t Idx = 0; Idx < Round; ++Idx) {
-        for (Instruction &I : FBB) {
-          if (getObf(I, MetaObfTy::OpaqueCst))
-            continue;
+    for (Instruction *Inst : ToReplace) {
+      Builder.SetInsertPoint(Inst);
+      Instruction *Result = Visitor.visit(*Inst);
 
-          Builder.SetInsertPoint(&I);
-          Instruction *Result = Visitor.visit(I);
+      if (!Result || Result == Inst)
+        continue;
 
-          if (!Result || Result == &I)
-            continue;
+      SDEBUG("[{}][{}] Replacing {} with {}", name(),
+             BB.getParent()->getName(),
+             Inst->getOpcodeName(), Result->getName());
 
-          SDEBUG("[{}][{}] Replacing {} with {}", name(), F->getName(),
-                 I.getOpcodeName(), Result->getName());
+      BasicBlock::iterator InsertPos = Inst->getIterator();
+      Result->copyMetadata(
+          *Inst, {LLVMContext::MD_dbg, LLVMContext::MD_annotation});
+      Result->takeName(Inst);
+      Result->insertInto(Inst->getParent(), InsertPos);
+      Inst->replaceAllUsesWith(Result);
+      Inst->eraseFromParent();
 
-          BasicBlock *InstParent = I.getParent();
-          BasicBlock::iterator InsertPos = I.getIterator();
-
-          Result->copyMetadata(
-              I, {LLVMContext::MD_dbg, LLVMContext::MD_annotation});
-          Result->takeName(&I);
-          Result->insertInto(InstParent, InsertPos);
-          I.replaceAllUsesWith(Result);
-        }
-      }
+      Changed = true;
     }
   }
 
-  return Counter > 0;
+  return Changed;
 }
 
 bool Arithmetic::runOnFunction(Function &F,
