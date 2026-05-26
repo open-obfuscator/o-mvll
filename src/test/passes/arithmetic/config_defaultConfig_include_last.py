@@ -6,7 +6,11 @@ import omvll
 from functools import lru_cache
 
 class MyConfig(omvll.ObfuscationConfig):
-    omvll.config.probability_seed = 2026;
+    omvll.config.probability_seed = 2026
+
+    omvll.config.pass_phases = {
+        omvll.Pass.Arithmetic: {omvll.Phase.Last},
+    }
 
     def __init__(self):
         super().__init__()
