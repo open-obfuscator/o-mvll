@@ -163,14 +163,14 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     )delim")
     .def(py::init<std::vector<uint64_t>, uint8_t>(), "constants"_a, "arith_rounds"_a = 0);
 
-  py::class_<OpaqueConstantsExceptSet>(m, "OpaqueConstantsExceptSet",
+  py::class_<OpaqueConstantsExcludeSet>(m, "OpaqueConstantsExcludeSet",
     R"delim(
     Option for the :meth:`omvll.ObfuscationConfig.obfuscate_constants` protection.
 
     This option takes a list of constants that cannot be protected by the pass
-    (e.g. ``OpaqueConstantsExceptSet([0x12234, 1, 2])``).
+    (e.g. ``OpaqueConstantsExcludeSet([0x12234, 1, 2])``).
     An optional ``arith_rounds`` parameter controls how many rounds of arithmetic obfuscation
-    are applied to the generated opaque expressions (e.g. ``OpaqueConstantsExceptSet([1, 2], arith_rounds=2)``).
+    are applied to the generated opaque expressions (e.g. ``OpaqueConstantsExcludeSet([1, 2], arith_rounds=2)``).
     )delim")
     .def(py::init<std::vector<uint64_t>, uint8_t>(), "constants"_a, "arith_rounds"_a = 0);
 

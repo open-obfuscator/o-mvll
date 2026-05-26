@@ -42,8 +42,8 @@ struct OpaqueConstantsSet {
   uint8_t ArithRounds = 0;
 };
 
-struct OpaqueConstantsExceptSet {
-  OpaqueConstantsExceptSet(std::vector<uint64_t> Value, uint8_t ArithRounds = 0)
+struct OpaqueConstantsExcludeSet {
+  OpaqueConstantsExcludeSet(std::vector<uint64_t> Value, uint8_t ArithRounds = 0)
       : Values(Value.begin(), Value.end()), ArithRounds(ArithRounds) {}
 
   inline bool contains(uint64_t Value) const { return Values.contains(Value); }
@@ -58,7 +58,7 @@ using OpaqueConstantsOpt = std::variant<
   OpaqueConstantsBool,
   OpaqueConstantsLowerLimit,
   OpaqueConstantsSet,
-  OpaqueConstantsExceptSet
+  OpaqueConstantsExcludeSet
 >;
 
 } // end namespace omvll

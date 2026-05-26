@@ -70,7 +70,7 @@ bool OpaqueConstants::process(Instruction &I, Use &Op, ConstantInt &CI,
                               return true;
                             return !V.empty() && V.contains(LV);
                           },
-                          [&](OpaqueConstantsExceptSet &V) {
+                          [&](OpaqueConstantsExcludeSet &V) {
                             if (CI.isZero())
                               return !V.contains(0);
                             if (CI.isOne())
@@ -253,7 +253,7 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
           [](OpaqueConstantsBool &V)         -> size_t { return V.ArithRounds; },
           [](OpaqueConstantsLowerLimit &V)   -> size_t { return V.ArithRounds; },
           [](OpaqueConstantsSet &V)          -> size_t { return V.ArithRounds; },
-          [](OpaqueConstantsExceptSet &V)    -> size_t { return V.ArithRounds; },
+          [](OpaqueConstantsExcludeSet &V)    -> size_t { return V.ArithRounds; },
       }, *Inserted);
       if (ArithRounds > 0)
         Arith.runOnFunction(F, ArithRounds);
