@@ -225,6 +225,7 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
   SINFO("[{}] Executing on module {}", name(), M.getName());
 
   for (Function &F : M) {
+    bool ChangedFunction = false;
     if (isFunctionGloballyExcluded(&F) || F.isDeclaration() ||
         F.isIntrinsic() || F.getName().starts_with("__omvll"))
       continue;
@@ -242,10 +243,11 @@ PreservedAnalyses OpaqueConstants::run(Module &M, ModuleAnalysisManager &FAM) {
       // Don't try opaque constants when potentially handling infinite loops.
       if (is_contained(successors(&BB), &BB))
         continue;
-      Changed |= runOnBasicBlock(BB, Inserted);
+      ChangedFunction |= runOnBasicBlock(BB, Inserted);
     }
+    Changed |= ChangedFunction;
 
-    if (Changed && Inserted) {
+    if (ChangedFunction && Inserted) {
       size_t ArithRounds = std::visit(overloaded{
           [](OpaqueConstantsSkip &)          -> size_t { return 0; },
           [](OpaqueConstantsBool &V)         -> size_t { return V.ArithRounds; },
