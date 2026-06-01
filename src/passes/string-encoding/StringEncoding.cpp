@@ -102,6 +102,28 @@ GlobalVariable *extractGlobalVariable(ConstantExpr *Expr) {
   return nullptr;
 }
 
+static bool hasAnyExcludedUser(Value *V, llvm::Module *M,
+                                ObfuscationConfig &UserConfig,
+                                const std::string &PlainStr) {
+  for (User *U : V->users()) {
+    if (auto *UI = dyn_cast<Instruction>(U)) {
+      Function *UserF = UI->getFunction();
+      if (!UserF)
+        continue;
+      if (isFunctionGloballyExcluded(UserF))
+        return true;
+      auto Opt = std::make_unique<StringEncodingOpt>(
+          UserConfig.obfuscateString(M, UserF, PlainStr));
+      if (isSkip(*Opt))
+        return true;
+    } else if (auto *CE = dyn_cast<ConstantExpr>(U)) {
+      if (hasAnyExcludedUser(CE, M, UserConfig, PlainStr))
+        return true;
+    }
+  }
+  return false;
+}
+
 std::pair<Instruction *, Instruction *>
 materializeConstantExpression(Instruction *Point, ConstantExpr *CE) {
   auto *Inst = CE->getAsInstruction();
@@ -526,6 +548,11 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
       if (isObjCMethodName(*G) &&
           std::get_if<StringEncOptLocal>(EncInfoOpt.get()))
         continue;
+
+      if (std::get_if<StringEncOptLocal>(EncInfoOpt.get())) {
+        if (hasAnyExcludedUser(G, M, UserConfig, safeGetString(*Data).str()))
+          continue;
+      }
 
       SINFO("[{}] Processing string {}", name(), safeGetString(*Data));
       Changed |= process(I, *ActualOp, *G, *Data, *EncInfoOpt);
