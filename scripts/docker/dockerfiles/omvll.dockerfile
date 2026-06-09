@@ -11,13 +11,13 @@ RUN mkdir -p /usr/share/man/man1                                      && \
     build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev   \
     libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev            \
     python3 python3-pip python3-venv libc6-dev cmake libssl-dev          \
-    libxml2-dev patch xz-utils libzstd-dev lsb-release                   \
-    software-properties-common gnupg                                     \
+    libxml2-dev patch xz-utils libzstd-dev lsb-release gnupg             \
   && wget https://apt.llvm.org/llvm.sh                                   \
   && chmod u+x llvm.sh                                                   \
   && ./llvm.sh 21 all                                                    \
   && ln -s /usr/bin/clang-21 /usr/bin/clang                              \
   && ln -s /usr/bin/clang++-21 /usr/bin/clang++                          \
+  && ln -s /usr/bin/lld-21 /usr/bin/ld.lld                               \
   && apt-get clean                                                       \
   && rm -rf /var/lib/apt/lists/*
 
@@ -32,9 +32,11 @@ RUN mkdir -p /test-deps/bin
 RUN ln -s /opt/venv/bin/lit /test-deps/bin/llvm-lit
 RUN cd /usr/lib/llvm-21/bin && cp llvm-config FileCheck count not /test-deps/bin/. && cd /
 
+RUN git config --global http.version HTTP/1.1
+
 # OSXCross compilation
 RUN mkdir -p /osxcross && cd /osxcross && \
-    git clone --depth 1 https://github.com/tpoechtrager/osxcross && \
+    git clone --depth 1 https://github.com/alexland7219/osxcross && \
     cd osxcross && ln -s /MacOSX26.4.sdk.tar.xz tarballs/ && \
     TARGET_DIR=/osxcross/install UNATTENDED=1 bash ./build.sh && \
     mv /osxcross/install/* /osxcross

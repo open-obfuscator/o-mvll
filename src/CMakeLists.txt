@@ -133,7 +133,7 @@ if(NOT APPLE)
     -Wl,-as-needed
     -Wl,--gc-sections
     -Wl,--exclude-libs,ALL
-    -fuse-ld=gold
+    -fuse-ld=lld
   )
 endif()
 
@@ -147,6 +147,7 @@ if(APPLE)
   endif()
   list(APPEND OMVLL_LINK_OPT
     -Wl,-flat_namespace
+    -Wl,-undefined,dynamic_lookup
     -Wl,-exported_symbols_list,${OMVLL_EXPORTS_LIST}
   )
 endif()
