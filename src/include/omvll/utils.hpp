@@ -9,7 +9,9 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
 #include "llvm/TargetParser/Triple.h"
@@ -20,7 +22,6 @@ class Instruction;
 class BasicBlock;
 class CallInst;
 class Function;
-class Module;
 class Type;
 class Value;
 class MDNode;
@@ -28,6 +29,14 @@ class MemoryBuffer;
 } // end namespace llvm
 
 namespace omvll {
+
+inline std::string getModuleTripleStr(const llvm::Module &M) {
+#if LLVM_VERSION_MAJOR >= 20
+  return M.getTargetTriple().str();
+#else
+  return M.getTargetTriple();
+#endif
+}
 
 std::string ToString(const llvm::Module &M);
 std::string ToString(const llvm::BasicBlock &BB);

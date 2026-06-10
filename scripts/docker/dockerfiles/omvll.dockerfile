@@ -2,7 +2,7 @@ FROM debian:stable-slim
 LABEL maintainer="Romain Thomas <me@romainthomas.fr>"
 
 # This can be obtained following the instructions here: https://github.com/tpoechtrager/osxcross?tab=readme-ov-file#packaging-the-sdk
-COPY MacOSX15.4.sdk.tar.xz /
+COPY MacOSX26.4.sdk.tar.xz /
 
 RUN mkdir -p /usr/share/man/man1                                      && \
     apt-get update -y                                                 && \
@@ -15,9 +15,9 @@ RUN mkdir -p /usr/share/man/man1                                      && \
     software-properties-common gnupg                                     \
   && wget https://apt.llvm.org/llvm.sh                                   \
   && chmod u+x llvm.sh                                                   \
-  && ./llvm.sh 19 all                                                    \
-  && ln -s /usr/bin/clang-19 /usr/bin/clang                              \
-  && ln -s /usr/bin/clang++-19 /usr/bin/clang++                          \
+  && ./llvm.sh 21 all                                                    \
+  && ln -s /usr/bin/clang-21 /usr/bin/clang                              \
+  && ln -s /usr/bin/clang++-21 /usr/bin/clang++                          \
   && apt-get clean                                                       \
   && rm -rf /var/lib/apt/lists/*
 
@@ -30,12 +30,12 @@ RUN git config --global --add safe.directory /o-mvll
 # Copy in missing test dependencies
 RUN mkdir -p /test-deps/bin
 RUN ln -s /opt/venv/bin/lit /test-deps/bin/llvm-lit
-RUN cd /usr/lib/llvm-19/bin && cp llvm-config FileCheck count not /test-deps/bin/. && cd /
+RUN cd /usr/lib/llvm-21/bin && cp llvm-config FileCheck count not /test-deps/bin/. && cd /
 
 # OSXCross compilation
 RUN mkdir -p /osxcross && cd /osxcross && \
     git clone --depth 1 https://github.com/tpoechtrager/osxcross && \
-    cd osxcross && ln -s /MacOSX15.4.sdk.tar.xz tarballs/ && \
+    cd osxcross && ln -s /MacOSX26.4.sdk.tar.xz tarballs/ && \
     TARGET_DIR=/osxcross/install UNATTENDED=1 bash ./build.sh && \
     mv /osxcross/install/* /osxcross
 

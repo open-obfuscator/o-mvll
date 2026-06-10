@@ -263,7 +263,9 @@ std::string TypeIDStr(const Type &Ty) {
     case Type::TypeID::VoidTyID:           return "VoidTyID";
     case Type::TypeID::LabelTyID:          return "LabelTyID";
     case Type::TypeID::MetadataTyID:       return "MetadataTyID";
+#if LLVM_VERSION_MAJOR < 20
     case Type::TypeID::X86_MMXTyID:        return "X86_MMXTyID";
+#endif
     case Type::TypeID::X86_AMXTyID:        return "X86_AMXTyID";
     case Type::TypeID::TokenTyID:          return "TokenTyID";
     case Type::TypeID::IntegerTyID:        return "IntegerTyID";

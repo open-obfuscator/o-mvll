@@ -22,6 +22,13 @@
 
 using namespace llvm;
 
+// LLVM 20 added a ThinOrFullLTOPhase parameter to the EP callback signatures.
+#if LLVM_VERSION_MAJOR >= 20
+#define OMVLL_EP_CALLBACK_LTO_ARG , ThinOrFullLTOPhase
+#else
+#define OMVLL_EP_CALLBACK_LTO_ARG
+#endif
+
 static llvm::once_flag InitializePluginFlag;
 
 using PassFactory = std::function<void(ModulePassManager &)>;
@@ -170,13 +177,15 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "OMVLL", "1.4.1", [](PassBuilder &PB) {
             try {
               PB.registerPipelineEarlySimplificationEPCallback(
-                  [](ModulePassManager &MPM, OptimizationLevel Opt) {
+                  [](ModulePassManager &MPM, OptimizationLevel
+                         OMVLL_EP_CALLBACK_LTO_ARG) {
                     MPM.addPass(omvll::LoggerBind());
                     addPassesForPhase(MPM, omvll::Phase::Early);
                     return true;
                   });
               PB.registerOptimizerLastEPCallback(
-                  [](ModulePassManager &MPM, OptimizationLevel Opt) {
+                  [](ModulePassManager &MPM, OptimizationLevel
+                         OMVLL_EP_CALLBACK_LTO_ARG) {
                     addPassesForPhase(MPM, omvll::Phase::Last);
                     return true;
                   });
@@ -185,6 +194,8 @@ PassPluginLibraryInfo getOMVLLPluginInfo() {
             }
           }};
 }
+
+#undef OMVLL_EP_CALLBACK_LTO_ARG
 
 __attribute__((visibility("default")))
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo

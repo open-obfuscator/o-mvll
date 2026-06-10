@@ -30,9 +30,11 @@ set(OMVLL_ABI "${OMVLL_DEFAULT_ABI}" CACHE STRING
   "Compiler ABI to build OMVLL against. Supported options are \"Apple\" and \"Android\". Defaults to ${OMVLL_DEFAULT_ABI}.")
 
 if(OMVLL_ABI STREQUAL "Apple")
-  set(LLVM_REQUIRED_VERSION 19.1.4)
+  set(LLVM_REQUIRED_VERSION 21.1.6 CACHE STRING
+    "Required LLVM version for the Apple ABI (matches Xcode 26.4 / clang 21)")
 elseif(OMVLL_ABI STREQUAL "Android")
-  set(LLVM_REQUIRED_VERSION 17)
+  set(LLVM_REQUIRED_VERSION 17 CACHE STRING
+    "Required LLVM version for the Android NDK ABI")
 else()
   # TODO: switch Linux build to release NDK
   set(LLVM_REQUIRED_VERSION 17.0.2)
@@ -136,9 +138,16 @@ if(NOT APPLE)
 endif()
 
 if(APPLE)
+  # ld64 resolves every entry in -exported_symbols_list against the link unit;
+  # the ORC EH-frame helpers were renamed in LLVM 20 (Wrapper -> AllocAction).
+  if(LLVM_VERSION_MAJOR GREATER_EQUAL 20)
+    set(OMVLL_EXPORTS_LIST "${CMAKE_CURRENT_SOURCE_DIR}/exports.txt")
+  else()
+    set(OMVLL_EXPORTS_LIST "${CMAKE_CURRENT_SOURCE_DIR}/exports.legacy.txt")
+  endif()
   list(APPEND OMVLL_LINK_OPT
     -Wl,-flat_namespace
-    -Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/exports.txt
+    -Wl,-exported_symbols_list,${OMVLL_EXPORTS_LIST}
   )
 endif()
 
