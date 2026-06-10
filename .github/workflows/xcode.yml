@@ -19,11 +19,11 @@ jobs:
       - name: O-MVLL Build Plugins
         shell: bash
         run: |
-          curl -LO https://open-obfuscator.build38.io/static/omvll-v1.7.0-macos-deps.tar
+          curl -LO https://open-obfuscator.build38.io/static/omvll-v1.8.0-macos-deps.tar
           mkdir -p /tmp/third-party-xcode26
-          tar xvf ./omvll-v1.7.0-macos-deps.tar --directory=/tmp/third-party-xcode26
+          tar xvf ./omvll-v1.8.0-macos-deps.tar --directory=/tmp/third-party-xcode26
           docker run --rm \
-            -v /tmp/third-party-xcode26/omvll-v1.7.0-macos-deps:/deps \
+            -v /tmp/third-party-xcode26/omvll-v1.8.0-macos-deps:/deps \
             -v $GITHUB_WORKSPACE:/o-mvll \
             openobfuscator/omvll-build:latest bash /o-mvll/scripts/docker/xcode_26_compile.sh
       - name: O-MVLL Sign Xcode Plugin

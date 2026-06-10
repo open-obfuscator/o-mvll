@@ -120,6 +120,14 @@ bool ControlFlowFlattening::runOnFunction(Function &F) {
   if (F.getInstructionCount() == 0)
     return false;
 
+  // DemotePHIToStack / DemoteRegToStack cannot safely spill values that flow
+  // into swifterror argument positions: the LLVM verifier requires those to
+  // come from an alloca or parameter, not a stack-reloaded pointer.  Skip any
+  // function whose entry block carries a swifterror alloca.
+  for (const BasicBlock &BB : F)
+    if (containsSwiftErrorAlloca(BB))
+      return false;
+
   bool Changed = false;
   std::string DemangledName = demangle(F.getName().str());
   const uint8_t X = RandomGenerator::generateRange(10, 254);

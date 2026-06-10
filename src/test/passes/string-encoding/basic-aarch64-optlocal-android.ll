@@ -2,7 +2,7 @@
 ; This file is distributed under the Apache License v2.0. See LICENSE for details.
 ;
 
-; REQUIRES: aarch64-registered-target
+; REQUIRES: aarch64-registered-target && android_abi
 
 ;     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \
 ;     RUN:         -target arm64-apple-ios26.0.0  -O1 -S -emit-llvm %s -o - | FileCheck %s

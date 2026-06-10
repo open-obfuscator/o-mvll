@@ -2,7 +2,7 @@
 ; This file is distributed under the Apache License v2.0. See LICENSE for details.
 ;
 
-; REQUIRES: aarch64-registered-target
+; REQUIRES: aarch64-registered-target && apple_abi
 
 ;     RUN: env OMVLL_CONFIG=%S/config_replace.py clang++ -fpass-plugin=%libOMVLL \
 ;     RUN:         -target arm64-apple-ios26.0.0 -O1 -S -emit-llvm %s -o - | FileCheck %s
@@ -37,12 +37,12 @@ define void @copy(ptr %p) {
 ; CHECK-NEXT:    br label %[[LOOP1:.*]]
 ; CHECK:       [[LOOP1]]:
 ; CHECK-NEXT:    [[IDX1:%.*]] = phi i64 [ 0, %[[BB1]] ], [ [[IDX1_NEXT:%.*]], %[[LOOP1]] ]
-; CHECK-NEXT:    [[SRC1_GEP:%.*]] = getelementptr inbounds i8, ptr @{{.*}}, i64 [[IDX1]]
+; CHECK-NEXT:    [[SRC1_GEP:%.*]] = getelementptr inbounds nuw i8, ptr @{{.*}}, i64 [[IDX1]]
 ; CHECK-NEXT:    [[SRC1_BYTE:%.*]] = load i8, ptr [[SRC1_GEP]], align 1
-; CHECK-NEXT:    [[KEY1_GEP:%.*]] = getelementptr inbounds i8, ptr [[ALLOCA1]], i64 [[IDX1]]
+; CHECK-NEXT:    [[KEY1_GEP:%.*]] = getelementptr inbounds nuw i8, ptr [[ALLOCA1]], i64 [[IDX1]]
 ; CHECK-NEXT:    [[KEY1_BYTE:%.*]] = load i8, ptr [[KEY1_GEP]], align 1
 ; CHECK-NEXT:    [[XOR1:%.*]] = xor i8 [[KEY1_BYTE]], [[SRC1_BYTE]]
-; CHECK-NEXT:    [[DST1_GEP:%.*]] = getelementptr inbounds i8, ptr @0, i64 [[IDX1]]
+; CHECK-NEXT:    [[DST1_GEP:%.*]] = getelementptr inbounds nuw i8, ptr @0, i64 [[IDX1]]
 ; CHECK-NEXT:    store i8 [[XOR1]], ptr [[DST1_GEP]], align 1
 ; CHECK-NEXT:    [[IDX1_NEXT]] = add nuw nsw i64 [[IDX1]], 1
 ; CHECK-NEXT:    [[DONE1:%.*]] = icmp eq i64 [[IDX1_NEXT]], 7
@@ -61,12 +61,12 @@ define void @copy(ptr %p) {
 ; CHECK-NEXT:    br label %[[LOOP2:.*]]
 ; CHECK:       [[LOOP2]]:
 ; CHECK-NEXT:    [[IDX2:%.*]] = phi i64 [ 0, %[[BB2]] ], [ [[IDX2_NEXT:%.*]], %[[LOOP2]] ]
-; CHECK-NEXT:    [[SRC2_GEP:%.*]] = getelementptr inbounds i8, ptr @{{.*}}, i64 [[IDX2]]
+; CHECK-NEXT:    [[SRC2_GEP:%.*]] = getelementptr inbounds nuw i8, ptr @{{.*}}, i64 [[IDX2]]
 ; CHECK-NEXT:    [[SRC2_BYTE:%.*]] = load i8, ptr [[SRC2_GEP]], align 1
-; CHECK-NEXT:    [[KEY2_GEP:%.*]] = getelementptr inbounds i8, ptr [[ALLOCA2]], i64 [[IDX2]]
+; CHECK-NEXT:    [[KEY2_GEP:%.*]] = getelementptr inbounds nuw i8, ptr [[ALLOCA2]], i64 [[IDX2]]
 ; CHECK-NEXT:    [[KEY2_BYTE:%.*]] = load i8, ptr [[KEY2_GEP]], align 1
 ; CHECK-NEXT:    [[XOR2:%.*]] = xor i8 [[KEY2_BYTE]], [[SRC2_BYTE]]
-; CHECK-NEXT:    [[DST2_GEP:%.*]] = getelementptr inbounds i8, ptr @2, i64 [[IDX2]]
+; CHECK-NEXT:    [[DST2_GEP:%.*]] = getelementptr inbounds nuw i8, ptr @2, i64 [[IDX2]]
 ; CHECK-NEXT:    store i8 [[XOR2]], ptr [[DST2_GEP]], align 1
 ; CHECK-NEXT:    [[IDX2_NEXT]] = add nuw nsw i64 [[IDX2]], 1
 ; CHECK-NEXT:    [[DONE2:%.*]] = icmp eq i64 [[IDX2_NEXT]], 7

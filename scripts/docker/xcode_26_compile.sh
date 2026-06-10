@@ -14,6 +14,9 @@ tar xzvf Python-slim.tar.gz
 tar xzvf pybind11.tar.gz
 tar xzvf spdlog-1.10.0-Darwin.tar.gz
 
+sed -i 's/;zstd::libzstd_shared//g; s/zstd::libzstd_shared;//g' /deps/LLVM-21.1.6-arm64-Darwin/lib/cmake/llvm/LLVMExports.cmake
+sed -i 's/;zstd::libzstd_shared//g; s/zstd::libzstd_shared;//g' /deps/LLVM-21.1.6-x86_64-Darwin/lib/cmake/llvm/LLVMExports.cmake
+
 cd /o-mvll/src
 
 # TODO: rename, build_macos?
