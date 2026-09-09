@@ -120,6 +120,20 @@ static bool hasAnyExcludedUser(Value *V, llvm::Module *M,
   return false;
 }
 
+// Returns true if the global variable is referenced inside a non-GEP
+// ConstantExpr (e.g. Swift's ptrtoint(G) - 32 literal pattern). Local
+// encoding replaces G's address with a ClearBuffer, which corrupts any
+// pointer arithmetic that relies on G's original address.
+static bool hasNonGEPConstantExprUser(const GlobalVariable &G) {
+  for (const User *U : G.users()) {
+    if (const auto *CE = dyn_cast<ConstantExpr>(U)) {
+      if (CE->getOpcode() != Instruction::GetElementPtr)
+        return true;
+    }
+  }
+  return false;
+}
+
 std::pair<Instruction *, Instruction *>
 materializeConstantExpression(Instruction *Point, ConstantExpr *CE) {
   auto *Inst = CE->getAsInstruction();
@@ -586,6 +600,12 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
 
       if (std::get_if<StringEncOptLocal>(EncInfoOpt.get())) {
         if (hasAnyExcludedUser(G, M, UserConfig, safeGetString(*Data).str()))
+          continue;
+        // Swift and other languages emit ptrtoint(G) - N constant expressions
+        // that encode the string's address into a tagged pointer. Local encoding
+        // replaces G's address with a ClearBuffer at a different location,
+        // breaking that arithmetic. Skip encoding for these strings.
+        if (hasNonGEPConstantExprUser(*G))
           continue;
       }
 
