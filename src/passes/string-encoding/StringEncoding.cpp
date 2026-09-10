@@ -120,19 +120,6 @@ static bool hasAnyExcludedUser(Value *V, llvm::Module *M,
   return false;
 }
 
-// Returns true if the global variable is referenced inside a non-GEP
-// ConstantExpr (e.g. Swift's ptrtoint(G) - 32 literal pattern). Local
-// encoding replaces G's address with a ClearBuffer, which corrupts any
-// pointer arithmetic that relies on G's original address.
-static bool hasNonGEPConstantExprUser(const GlobalVariable &G) {
-  for (const User *U : G.users()) {
-    if (const auto *CE = dyn_cast<ConstantExpr>(U)) {
-      if (CE->getOpcode() != Instruction::GetElementPtr)
-        return true;
-    }
-  }
-  return false;
-}
 
 std::pair<Instruction *, Instruction *>
 materializeConstantExpression(Instruction *Point, ConstantExpr *CE) {
@@ -152,6 +139,25 @@ materializeConstantExpression(Instruction *Point, ConstantExpr *CE) {
   return {Inst, Prev};
 }
 
+// Returns K > 0 if EncPtr matches inttoptr(sub(ptrtoint(G), K)), else 0.
+// Swift large-string pattern: _object = G - K; bytes accessed at _object + K.
+// K is typically 32 on 64-bit Apple platforms (size of the HeapObject header).
+static uint64_t getSwiftPtrToIntOffset(const Use &EncPtr) {
+  auto *CE = dyn_cast<ConstantExpr>(EncPtr.get());
+  if (!CE || CE->getOpcode() != Instruction::IntToPtr)
+    return 0;
+  auto *SubCE = dyn_cast<ConstantExpr>(CE->getOperand(0));
+  if (!SubCE || SubCE->getOpcode() != Instruction::Sub)
+    return 0;
+  auto *PtrToIntCE = dyn_cast<ConstantExpr>(SubCE->getOperand(0));
+  if (!PtrToIntCE || PtrToIntCE->getOpcode() != Instruction::PtrToInt)
+    return 0;
+  auto *Offset = dyn_cast<ConstantInt>(SubCE->getOperand(1));
+  if (!Offset || Offset->isZero())
+    return 0;
+  return Offset->getZExtValue();
+}
+
 CallInst *StringEncoding::createDecodingTrampoline(
     GlobalVariable &G, Use &EncPtr, Instruction *NewPt, uint64_t KeyValI64,
     uint64_t Size, const StringEncoding::EncodingInfo &EI,
@@ -165,12 +171,27 @@ CallInst *StringEncoding::createDecodingTrampoline(
     ++It;
 
   IRBuilder<NoFolder> IRB(&*It);
+
+  // Detect Swift's inttoptr(sub(ptrtoint(G), K)) tagged-pointer pattern.
+  // When K > 0, allocate a BigBuffer[(K + Size) x i8]: BigBuffer[0..K-1] holds
+  // a runtime copy of the Swift object header from G-K (__TEXT), and
+  // BigBuffer[K..K+Size-1] holds the decoded string bytes. This preserves the
+  // invariant that Swift reads _object+K to get the string bytes.
+  uint64_t HeaderSz = IsLocalToFunction ? getSwiftPtrToIntOffset(EncPtr) : 0;
+
   auto *BufferTy = ArrayType::get(IRB.getInt8Ty(), Size);
-  GlobalVariable *ClearBuffer =
-      new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
-                         Constant::getNullValue(BufferTy));
-  // For this global variable, use the most recent buffer for decoding.
-  OriginalToDecoded[&G] = ClearBuffer;
+  GlobalVariable *OutputBuffer;
+  if (HeaderSz > 0) {
+    auto *BigBufTy = ArrayType::get(IRB.getInt8Ty(), HeaderSz + Size);
+    OutputBuffer = new GlobalVariable(*M, BigBufTy, false,
+                                      GlobalValue::InternalLinkage,
+                                      Constant::getNullValue(BigBufTy));
+  } else {
+    OutputBuffer = new GlobalVariable(*M, BufferTy, false,
+                                      GlobalValue::InternalLinkage,
+                                      Constant::getNullValue(BufferTy));
+  }
+  OriginalToDecoded[&G] = OutputBuffer;
 
   AllocaInst *Key = IRB.CreateAlloca(IRB.getInt64Ty());
   AllocaInst *StrSize = IRB.CreateAlloca(IRB.getInt32Ty());
@@ -206,8 +227,16 @@ CallInst *StringEncoding::createDecodingTrampoline(
   Value *Input = IRB.CreateBitCast(&G, IRB.getPtrTy());
   Value *Output = Input;
 
-  if (IsLocalToFunction)
-    Output = ClearBuffer;
+  if (IsLocalToFunction) {
+    if (HeaderSz > 0)
+      // GEP to BigBuffer[HeaderSz]: decode() writes plaintext here.
+      // CE fixup: ptrtoint(GEP(BigBuffer, K)) - K = ptrtoint(BigBuffer).
+      // Swift then reads BigBuffer + K = decoded string bytes ✓
+      Output = IRB.CreateConstGEP1_64(IRB.getInt8Ty(), OutputBuffer,
+                                       HeaderSz, "bigbuf.str");
+    else
+      Output = OutputBuffer;
+  }
 
   auto *NewF =
       Function::Create(FDecode->getFunctionType(), GlobalValue::PrivateLinkage,
@@ -266,6 +295,19 @@ CallInst *StringEncoding::createDecodingTrampoline(
   auto *ContinuationBB = BasicBlock::Create(Ctx, "", Wrapper);
   IRB.CreateCondBr(ICmp, NewBB, ContinuationBB);
   IRB.SetInsertPoint(NewBB);
+
+  if (HeaderSz > 0) {
+    // Copy the Swift object header from G-HeaderSz (__TEXT, read-only) into
+    // OutputBuffer[0..HeaderSz-1] (__DATA, writable). This preserves the isa
+    // pointer required for ObjC bridging. Bytes are at a fixed +HeaderSz offset
+    // from the object pointer — no pointer patching inside the header needed.
+    // Wrapper->getArg(2) = Input = ptr to G (encrypted bytes in __TEXT).
+    Value *HdrSrc =
+        IRB.CreateGEP(IRB.getInt8Ty(), Wrapper->getArg(2),
+                      IRB.getInt64(-(int64_t)HeaderSz), "hdr.src");
+    IRB.CreateMemCpy(OutputBuffer, Align(1), HdrSrc, Align(1), HeaderSz);
+  }
+
   auto *CI = IRB.CreateCall(NewF->getFunctionType(), NewF,
                             {Wrapper->getArg(1), Wrapper->getArg(2),
                              Wrapper->getArg(3), Wrapper->getArg(4)});
@@ -298,7 +340,7 @@ CallInst *StringEncoding::createDecodingTrampoline(
     assert(isa<GlobalVariable>(EncPtr.get()) &&
            "Expecting a GlobalVariable as use of NewPt?");
     auto *ActualGV = cast<GlobalVariable>(EncPtr.get());
-    ActualGV->setInitializer(ClearBuffer);
+    ActualGV->setInitializer(OutputBuffer);
   } else {
     NewPt->setOperand(EncPtr.getOperandNo(), Output);
   }
@@ -600,12 +642,6 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
 
       if (std::get_if<StringEncOptLocal>(EncInfoOpt.get())) {
         if (hasAnyExcludedUser(G, M, UserConfig, safeGetString(*Data).str()))
-          continue;
-        // Swift and other languages emit ptrtoint(G) - N constant expressions
-        // that encode the string's address into a tagged pointer. Local encoding
-        // replaces G's address with a ClearBuffer at a different location,
-        // breaking that arithmetic. Skip encoding for these strings.
-        if (hasNonGEPConstantExprUser(*G))
           continue;
       }
 
