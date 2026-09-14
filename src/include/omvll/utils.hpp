@@ -31,8 +31,12 @@ class MemoryBuffer;
 } // end namespace llvm
 
 namespace omvll {
-
-inline std::string tripleToStr(std::string S) { return S; }
+ 
+// Module::getTargetTriple() returns `const std::string &` on the LLVM 21
+// snapshot shipped with NDK r29d and `const Triple &` on Xcode 26.5's
+// release 21.1.6. Both report LLVM_VERSION_MAJOR == 21, so there is nothing
+// for the preprocessor to test. Overload resolution picks the right one.
+inline std::string tripleToStr(const std::string &S) { return S; }
 inline std::string tripleToStr(const llvm::Triple &T) { return T.str(); }
 
 inline std::string getModuleTripleStr(const llvm::Module &M) {

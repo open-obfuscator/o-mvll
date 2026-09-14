@@ -32,7 +32,7 @@ set(OMVLL_ABI "${OMVLL_DEFAULT_ABI}" CACHE STRING
 
 if(OMVLL_ABI STREQUAL "Apple")
   set(LLVM_REQUIRED_VERSION 21.1.6 CACHE STRING
-    "Required LLVM version for the Apple ABI (matches Xcode 26.4 / clang 21)")
+    "Required LLVM version for the Apple ABI (matches Xcode 26.6 / clang 21)")
 elseif(OMVLL_ABI STREQUAL "Android")
   set(LLVM_REQUIRED_VERSION 21.0.0 CACHE STRING
     "Required LLVM version for the Android NDK ABI")
