@@ -289,9 +289,6 @@ std::string TypeIDStr(const Type &Ty) {
     case Type::TypeID::VoidTyID:           return "VoidTyID";
     case Type::TypeID::LabelTyID:          return "LabelTyID";
     case Type::TypeID::MetadataTyID:       return "MetadataTyID";
-#if LLVM_VERSION_MAJOR < 20
-    case Type::TypeID::X86_MMXTyID:        return "X86_MMXTyID";
-#endif
     case Type::TypeID::X86_AMXTyID:        return "X86_AMXTyID";
     case Type::TypeID::TokenTyID:          return "TokenTyID";
     case Type::TypeID::IntegerTyID:        return "IntegerTyID";
@@ -352,11 +349,7 @@ size_t demotePHINode(Function &F) {
 
     Count += PhiNodes.size();
     for (PHINode *Phi : PhiNodes)
-#if LLVM_VERSION_MAJOR > 18
       DemotePHIToStack(Phi, F.begin()->getTerminator()->getIterator());
-#else
-      DemotePHIToStack(Phi, F.begin()->getTerminator());
-#endif
     } while (!PhiNodes.empty());
   return Count;
 }
@@ -387,11 +380,8 @@ size_t demoteRegs(Function &F) {
 
     Count += WorkList.size();
     for (Instruction *I : WorkList)
-#if LLVM_VERSION_MAJOR > 18
-      DemoteRegToStack(*I, false, F.begin()->getTerminator()->getIterator());
-#else
-      DemoteRegToStack(*I, false, F.begin()->getTerminator());
-#endif
+      DemoteRegToStack(*I, false, 
+                       F.begin()->getTerminator()->getIterator());
   } while (!WorkList.empty());
   return Count;
 }
@@ -428,11 +418,7 @@ size_t reg2mem(Function &F) {
       Constant::getNullValue(Type::getInt32Ty(F.getContext())),
       Type::getInt32Ty(F.getContext()), "reg2mem alloca point", I);
 
-#if LLVM_VERSION_MAJOR > 18
-  auto AllocaInsertionPoint = BCI->getIterator();
-#else
-  auto AllocaInsertionPoint = BCI;
-#endif
+  BasicBlock::iterator AllocaInsertionPoint = BCI->getIterator();
 
   // Find the escaped instructions. But don't create stack slots for
   // allocas in entry block.

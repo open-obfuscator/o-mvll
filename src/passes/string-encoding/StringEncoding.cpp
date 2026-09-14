@@ -6,11 +6,7 @@
 #include <string>
 
 #include "llvm/ADT/STLExtras.h"
-#if LLVM_VERSION_MAJOR > 18
 #include "llvm/ADT/StableHashing.h"
-#else
-#include "llvm/CodeGen/StableHashing.h"
-#endif
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
@@ -751,16 +747,9 @@ bool StringEncoding::processGlobal(Use &Op, GlobalVariable &G,
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx), /* no args */ {},
                                         /* no var args */ false);
 
-#if LLVM_VERSION_MAJOR >= 20
   const std::string GlobalID = GlobalValue::getGlobalIdentifier(
       G.getName(), G.getLinkage(), M->getModuleIdentifier());
   unsigned GlobalIDHashVal = xxh3_64bits(GlobalID);
-#elif LLVM_VERSION_MAJOR > 18
-  unsigned GlobalIDHashVal = xxh3_64bits(G.getGlobalIdentifier());
-#else
-  unsigned GlobalIDHashVal =
-      stable_hash_combine_string(G.getGlobalIdentifier());
-#endif
   unsigned HashCombinedVal = stable_hash_combine(GlobalIDHashVal, StrSz, Key);
   std::string Name = CtorPrefixName + utostr(HashCombinedVal);
   FunctionCallee FCallee = M->getOrInsertFunction(Name, FTy);
