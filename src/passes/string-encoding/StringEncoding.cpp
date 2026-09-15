@@ -6,7 +6,6 @@
 #include <string>
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Demangle/Demangle.h"
@@ -628,12 +627,16 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
           continue;
       }
 
-      // StringEncOptDefault decodes locally as well.
+      // StringEncOptDefault decodes locally as well. Local decoding cannot
+      // redirect a reference the loader materialises, so encode globally
+      // instead: that decodes G in place, leaving the reference valid.
       if ((std::get_if<StringEncOptLocal>(EncInfoOpt.get()) ||
            std::get_if<StringEncOptDefault>(EncInfoOpt.get())) &&
           isAddressTakenByGlobalInitializer(*G, ActualOp->get())) {
-        SINFO("[{}] Skipping {}: address is built into a global initializer",
+        SINFO("[{}] Encoding {} globally: its address is built into a global "
+              "initializer",
               name(), safeGetString(*Data));
+        Changed |= processGlobal(*ActualOp, *G, *Data);
         continue;
       }
 
