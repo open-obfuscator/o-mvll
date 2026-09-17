@@ -98,6 +98,36 @@ GlobalVariable *extractGlobalVariable(ConstantExpr *Expr) {
   return nullptr;
 }
 
+// Returns true if G's address is built into the initializer of a global other
+// than Redirected, e.g. the property storage Swift emits for a `static let`
+// string constant. Local decoding rewrites the instruction operand naming G,
+// but the loader materialises an initializer: there is no operand to rewrite,
+// so that reference would keep reading G and find the encoded bytes.
+//
+// Redirected, the operand being rewritten, is excluded: createDecodingTrampoline
+// already repoints such a global at the decode buffer, with the stub in the same
+// function.
+static bool isAddressTakenByGlobalInitializer(const GlobalVariable &G,
+                                              const Value *Redirected) {
+  SmallPtrSet<const Constant *, 16> Seen;
+  SmallVector<const Constant *, 16> Worklist{&G};
+
+  while (!Worklist.empty()) {
+    const Constant *Cur = Worklist.pop_back_val();
+    for (const User *U : Cur->users()) {
+      if (isa<GlobalVariable>(U) || isa<GlobalAlias>(U)) {
+        if (U != &G && U != Redirected)
+          return true;
+        continue;
+      }
+      if (const auto *UC = dyn_cast<Constant>(U))
+        if (Seen.insert(UC).second)
+          Worklist.emplace_back(UC);
+    }
+  }
+  return false;
+}
+
 static bool hasAnyExcludedUser(Value *V, llvm::Module *M,
                                 ObfuscationConfig &UserConfig,
                                 const std::string &PlainStr) {
@@ -151,6 +181,14 @@ CallInst *StringEncoding::createDecodingTrampoline(
     ++It;
 
   IRBuilder<NoFolder> IRB(&*It);
+
+  // The decoding stub loads and stores module-level globals (the output buffer
+  // and the "already decoded" flag). Swift emits accessors for string literals
+  // as memory(none) (e.g. a static let getter); leaving that attribute in place
+  // lets later passes fold away the stores we just injected, so the buffer stays
+  // zeroed and the string decodes to "". Drop the stale memory effects.
+  NewPt->getFunction()->removeFnAttr(Attribute::Memory);
+
   auto *BufferTy = ArrayType::get(IRB.getInt8Ty(), Size);
   GlobalVariable *ClearBuffer =
       new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
@@ -587,6 +625,19 @@ bool StringEncoding::encodeStrings(Function &F, ObfuscationConfig &UserConfig) {
       if (std::get_if<StringEncOptLocal>(EncInfoOpt.get())) {
         if (hasAnyExcludedUser(G, M, UserConfig, safeGetString(*Data).str()))
           continue;
+      }
+
+      // StringEncOptDefault decodes locally as well. Local decoding cannot
+      // redirect a reference the loader materialises, so encode globally
+      // instead: that decodes G in place, leaving the reference valid.
+      if ((std::get_if<StringEncOptLocal>(EncInfoOpt.get()) ||
+           std::get_if<StringEncOptDefault>(EncInfoOpt.get())) &&
+          isAddressTakenByGlobalInitializer(*G, ActualOp->get())) {
+        SINFO("[{}] Encoding {} globally: its address is built into a global "
+              "initializer",
+              name(), safeGetString(*Data));
+        Changed |= processGlobal(*ActualOp, *G, *Data);
+        continue;
       }
 
       SINFO("[{}] Processing string {}", name(), safeGetString(*Data));
