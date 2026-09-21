@@ -19,7 +19,7 @@ jobs:
       - name: O-MVLL Build Plugins
         shell: bash
         run: |
-          curl -LO https://open-obfuscator.dev.build38.io/static/omvll-1.11.0-macos-deps.tar
+          curl -LO https://open-obfuscator.build38.io/static/omvll-1.11.0-macos-deps.tar
           mkdir -p /tmp/third-party-xcode27
           tar xvf ./omvll-1.11.0-macos-deps.tar --directory=/tmp/third-party-xcode27
           docker run --rm \
