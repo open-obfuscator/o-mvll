@@ -55,7 +55,9 @@ bool OpaqueFieldAccess::runOnStructRead(BasicBlock &BB, LoadInst &Load,
   SDEBUG("[{}] Obfuscating field READ access on {}->#{} (offset: {})", name(),
          S.getName(), OffVal->getLimitedValue(), ComputedOffset);
 
-  IRBuilder<NoFolder> IRB(&Load);
+  // replaceAllUsesWith rewrites every user of GEP, so the replacement
+  // must dominate all of them.
+  IRBuilder<NoFolder> IRB(&GEP);
   Value *OpaqueOffset =
       IRB.CreateAdd(ConstantInt::get(IRB.getInt32Ty(), 0),
                     ConstantInt::get(IRB.getInt32Ty(), ComputedOffset));
@@ -77,7 +79,8 @@ bool OpaqueFieldAccess::runOnBufferRead(BasicBlock &BB, LoadInst &Load,
     return false;
 
   SDEBUG("[{}] Obfuscating buffer load access", name());
-  IRBuilder<NoFolder> IRB(&Load);
+  
+  IRBuilder<NoFolder> IRB(&GEP);
   const uint64_t Val = CI.getLimitedValue();
   uint32_t Lhs, Rhs = 0;
 
@@ -260,7 +263,7 @@ bool OpaqueFieldAccess::runOnStructWrite(BasicBlock &BB, StoreInst &Store,
   SDEBUG("[{}] Obfuscating field WRITE access on {}->#{} (offset: {})", name(),
          S.getName(), OffVal->getLimitedValue(), ComputedOffset);
 
-  IRBuilder<NoFolder> IRB(&Store);
+  IRBuilder<NoFolder> IRB(&GEP);
 
   Value *OpaqueOffset =
       IRB.CreateAdd(ConstantInt::get(IRB.getInt32Ty(), 0),
@@ -284,7 +287,7 @@ bool OpaqueFieldAccess::runOnBufferWrite(BasicBlock &BB, StoreInst &Store,
 
   SDEBUG("[{}] Obfuscating buffer write access", name());
 
-  IRBuilder<NoFolder> IRB(&Store);
+  IRBuilder<NoFolder> IRB(&GEP);
   uint64_t Val = CI.getLimitedValue();
   uint32_t Lhs, Rhs = 0;
 
