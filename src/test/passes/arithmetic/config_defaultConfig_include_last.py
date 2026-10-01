@@ -7,6 +7,7 @@ from functools import lru_cache
 
 class MyConfig(omvll.ObfuscationConfig):
     omvll.config.probability_seed = 2026
+    omvll.config.shuffle_functions = False
 
     omvll.config.pass_phases = {
         omvll.Pass.Arithmetic: {omvll.Phase.Last},

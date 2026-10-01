@@ -11,18 +11,6 @@
 ; only thing that enables the pass. `included` carries `bbsplit` and must be
 ; split; `excluded` carries `!bbsplit` and must be left untouched even though it
 ; is otherwise identical.
-;
-; CHECK lines are ordered to match clang's emission order, which lists
-; `excluded` before `included`.
-
-; The `!bbsplit`-annotated function keeps its `work` block intact (no split).
-; CHECK-LABEL: define i32 @excluded(i32 %a, i32 %b)
-; CHECK:       work:
-; CHECK-NEXT:    %w1 = add i32 %a, %b
-; CHECK-NEXT:    %w2 = mul i32 %w1, %a
-; CHECK-NEXT:    %w3 = sub i32 %w2, %b
-; CHECK-NEXT:    %w4 = xor i32 %w3, %w1
-; CHECK-NEXT:    ret i32 %w4
 
 ; The `bbsplit`-annotated function is split down the middle.
 ; CHECK-LABEL: define i32 @included(i32 %a, i32 %b)
@@ -31,6 +19,15 @@
 ; CHECK-NEXT:    %w2 = mul i32 %w1, %a
 ; CHECK-NEXT:    br label %[[SPLIT:.*]]
 ; CHECK:       [[SPLIT]]:
+; CHECK-NEXT:    %w3 = sub i32 %w2, %b
+; CHECK-NEXT:    %w4 = xor i32 %w3, %w1
+; CHECK-NEXT:    ret i32 %w4
+
+; The `!bbsplit`-annotated function keeps its `work` block intact (no split).
+; CHECK-LABEL: define i32 @excluded(i32 %a, i32 %b)
+; CHECK:       work:
+; CHECK-NEXT:    %w1 = add i32 %a, %b
+; CHECK-NEXT:    %w2 = mul i32 %w1, %a
 ; CHECK-NEXT:    %w3 = sub i32 %w2, %b
 ; CHECK-NEXT:    %w4 = xor i32 %w3, %w1
 ; CHECK-NEXT:    ret i32 %w4

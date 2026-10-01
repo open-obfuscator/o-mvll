@@ -455,17 +455,15 @@ void shuffleFunctions(Module &M) {
    * On the other hand, getFunctionList() has a sort method that we can
    * use to (randomly?) shuffle in list in place.
    */
-  DenseMap<Function *, uint32_t> Values;
+  DenseMap<Function *, uint64_t> Values;
   DenseSet<uint64_t> Taken;
 
-  std::mt19937_64 Gen64;
-  size_t Max = std::numeric_limits<uint32_t>::max();
-  std::uniform_int_distribution<uint32_t> Dist(0, Max - 1);
-
+  // Draw from the shared RandomGenerator so the ordering follows the
+  // configured omvll.config.probability_seed, like every other pass.
   for (Function &F : M) {
-    uint64_t ID = Dist(Gen64);
+    uint64_t ID = RandomGenerator::generateFullRand();
     while (!Taken.insert(ID).second)
-      ID = Dist(Gen64);
+      ID = RandomGenerator::generateFullRand();
 
     Values[&F] = ID;
   }

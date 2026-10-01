@@ -6,6 +6,8 @@ import omvll
 from functools import lru_cache
 
 class MyConfig(omvll.ObfuscationConfig):
+    omvll.config.shuffle_functions = False
+
     def __init__(self):
         super().__init__()
     def basic_block_split(self, mod: omvll.Module, fun: omvll.Function):
