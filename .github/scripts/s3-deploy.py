@@ -5,6 +5,7 @@
 #
 
 import sys
+import html
 import os
 import logging
 import pathlib
@@ -163,9 +164,10 @@ def filename(object):
 
 def generate_index(dir_name: str, s3_bucket_name: str, s3_resource):
     files = s3_resource.Bucket(s3_bucket_name).objects.filter(Prefix=f'{dir_name}/omvll')
-    tmpl_info = [(object.key, filename(object)) for object in files if filename(object) not in SKIP_LIST]
-    html = Template(INDEX_TEMPLATE).render(files=tmpl_info)
-    return html
+    tmpl_info = [(html.escape(object.key, quote=True), html.escape(filename(object), quote=True))
+                 for object in files if filename(object) not in SKIP_LIST]
+    index = Template(INDEX_TEMPLATE).render(files=tmpl_info)
+    return index
 
 dir_name = "ci"
 logger.info("Destination directory: %s", dir_name)
