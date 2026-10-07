@@ -212,6 +212,16 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     .def(py::init<std::vector<uint64_t>, uint8_t>(), "constants"_a, "arith_rounds"_a = 0);
 
   // Indirect Branch
+  py::class_<IndirectBranchConfig>(m, "IndirectBranchConfig",
+    R"delim(
+    Configuration returned by the
+    :py:meth:`~omvll.ObfuscationConfig.indirect_branch` callback.
+
+    :param value: ``True`` enables the protection, ``False`` disables it.
+    :type value: bool
+    )delim")
+    .def(py::init<bool>(), "value"_a);
+
   py::class_<IndirectBranchOpt>(m, "IndirectBranchOpt",
     R"delim(
     Option for the :py:meth:`~omvll.ObfuscationConfig.indirect_branch`
@@ -223,6 +233,16 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
     .def(py::init<bool>(), "value"_a);
 
   // Indirect Call
+  py::class_<IndirectCallConfig>(m, "IndirectCallConfig",
+    R"delim(
+    Configuration returned by the
+    :py:meth:`~omvll.ObfuscationConfig.indirect_call` callback.
+
+    :param value: ``True`` enables the protection, ``False`` disables it.
+    :type value: bool
+    )delim")
+    .def(py::init<bool>(), "value"_a);
+
   py::class_<IndirectCallOpt>(m, "IndirectCallOpt",
     R"delim(
     Option for the :py:meth:`~omvll.ObfuscationConfig.indirect_call` callback.
