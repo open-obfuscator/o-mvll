@@ -189,12 +189,18 @@ CallInst *StringEncoding::createDecodingTrampoline(
   // zeroed and the string decodes to "". Drop the stale memory effects.
   NewPt->getFunction()->removeFnAttr(Attribute::Memory);
 
-  auto *BufferTy = ArrayType::get(IRB.getInt8Ty(), Size);
-  GlobalVariable *ClearBuffer =
-      new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
-                         Constant::getNullValue(BufferTy));
-  // For this global variable, use the most recent buffer for decoding.
-  OriginalToDecoded[&G] = ClearBuffer;
+  // Only local decoding writes to a separate buffer; global decoding restores
+  // G in place. Mapping G to a buffer that is never written would let
+  // reconstructConstantAggregate swap it into an aggregate, which then reads "".
+  GlobalVariable *ClearBuffer = nullptr;
+  if (IsLocalToFunction) {
+    auto *BufferTy = ArrayType::get(IRB.getInt8Ty(), Size);
+    ClearBuffer =
+        new GlobalVariable(*M, BufferTy, false, GlobalValue::InternalLinkage,
+                           Constant::getNullValue(BufferTy));
+    // For this global variable, use the most recent buffer for decoding.
+    OriginalToDecoded[&G] = ClearBuffer;
+  }
 
   AllocaInst *Key = IRB.CreateAlloca(IRB.getInt64Ty());
   AllocaInst *StrSize = IRB.CreateAlloca(IRB.getInt32Ty());
