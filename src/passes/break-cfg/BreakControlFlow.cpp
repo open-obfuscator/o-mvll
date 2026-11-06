@@ -181,6 +181,12 @@ bool BreakControlFlow::runOnFunction(Function &F) {
   ClonedF->setPrologueData(Prologue);
   ClonedF->setLinkage(GlobalValue::InternalLinkage);
 
+  // The breaking stub makes it valid to enter ClonedF only at +PrologueSize,
+  // but function-merging passes ignore prologue data and may merge or thunk it
+  // into the stub. A unique attr fails their cmpAttrs gate, keeping it distinct.
+  ClonedF->addFnAttr("omvll-no-merge", F.getName());
+  ClonedF->setUnnamedAddr(GlobalValue::UnnamedAddr::None);
+
   BasicBlock *Entry =
       BasicBlock::Create(Trampoline.getContext(), "Entry", &Trampoline);
   IRBuilder<NoFolder> IRB(Entry);
