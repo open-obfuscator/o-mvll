@@ -219,8 +219,16 @@ py::module_ &py_init_obf_opt(py::module_ &m) {
 
     :param value: ``True`` enables the protection, ``False`` disables it.
     :type value: bool
+    :param max_branches: Skip terminators with more successors than this,
+                         bounding the code-size expansion on large switch
+                         tables. ``0`` (default) means no limit.
+    :type max_branches: int
     )delim")
-    .def(py::init<bool>(), "value"_a);
+    .def(py::init<bool>(), "value"_a)
+    .def(py::init([](bool Value, unsigned MaxBranches) -> IndirectBranchOpt {
+           return IndirectBranchConfig(Value, MaxBranches);
+         }),
+         "value"_a, "max_branches"_a);
 
   // Indirect Call
   py::class_<IndirectCallOpt>(m, "IndirectCallOpt",

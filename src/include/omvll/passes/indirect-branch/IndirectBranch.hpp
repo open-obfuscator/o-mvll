@@ -14,7 +14,7 @@ struct IndirectBranch : llvm::PassInfoMixin<IndirectBranch> {
                               llvm::ModuleAnalysisManager &MAM);
 
   bool process(llvm::Function &F, const llvm::DataLayout &DL,
-               llvm::LLVMContext &Ctx);
+               llvm::LLVMContext &Ctx, unsigned MaxBranches);
 
 private:
   unsigned Seed = 0;

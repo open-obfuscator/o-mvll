@@ -15,6 +15,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "omvll/ObfuscationConfig.hpp"
 #include "omvll/PyConfig.hpp"
@@ -29,16 +30,24 @@ using namespace omvll;
 namespace omvll {
 
 bool IndirectBranch::process(Function &F, const DataLayout &DL,
-                             LLVMContext &Ctx) {
+                             LLVMContext &Ctx, unsigned MaxBranches) {
   ScopedTrace TracePassFunc(F.getName(), name());
   Module &M = *F.getParent();
   std::vector<Instruction *> TerminatorsToReplace;
   SmallPtrSet<BasicBlock *, 32> SuccBlocks;
 
+  // Split critical edges so no converted branch feeds a block with phi nodes
+  // through a shared predecessor, which would otherwise yield invalid IR.
+  SplitAllCriticalEdges(F, CriticalEdgeSplittingOptions());
+
   // Gather jumps and switch instructions.
   for (BasicBlock &BB : F) {
     auto *TI = BB.getTerminator();
     if (isa<BranchInst>(TI) || isa<SwitchInst>(TI)) {
+      // Skip wide terminators (e.g. large switch tables) to bound the
+      // select-chain code-size expansion. 0 means no limit.
+      if (MaxBranches && TI->getNumSuccessors() > MaxBranches)
+        continue;
       TerminatorsToReplace.emplace_back(TI);
       for (BasicBlock *Succ : successors(&BB))
         SuccBlocks.insert(Succ);
@@ -89,10 +98,6 @@ bool IndirectBranch::process(Function &F, const DataLayout &DL,
 
   // Translate collected direct branches into indirect ones.
   for (Instruction *TI : TerminatorsToReplace) {
-    // TODO: May be worth avoiding translating branches in critical edges (or
-    // splitting them beforehand), as they may break some invariances to
-    // subsequent code motion optimizations.
-    // TODO: Add threshold on the maximum number of branches to convert?
     // TODO: Try to move this check above.
     if (TI->getParent()->size() == 1)
       continue;
@@ -168,7 +173,7 @@ PreservedAnalyses IndirectBranch::run(Module &M, ModuleAnalysisManager &MAM) {
         F.isIntrinsic() || F.getName().starts_with("__omvll"))
       continue;
 
-    Changed |= process(F, DL, Ctx);
+    Changed |= process(F, DL, Ctx, Opt->MaxBranches);
   }
 
   SINFO("[{}] Changes {} applied on module {}", name(), Changed ? "" : "not",

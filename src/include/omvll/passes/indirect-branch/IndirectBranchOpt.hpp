@@ -11,8 +11,12 @@ namespace omvll {
 
 struct IndirectBranchConfig {
   IndirectBranchConfig(bool Value) : Value(Value) {}
+  IndirectBranchConfig(bool Value, unsigned MaxBranches)
+      : Value(Value), MaxBranches(MaxBranches) {}
   operator bool() const { return Value; }
   bool Value = false;
+  // Skip terminators with more successors than this. 0 means no limit.
+  unsigned MaxBranches = 0;
 };
 
 using IndirectBranchOpt = std::optional<IndirectBranchConfig>;
